@@ -1,0 +1,137 @@
+/* Menu principal */
+.menu button { 
+    display: block; 
+    width: 100%; 
+    margin: 10px 0; 
+    padding: 15px; 
+    font-size: 16px; 
+    border: none; 
+    background: #007bff; 
+    color: white; 
+    border-radius: 5px; 
+    cursor: pointer; 
+}
+
+.menu button:hover { 
+    background: #0056b3; 
+}
+
+/* Statut de connexion WebSocket */
+.connection-status-container {
+    text-align: center;
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 5px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.connection-status {
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 3px;
+}
+
+.connection-status.connected {
+    background: #d4edda;
+    color: #155724;
+}
+
+.connection-status.connecting {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.connection-status.disconnected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Section de test WebSocket */
+.websocket-test {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 5px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.websocket-test h3 {
+    margin: 0 0 10px 0;
+    text-align: center;
+    color: #495057;
+}
+
+.websocket-test button {
+    display: inline-block;
+    width: calc(33.33% - 7px);
+    margin: 5px 2px;
+    padding: 8px;
+    font-size: 14px;
+    border: none;
+    background: #6c757d;
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.websocket-test button:hover {
+    background: #5a6268;
+}
+
+/* Section Game Channels */
+.game-channels {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 5px;
+    background: #f1f8ff;
+    border: 1px solid #bee5eb;
+}
+
+.game-channels h3 {
+    margin: 0 0 10px 0;
+    text-align: center;
+    color: #0c5460;
+}
+
+.game-channel-btn {
+    display: inline-block;
+    width: calc(33.33% - 7px);
+    margin: 5px 2px;
+    padding: 8px;
+    font-size: 14px;
+    border: none;
+    background: #17a2b8;
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.game-channel-btn:hover {
+    background: #138496;
+}
+
+.game-channel-btn.subscribed {
+    background: #28a745;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+}
+
+.game-channel-btn.subscribed:hover {
+    background: #218838;
+}
+
+#logout-btn { 
+    margin-top: 20px; 
+    padding: 10px; 
+    background: #dc3545; 
+    color: white; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    width: 100%;
+}
+
+#logout-btn:hover {
+    background: #c82333;
+} 

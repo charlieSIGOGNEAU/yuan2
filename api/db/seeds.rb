@@ -10,6 +10,11 @@ User.create(name: "user4")
 User.create(name: "user5")
 User.create(name: "user6")
 
+Game.create(game_status: 0, game_type: 0, player_count: 2)
+Game.create(game_status: 0, game_type: 0, player_count: 3)
+Game.create(game_status: 0, game_type: 0, player_count: 4)
+
+
 # # Créer des utilisateurs de test
 # puts "Création d'utilisateurs de test..."
 

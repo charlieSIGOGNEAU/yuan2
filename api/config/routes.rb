@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # Mount Action Cable server
+  mount ActionCable.server => '/cable'
+  
   # API routes
   namespace :api do
     namespace :v1 do

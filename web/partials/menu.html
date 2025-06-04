@@ -1,0 +1,31 @@
+<h1>Yuan Game</h1>
+<p>Bienvenue, <span id="username"></span>!</p>
+
+<!-- Statut de connexion WebSocket -->
+<div class="connection-status-container">
+    🔌 WebSocket: <span id="connection-status" class="connection-status disconnected">disconnected</span>
+</div>
+
+<div class="menu">
+    <button id="quick-game-btn">🚀 Partie Rapide</button>
+    <button id="custom-game-btn">⚙️ Partie Personnalisée</button>
+    <button id="options-btn">🔧 Options</button>
+</div>
+
+<!-- Boutons de test WebSocket -->
+<div class="websocket-test">
+    <h3>🧪 Test WebSocket</h3>
+    <button id="ping-btn">💓 Ping</button>
+    <button id="test-message-btn">💬 Message Test</button>
+    <button id="reconnect-btn">🔄 Reconnecter</button>
+</div>
+
+<!-- Boutons Game Channels -->
+<div class="game-channels">
+    <h3>🎮 Channels de Jeu</h3>
+    <button id="game-1-btn" class="game-channel-btn" data-game-id="1">🎲 Game 1</button>
+    <button id="game-2-btn" class="game-channel-btn" data-game-id="2">🎯 Game 2</button>
+    <button id="game-3-btn" class="game-channel-btn" data-game-id="3">🃏 Game 3</button>
+</div>
+
+<button id="logout-btn">Déconnexion</button> 

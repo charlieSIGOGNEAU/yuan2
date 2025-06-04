@@ -1,0 +1,21 @@
+/* Page de connexion */
+form input, form button { 
+    display: block; 
+    width: 100%; 
+    margin: 10px 0; 
+    padding: 10px; 
+    font-size: 16px; 
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+form button {
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+form button:hover {
+    background: #0056b3;
+} 
