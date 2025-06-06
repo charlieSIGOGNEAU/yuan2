@@ -23,12 +23,12 @@ const WebSocketClient = {
         this.connection.onmessage = (event) => {
             const data = JSON.parse(event.data);
             
-            // 🎯 AFFICHAGE SIMPLE DU JSON
+            // 🎯 AFFICHAGE SIMPLE DU JSON (sauf les pings automatiques)
             if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
                 console.log('📨 Message reçu:', data);
             }
             
-            this.handleMessage(data);
+            // this.handleMessage(data);
         };
 
         this.connection.onclose = () => {
@@ -64,16 +64,6 @@ const WebSocketClient = {
         return false;
     },
 
-    // Ping simple
-    ping() {
-        const pingMessage = {
-            command: 'message',
-            identifier: JSON.stringify({ channel: 'GameChannel' }),
-            data: JSON.stringify({ action: 'ping', timestamp: Date.now() })
-        };
-        return this.send(pingMessage);
-    },
-
     // Déconnexion
     disconnect() {
         if (this.connection) {
@@ -104,16 +94,6 @@ const WebSocketClient = {
         });
         document.body.appendChild(notification);
         setTimeout(() => notification.remove(), 3000);
-    },
-
-    // Message de test
-    sendTestMessage(message) {
-        const messageData = {
-            command: 'message',
-            identifier: JSON.stringify({ channel: 'GameChannel' }),
-            data: JSON.stringify({ action: 'send_message', message: message })
-        };
-        return this.send(messageData);
     },
 
     // Game channels

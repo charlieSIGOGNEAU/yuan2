@@ -35,17 +35,6 @@ const MenuPage = {
             case 'options-btn':
                 alert('🔧 Options - À implémenter');
                 break;
-            case 'ping-btn':
-                WebSocketClient.ping();
-                break;
-            case 'test-message-btn':
-                const message = `Test ${new Date().toLocaleTimeString()}`;
-                WebSocketClient.sendTestMessage(message);
-                break;
-            case 'reconnect-btn':
-                WebSocketClient.disconnect();
-                WebSocketClient.connect();
-                break;
             // Boutons Game Channels
             case 'game-1-btn':
                 WebSocketClient.toggleGameChannel(1);
