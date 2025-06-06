@@ -19,7 +19,7 @@ const Auth = {
                 this.currentUser = data.user;
                 console.log('✅ Connexion réussie:', this.currentUser.name);
                 
-                // Démarrer la connexion WebSocket après l'authentification
+                // Démarrer la connexion WebSocket après l'authentification, connect() est une methode de WebSocket.js
                 await WebSocketClient.connect();
                 
                 MenuPage.show();

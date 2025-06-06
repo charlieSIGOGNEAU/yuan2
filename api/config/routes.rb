@@ -8,6 +8,9 @@ Rails.application.routes.draw do
       # Routes d'authentification
       post 'auth/login', to: 'auth#login'
       get 'auth/me', to: 'auth#me'
+      
+      # Routes de jeu
+      post 'games/quick_game', to: 'games#quick_game'
     end
   end
 

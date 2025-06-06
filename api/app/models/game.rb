@@ -1,10 +1,9 @@
 class Game < ApplicationRecord
     enum :game_status, {
       waiting_for_players: 0,
-      initializing: 1,
-      simultaneous_play: 2,
-      completed: 3,
-      abandoned: 4
+      simultaneous_play: 1,
+      completed: 2,
+      abandoned: 3
     }, default: :waiting_for_players
   
     enum :game_type, {
@@ -25,14 +24,22 @@ class Game < ApplicationRecord
                                     .where(game_users: { user_id: user.id })
                                     .where.not(game_status: [:completed, :abandoned])
                                     .first
-      return existing_game_for_user if existing_game_for_user
+      if existing_game_for_user
+        game_user = existing_game_for_user.game_users.find_by(user_id: user.id)
+        return {game: existing_game_for_user, game_user: game_user, message: "ongoing game"}
+      end
       
       waiting_game = where(game_status: :waiting_for_players, game_type: :quick_game).first
   
       if waiting_game
         # Si on ne peut pas rejoindre la partie, on cherche une autre partie
-        if waiting_game.add_player(user)
-          waiting_game
+        game_user = waiting_game.add_player(user)
+        if game_user
+          if waiting_game.simultaneous_play?
+            return { game: waiting_game, game_user: game_user, message: "game ready simultaneous_play" }
+          else
+            return { game: waiting_game, game_user: game_user, message: "waiting for players" }
+          end
         else
           # si on n'est pas arriver a s'ajouter a la partie car on etait plusieur en meme temps, on cherche une autre partie
           find_or_create_waiting_game(user)
@@ -43,9 +50,8 @@ class Game < ApplicationRecord
           game_status: :waiting_for_players,
           game_type: :quick_game
         )
-        return nil unless game.persisted?
-        game.add_player(user)
-        game
+        game_user = game.add_player(user)
+        return {game: game, game_user: game_user, message: "new game"}
       end
     end
   
@@ -56,7 +62,7 @@ class Game < ApplicationRecord
         game_user = game_users.create(user: user)
         return false unless game_user.persisted?
         initialize_game if game_users.count == player_count
-        true
+        game_user
       end
     end
   
@@ -69,10 +75,8 @@ class Game < ApplicationRecord
   
     def initialize_game
       Rails.logger.info "Initialisation de la partie #{id}"
-      update(game_status: :initializing)
       create_tiles
       update(game_status: :simultaneous_play)
-      broadcast_game_start
     rescue => e
       Rails.logger.error "ERROR during game initialization for game #{id}: #{e.message}"
       raise
@@ -115,24 +119,5 @@ class Game < ApplicationRecord
         end
       end
       true
-    end
-  
-    def broadcast_game_start
-      Rails.logger.info "Diffusion du démarrage de la partie #{id} aux joueurs: #{game_users.map(&:user_id).join(', ')}"
-      game_data = {
-        id: id,
-        game_status: game_status,
-        game_type: game_type,
-        player_count: player_count,
-        game_users: game_users.as_json(only: [:id, :user_id, :user_name]),
-        tiles: tiles.as_json(only: [:id, :game_user_id, :turn])
-      }
-      ActionCable.server.broadcast(
-        "game_#{id}",
-        {
-          type: 'game_start',
-          game: game_data
-        }
-      )
     end
   end 

@@ -27,7 +27,7 @@ const MenuPage = {
                 Auth.logout();
                 break;
             case 'quick-game-btn':
-                alert('🚀 Partie rapide - À implémenter');
+                Game.startQuickGame();
                 break;
             case 'custom-game-btn':
                 alert('⚙️ Partie personnalisée - À implémenter');

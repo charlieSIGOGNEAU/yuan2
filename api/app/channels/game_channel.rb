@@ -7,11 +7,18 @@ class GameChannel < ApplicationCable::Channel
       stream_from "game_#{game_id}"
       GameBroadcast.send_game_message(game_id, {
         type: 'user_joined_game',
-        user: current_user.name,
+        user_id: current_user.id,
+        user_name: current_user.name,
         game_id: game_id,
         message: "#{current_user.name} a rejoint le Game #{game_id}",
         timestamp: Time.current
       })
+      if (game = Game.find_by(id: game_id))
+        GameBroadcast.send_user_message(current_user.id, {
+          type: 'details_game test',
+          game: game.as_json(include: { game_users: {} })
+        })
+      end  
       logger.info "📡 Utilisateur #{current_user.name} souscrit au GameChannel pour Game #{game_id}"
     else
       stream_from "user_#{current_user.id}"

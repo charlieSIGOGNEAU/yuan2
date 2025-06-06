@@ -3,48 +3,31 @@ class Api::V1::GamesController < ApplicationController
 
   # POST /api/v1/games/quick_game
   def quick_game
-    game = Game.find_or_create_waiting_game(current_user)
-    p "#" *111
-    p game.id
-    p "#" *111
+    result = Game.find_or_create_waiting_game(current_user)
+    game = result[:game]
+    message = result[:message]
+    game_user = result[:game_user]
 
     if game
-      render json: {
-        success: true,
-        game: game_with_details(game),
-        message: "Partie trouvée/créée avec succès"
-      }
+      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+
+      case message
+      when "ongoing game"
+      when "game ready simultaneous_play"
+        GameBroadcast.game_broadcast_game_details(game.id)
+      when "waiting for players"
+        GameBroadcast.game_broadcast_new_player(game.id, game_user.id) 
+      when "new game"
+      end
+      render json: { success: true, game_id: game.id }
     else
-      render json: {
-        success: false,
-        message: "Impossible de créer ou rejoindre une partie"
-      }, status: 422
+      render json: { success: false }, status: 422
     end
   end
 
-  private
+  # une methode de recuperation de donne de la partie en fonction de l'id de la partie
 
-  def game_with_details(game)
-    {
-      id: game.id,
-      game_status: game.game_status,
-      game_type: game.game_type,
-      player_count: game.player_count,
-      current_players_count: game.game_users.count,
-      game_users: game.game_users.includes(:user).map do |game_user|
-        {
-          id: game_user.id,
-          user_id: game_user.user_id,
-          user_name: game_user.user.name
-        }
-      end,
-      tiles: game.tiles.map do |tile|
-        {
-          id: tile.id,
-          game_user_id: tile.game_user_id,
-          turn: tile.turn
-        }
-      end
-    }
-  end
+ 
+
+
 end 

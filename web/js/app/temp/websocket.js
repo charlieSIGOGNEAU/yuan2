@@ -1,5 +1,3 @@
-
-
 const WebSocketClient = {
     connection: null,
     gameSubscriptions: [],
@@ -7,7 +5,7 @@ const WebSocketClient = {
 
     // Connexion WebSocket
     async connect() {
-        if (!Auth.authToken) return;
+        if (!Auth.authToken) return; // faudrai lancer une de recuperer le token
 
         this.connectionStatus = 'connecting';
 

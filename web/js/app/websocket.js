@@ -27,8 +27,6 @@ const WebSocketClient = {
             if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
                 console.log('📨 Message reçu:', data);
             }
-            
-            // this.handleMessage(data);
         };
 
         this.connection.onclose = () => {
@@ -45,14 +43,6 @@ const WebSocketClient = {
             identifier: JSON.stringify({ channel: 'GameChannel' })
         };
         this.send(subscribeMessage);
-    },
-
-    // Gérer les messages
-    handleMessage(data) {
-        if (data.message) {
-            // 🎯 AFFICHAGE SIMPLE DU MESSAGE
-            console.log('💬 Message:', data.message);
-        }
     },
 
     // Envoyer un message
@@ -96,6 +86,7 @@ const WebSocketClient = {
         setTimeout(() => notification.remove(), 3000);
     },
 
+
     // Game channels
     subscribeToGameChannel(gameId) {
         if (this.gameSubscriptions.has(gameId)) return;
@@ -107,7 +98,7 @@ const WebSocketClient = {
         
         if (this.send(subscribeMessage)) {
             this.gameSubscriptions.set(gameId, true);
-            this.updateGameChannelUI(gameId, true);
+            // this.updateGameChannelUI(gameId, true);
         }
     },
 
@@ -121,7 +112,7 @@ const WebSocketClient = {
         
         if (this.send(unsubscribeMessage)) {
             this.gameSubscriptions.delete(gameId);
-            this.updateGameChannelUI(gameId, false);
+            // this.updateGameChannelUI(gameId, false);
         }
     },
 
@@ -133,17 +124,17 @@ const WebSocketClient = {
         }
     },
 
-    updateGameChannelUI(gameId, isSubscribed) {
-        const button = document.getElementById(`game-${gameId}-btn`);
-        if (button) {
-            if (isSubscribed) {
-                button.classList.add('subscribed');
-                button.textContent = `✅ Game ${gameId}`;
-            } else {
-                button.classList.remove('subscribed');
-                const icons = { 1: '🎲', 2: '🎯', 3: '🃏' };
-                button.textContent = `${icons[gameId] || '🎮'} Game ${gameId}`;
-            }
-        }
-    }
+    // updateGameChannelUI(gameId, isSubscribed) {
+    //     const button = document.getElementById(`game-${gameId}-btn`);
+    //     if (button) {
+    //         if (isSubscribed) {
+    //             button.classList.add('subscribed');
+    //             button.textContent = `✅ Game ${gameId}`;
+    //         } else {
+    //             button.classList.remove('subscribed');
+    //             const icons = { 1: '🎲', 2: '🎯', 3: '🃏' };
+    //             button.textContent = `${icons[gameId] || '🎮'} Game ${gameId}`;
+    //         }
+    //     }
+    // }
 }; 
