@@ -1,7 +1,7 @@
 // Client WebSocket simplifié
 const WebSocketClient = {
     connection: null,
-    gameSubscriptions: new Map(),
+    gameSubscriptions: [],
     connectionStatus: 'disconnected',
     
     // Connexion WebSocket
@@ -17,7 +17,15 @@ const WebSocketClient = {
         this.connection.onopen = () => {
             this.connectionStatus = 'connected';
             this.updateConnectionUI();
+            
             this.subscribeToChannel();
+
+            // 🎯 RÉ-ABONNER AUX GAME CHANNELS PRÉCÉDENTS
+            const previousGameIds = [...this.gameSubscriptions];
+            this.gameSubscriptions = [];    
+            previousGameIds.forEach(gameId => {
+                this.subscribeToGameChannel(gameId);
+            });
         };
 
         this.connection.onmessage = (event) => {
@@ -36,7 +44,7 @@ const WebSocketClient = {
         };
     },
 
-    // S'abonner au channel principal
+    // S'abonner au channel personel
     subscribeToChannel() {
         const subscribeMessage = {
             command: 'subscribe',
@@ -86,10 +94,9 @@ const WebSocketClient = {
         setTimeout(() => notification.remove(), 3000);
     },
 
-
     // Game channels
     subscribeToGameChannel(gameId) {
-        if (this.gameSubscriptions.has(gameId)) return;
+        if (this.gameSubscriptions.includes(gameId)) return;
 
         const subscribeMessage = {
             command: 'subscribe',
@@ -97,13 +104,12 @@ const WebSocketClient = {
         };
         
         if (this.send(subscribeMessage)) {
-            this.gameSubscriptions.set(gameId, true);
-            // this.updateGameChannelUI(gameId, true);
+            this.gameSubscriptions.push(gameId);
         }
     },
 
     unsubscribeFromGameChannel(gameId) {
-        if (!this.gameSubscriptions.has(gameId)) return;
+        if (!this.gameSubscriptions.includes(gameId)) return;
 
         const unsubscribeMessage = {
             command: 'unsubscribe',
@@ -111,30 +117,15 @@ const WebSocketClient = {
         };
         
         if (this.send(unsubscribeMessage)) {
-            this.gameSubscriptions.delete(gameId);
-            // this.updateGameChannelUI(gameId, false);
+            this.gameSubscriptions = this.gameSubscriptions.filter(id => id !== gameId);
         }
     },
 
     toggleGameChannel(gameId) {
-        if (this.gameSubscriptions.has(gameId)) {
+        if (this.gameSubscriptions.includes(gameId)) {
             this.unsubscribeFromGameChannel(gameId);
         } else {
             this.subscribeToGameChannel(gameId);
         }
-    },
-
-    // updateGameChannelUI(gameId, isSubscribed) {
-    //     const button = document.getElementById(`game-${gameId}-btn`);
-    //     if (button) {
-    //         if (isSubscribed) {
-    //             button.classList.add('subscribed');
-    //             button.textContent = `✅ Game ${gameId}`;
-    //         } else {
-    //             button.classList.remove('subscribed');
-    //             const icons = { 1: '🎲', 2: '🎯', 3: '🃏' };
-    //             button.textContent = `${icons[gameId] || '🎮'} Game ${gameId}`;
-    //         }
-    //     }
-    // }
+    }
 }; 
