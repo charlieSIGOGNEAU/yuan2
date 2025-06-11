@@ -17,24 +17,14 @@ const WebSocketClient = {
         this.connection.onopen = () => {
             this.connectionStatus = 'connected';
             this.updateConnectionUI();
-            
             this.subscribeToChannel();
-
-            // 🎯 RÉ-ABONNER AUX GAME CHANNELS PRÉCÉDENTS
-            const previousGameIds = [...this.gameSubscriptions];
-            this.gameSubscriptions = [];    
-            previousGameIds.forEach(gameId => {
-                this.subscribeToGameChannel(gameId);
-            });
         };
 
         this.connection.onmessage = (event) => {
             const data = JSON.parse(event.data);
             
             // 🎯 AFFICHAGE SIMPLE DU JSON (sauf les pings automatiques)
-            if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
-                console.log('📨 Message reçu:', data);
-            }
+            gameApi.handleGameMessage(data);
         };
 
         this.connection.onclose = () => {

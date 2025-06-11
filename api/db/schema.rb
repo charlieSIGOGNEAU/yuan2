@@ -11,6 +11,17 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
+  create_table "actions", force: :cascade do |t|
+    t.integer "game_user_id", null: false
+    t.integer "game_id", null: false
+    t.string "action"
+    t.integer "turn"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_actions_on_game_id"
+    t.index ["game_user_id"], name: "index_actions_on_game_user_id"
+  end
+
   create_table "game_users", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "game_id", null: false
@@ -56,6 +67,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "actions", "game_users"
+  add_foreign_key "actions", "games"
   add_foreign_key "game_users", "games"
   add_foreign_key "game_users", "users"
   add_foreign_key "tiles", "game_users"

@@ -24,7 +24,7 @@ const ApiService = {
         }
     },
 
-    // Partie rapide
+    // recherche partie rapide
     async quickGame() {
         return this.call('/games/quick_game', {
             method: 'POST'

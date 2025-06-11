@@ -40,6 +40,15 @@ class Tout < ActiveRecord::Migration[7.2]
       t.timestamps
     end
 
+    create_table :actions do |t|
+      t.references :game_user, null: false, foreign_key: true
+      t.references :game, null: false, foreign_key: true
+      t.string :action
+      t.integer :turn
+
+      t.timestamps
+    end
+
     add_index :game_users, [:user_id, :game_id], unique: true
   end
 

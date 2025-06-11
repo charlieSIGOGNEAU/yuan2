@@ -1,9 +1,10 @@
 class Game < ApplicationRecord
     enum :game_status, {
       waiting_for_players: 0,
-      simultaneous_play: 1,
-      completed: 2,
-      abandoned: 3
+      installation_phase: 1,
+      simultaneous_play: 2,
+      completed: 3,
+      abandoned: 4
     }, default: :waiting_for_players
   
     enum :game_type, {
@@ -14,6 +15,7 @@ class Game < ApplicationRecord
     has_many :game_users, dependent: :destroy
     has_many :users, through: :game_users
     has_many :tiles, dependent: :destroy
+    has_many :actions, dependent: :destroy
   
     validates :game_status, presence: true
     validates :game_type, presence: true
