@@ -1,5 +1,7 @@
+import { Auth } from './auth.js';
+import { WebSocketClient } from './websocket.js';
 // Module de gestion des jeux
-const Game = {
+export const Game = {
     // Démarrer une partie rapide
     async startQuickGame() {
         const response = await fetch('http://localhost:3000/api/v1/games/quick_game', {

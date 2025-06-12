@@ -1,5 +1,9 @@
+import { Auth } from './auth.js';
+import { gameApi } from '../game_logic_yuan/gameApi.js';
+
+
 // Client WebSocket simplifié
-const WebSocketClient = {
+export const WebSocketClient = {
     connection: null,
     gameSubscriptions: [],
     connectionStatus: 'disconnected',
@@ -29,9 +33,50 @@ const WebSocketClient = {
 
         this.connection.onclose = () => {
             this.connectionStatus = 'disconnected';
+            
+            // Sauvegarder les channels avant reconnexion
+            const channelsToRestore = [...this.gameSubscriptions];
+            this.gameSubscriptions = []; // Reset
+            
             this.updateConnectionUI();
-            setTimeout(() => this.connect(), 2000); // Reconnexion simple
+            
+            // Reconnexion avec attente vraie
+            setTimeout(async () => {
+                await this.connect();
+                
+                // Attendre que la connexion soit vraiment prête
+                if (channelsToRestore.length > 0) {
+                    await this.waitForConnectionAndRestore(channelsToRestore);
+                }
+            }, 2000);
         };
+    },
+
+    // Fonction qui attend la connexion puis restaure les channels
+    async waitForConnectionAndRestore(channelsToRestore) {
+        console.log('⏳ Attente connexion pour restaurer:', channelsToRestore);
+        
+        // Attendre que la connexion soit vraiment ouverte
+        return new Promise((resolve) => {
+            const checkConnection = () => {
+                if (this.connection && this.connection.readyState === WebSocket.OPEN) {
+                    console.log('✅ Connexion établie, restauration des channels...');
+                    
+                    // Restaurer les channels
+                    channelsToRestore.forEach(gameId => {
+                        console.log(`🔄 Restauration channel game ${gameId}`);
+                        this.subscribeToGameChannel(gameId);
+                    });
+                    
+                    resolve();
+                } else {
+                    // Réessayer dans 100ms
+                    setTimeout(checkConnection, 100);
+                }
+            };
+            
+            checkConnection();
+        });
     },
 
     // S'abonner au channel personel
@@ -111,11 +156,11 @@ const WebSocketClient = {
         }
     },
 
-    toggleGameChannel(gameId) {
-        if (this.gameSubscriptions.includes(gameId)) {
-            this.unsubscribeFromGameChannel(gameId);
-        } else {
-            this.subscribeToGameChannel(gameId);
-        }
-    }
+    // toggleGameChannel(gameId) {
+    //     if (this.gameSubscriptions.includes(gameId)) {
+    //         this.unsubscribeFromGameChannel(gameId);
+    //     } else {
+    //         this.subscribeToGameChannel(gameId);
+    //     }
+    // }
 }; 

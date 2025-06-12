@@ -13,7 +13,7 @@ class Api::V1::GamesController < ApplicationController
 
       case message
       when "ongoing game"
-      when "game ready simultaneous_play"
+      when "game ready installation_phase"
         GameBroadcast.game_broadcast_game_details(game.id)
       when "waiting for players"
         GameBroadcast.game_broadcast_new_player(game.id, game_user.id) 

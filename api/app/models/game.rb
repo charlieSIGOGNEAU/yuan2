@@ -37,8 +37,8 @@ class Game < ApplicationRecord
         # Si on ne peut pas rejoindre la partie, on cherche une autre partie
         game_user = waiting_game.add_player(user)
         if game_user
-          if waiting_game.simultaneous_play?
-            return { game: waiting_game, game_user: game_user, message: "game ready simultaneous_play" }
+          if waiting_game.installation_phase?
+            return { game: waiting_game, game_user: game_user, message: "game ready installation_phase" }
           else
             return { game: waiting_game, game_user: game_user, message: "waiting for players" }
           end
@@ -78,7 +78,7 @@ class Game < ApplicationRecord
     def initialize_game
       Rails.logger.info "Initialisation de la partie #{id}"
       create_tiles
-      update(game_status: :simultaneous_play)
+      update(game_status: :installation_phase)
     rescue => e
       Rails.logger.error "ERROR during game initialization for game #{id}: #{e.message}"
       raise

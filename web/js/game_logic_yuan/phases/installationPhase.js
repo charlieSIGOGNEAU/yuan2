@@ -1,21 +1,7 @@
 import { TILE_CONFIGS } from '../pieces/TileTypes.js';
 
 export const installationPhase = {
-    tilesInGame(numPlayers) {
-        const tileRanges = {
-            2: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm"],
-            3: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm"],
-            4: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om"]
-        };
-        const titles = tileRanges[numPlayers]
-        // shuffle
-        for (let i = titles.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1)); // Choisir un indice aléatoire
-            [titles[i], titles[j]] = [titles[j], titles[i]]; // Échanger les éléments
-        }
-        return titles;
-    },
-
+    
     getAllAdjacentTiles(centers) {
         const centerAdjacents = [{ q: 3, r: -2}, { q: 2, r: 1}, { q: -1, r: 3}, { q: -3, r: 2}, { q: -2, r: -1}, { q: 1, r: -3}]
         const adjacentSet = new Set();

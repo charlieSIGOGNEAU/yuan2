@@ -1,5 +1,9 @@
+import { loadPartial, loadCSS } from '../simple.js';
+import { Auth } from './auth.js';
+
+
 // Gestion page de connexion
-const LoginPage = {
+export const LoginPage = {
     // Afficher la page
     async show() {
         const html = await loadPartial('partials/login.html');

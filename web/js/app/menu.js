@@ -1,5 +1,10 @@
+import { loadPartial, loadCSS } from '../simple.js';
+import { Auth } from './auth.js';
+import { WebSocketClient } from './websocket.js';
+import { Game } from './game.js';
+
 // Gestion menu principal - Version simplifiée
-const MenuPage = {
+export const MenuPage = {
     // Afficher la page
     async show() {
         const html = await loadPartial('partials/menu.html');
@@ -36,15 +41,15 @@ const MenuPage = {
                 alert('🔧 Options - À implémenter');
                 break;
             // Boutons Game Channels
-            case 'game-1-btn':
-                WebSocketClient.toggleGameChannel(1);
-                break;
-            case 'game-2-btn':
-                WebSocketClient.toggleGameChannel(2);
-                break;
-            case 'game-3-btn':
-                WebSocketClient.toggleGameChannel(3);
-                break;
+            // case 'game-1-btn':
+            //     WebSocketClient.toggleGameChannel(1);
+            //     break;
+            // case 'game-2-btn':
+            //     WebSocketClient.toggleGameChannel(2);
+            //     break;
+            // case 'game-3-btn':
+            //     WebSocketClient.toggleGameChannel(3);
+            //     break;
         }
     }
 }; 

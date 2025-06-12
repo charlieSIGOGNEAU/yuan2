@@ -1,5 +1,9 @@
+import { LoginPage } from './login.js';
+import { MenuPage } from './menu.js';
+import { WebSocketClient } from './websocket.js';
+
 // Module d'authentification simplifié
-const Auth = {
+export const Auth = {
     currentUser: null,
     authToken: null,
 
