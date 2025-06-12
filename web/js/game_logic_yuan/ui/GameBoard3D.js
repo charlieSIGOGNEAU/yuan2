@@ -2,6 +2,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 
 export class GameBoard3D {
     constructor(containerId) {
+        console.log('GameBoard3D constructor');
         this.container = document.getElementById(containerId);
         // Désactiver les comportements tactiles par défaut
         this.container.style.touchAction = 'none';
@@ -28,6 +29,9 @@ export class GameBoard3D {
         });
 
         this.init();
+    }
+    test() {
+        console.log('GameBoard3D test');
     }
 
     init() {
