@@ -16,7 +16,7 @@ class GameBroadcast
         ActionCable.server.broadcast "user_#{user_id}", {
             type: 'game_details',
             game: Game.find(game_id).as_json(include: { game_users: { except: [:game_id]} , tiles: { except: [:game_id]}, actions: { except: [:game_id]}}),
-            me_game_user_id: game_user_id
+            my_game_user_id: game_user_id
         }
     end
     

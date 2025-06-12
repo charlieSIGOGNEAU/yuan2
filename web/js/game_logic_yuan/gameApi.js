@@ -1,9 +1,10 @@
-import { GameBoard3D } from './ui/GameBoard3D.js';
+import { gameState } from './gameState.js';
 import { Game } from '../app/game.js';
 
 // Fonctions pour l'API
 export const gameApi = {
     gameBoard: null,
+
     
     // Futures fonctions pour envoyer à l'API
     handleGameMessage(data) {
@@ -11,11 +12,16 @@ export const gameApi = {
             console.log('📨 Message reçu:', data);
         }  
         
-        if (data.message && data.message.type === 'game_details' && (data.message.game.game_status === 'installation_phase' || data.message.game.game_status === 'simultaneous_play') && !this.gameBoard) {
-            // Appeler Game pour afficher le plateau de jeu
-            console.log('📨 Message reçu:', "OKOK");
-            this.gameBoard = Game.showGameBoard();
-            this.gameBoard.test();
+        if (data.message && data.message.type === 'game_details') {
+            // Mettre à jour le gameState avec les nouvelles données
+            gameState.update(data.message);
+            console.log('🎮 GameState mis à jour:', gameState);
+            
+            // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
+            if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay()) && !this.gameBoard) {
+                console.log('🎮 Lancement du GameBoard3D');
+                this.gameBoard = Game.showGameBoard();
+            }
         } 
     } 
 };

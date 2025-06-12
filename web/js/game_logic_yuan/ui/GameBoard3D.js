@@ -1,3 +1,5 @@
+// attention dans un repere exagonal r, c'est en bas a gauche et q a droite. a modifier lor de la pose des tuiles
+
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 export class GameBoard3D {
@@ -30,10 +32,7 @@ export class GameBoard3D {
 
         this.init();
     }
-    test() {
-        console.log('GameBoard3D test');
-    }
-
+    
     init() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
