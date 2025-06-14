@@ -22,7 +22,8 @@ class Tout < ActiveRecord::Migration[7.2]
   
     create_table :tiles do |t|
       t.string :name
-      t.string :position
+      t.integer :position_q
+      t.integer :position_r
       t.integer :rotation
       t.references :game_user, null: false, foreign_key: true
       t.references :game, null: false, foreign_key: true

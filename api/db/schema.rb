@@ -50,7 +50,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
 
   create_table "tiles", force: :cascade do |t|
     t.string "name"
-    t.string "position"
+    t.integer "position_q"
+    t.integer "position_r"
     t.integer "rotation"
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false

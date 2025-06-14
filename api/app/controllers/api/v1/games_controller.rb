@@ -25,9 +25,4 @@ class Api::V1::GamesController < ApplicationController
     end
   end
 
-  # une methode de recuperation de donne de la partie en fonction de l'id de la partie
-
- 
-
-
 end 

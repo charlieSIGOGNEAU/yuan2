@@ -132,12 +132,11 @@ export class GameBoard3D {
         tile.rotation.x = -Math.PI / 2;
         tile.rotation.z = rotation * Math.PI / 3;
         this.workplane.add(tile);
-        // this.tiles.push(tile);
         this.tileTemp = tile;
 
         // Création des deux sprites rotation supplémentaires
         const spriteGeometry = new THREE.PlaneGeometry(1, 1);
-        const rotationTexture = textureLoader.load('/images/rotation.webp');
+        const rotationTexture = textureLoader.load('./images/rotation.webp');
 
         // Premier sprite rotation à droite
         const rightSprite = new THREE.Mesh(spriteGeometry, new THREE.MeshBasicMaterial({
@@ -163,7 +162,7 @@ export class GameBoard3D {
         this.tiles.push(leftSprite);
 
         // Sprite OK
-        const okTexture = textureLoader.load('/images/buttonOk.webp');
+        const okTexture = textureLoader.load('./images/buttonOk.webp');
         const okSprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: okTexture,
             transparent: true,
@@ -179,7 +178,11 @@ export class GameBoard3D {
         this.tempTileRotation = rotation;
         this.tempTileSprites = [leftSprite, rightSprite, okSprite];
 
-        return tile;
+        // Retourner un objet avec la position et la rotation
+        return {
+            position: position,
+            rotation: rotation
+        };
     }
 
     // Nouvelle méthode pour déplacer la tuile temporaire

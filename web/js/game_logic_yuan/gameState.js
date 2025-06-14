@@ -31,7 +31,10 @@ class Tile {
     constructor(data = {}) {
         this.id = data.id || null;
         this.name = data.name || null;
-        this.position = data.position || null;
+        this.position = {
+            q: data.position_q ?? 0,
+            r: data.position_r ?? 0
+        };
         this.rotation = data.rotation || 0;
         this.game_user_id = data.game_user_id || null;
         this.turn = data.turn || 0;
@@ -43,7 +46,12 @@ class Tile {
     update(data) {
         this.id = data.id || this.id;
         this.name = data.name || this.name;
-        this.position = data.position || this.position;
+        if (data.position_q !== undefined || data.position_r !== undefined) {
+            this.position = {
+                q: data.position_q ?? this.position.q,
+                r: data.position_r ?? this.position.r
+            };
+        }
         this.rotation = data.rotation || this.rotation;
         this.game_user_id = data.game_user_id || this.game_user_id;
         this.turn = data.turn || this.turn;
@@ -76,8 +84,8 @@ class Action {
 class Terrain {
     constructor(data = {}) {
         this.type = data.type || 'plain';
-        this.positionQ = data.positionQ || 0;
-        this.positionR = data.positionR || 0;
+        this.position_q = data.position_q || 0;
+        this.position_r = data.position_r || 0;
         this.user_id = data.user_id || null;
         this.construction_type = data.construction_type || null;
         this.armee = data.armee || 0;  
@@ -85,8 +93,8 @@ class Terrain {
 
     update(data) {
         this.type = data.type || this.type;
-        this.positionQ = data.positionQ || this.positionQ;
-        this.positionR = data.positionR || this.positionR;
+        this.position_q = data.position_q || this.position_q;
+        this.position_r = data.position_r || this.position_r;
         this.user_id = data.user_id || this.user_id;
         this.construction_type = data.construction_type || this.construction_type;
         this.armee = data.armee || this.armee;

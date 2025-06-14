@@ -1,76 +1,76 @@
 export const TILE_CONFIGS = {
     "Am": {
-        image: '/images/Am.webp',
+        image: './images/tiles/Am.webp',
         zones: ["water","mountain","mine","water","forest","mountain","plain"],
         names: ["","","GE","","ALTAI","","CAO"]
     },
     "Bm": {
-        image: '/images/Bm.webp',
+        image: './images/tiles/Bm.webp',
         zones: ["forest","mountain","mine","water","forest","water","plain"],
         names: ["JU","","LI","","HUO","","MAND"]
     },
     "Cm": {
-        image: '/images/Cm.webp',
+        image: './images/tiles/Cm.webp',
         zones: ["water","mountain","plain","forest","mountain","mine","mountain"],
         names: ["","","QIN","TAN","","WUZ",""]
     },
     "Dm": {
-        image: '/images/Dm.webp',
+        image: './images/tiles/Dm.webp',
         zones: ["plain","water","forest","mine","rice","mountain","water"],
         names: ["CHENG","","ZAV","XU","BAO","",""]
     },
     "Em": {
-        image: '/images/Em.webp',
+        image: './images/tiles/Em.webp',
         zones: ["water","rice","rice","plain","water","water","mountain"],
         names: ["","IK","HOV","GVI","","",""]
     },
     "Fm": {
-        image: '/images/Fm.webp',
+        image: './images/tiles/Fm.webp',
         zones: ["mountain","mountain","rice","plain","forest","water","mountain"],
         names: ["","","LIANG","KHAL","MAO","","",]
     },
     "Gm": {
-        image: '/images/Gm.webp',
+        image: './images/tiles/Gm.webp',
         zones: ["plain","rice","mine","rice","forest","mountain","mountain"],
         names: ["XIA","TANG","SONG","NIE","ULAN","",""]
     },
     "Hm": {
-        image: '/images/Hm.webp',
+        image: './images/tiles/Hm.webp',
         zones: ["mine","mine","water","water","mountain","rice","water"],
         names: ["BAY","ZHOU","","","","YAN",""]
     },
     "Im": {
-        image: '/images/Im.webp',
+        image: './images/tiles/Im.webp',
         zones: ["mountain","mountain","mountain","mountain","water","rice","forest"],
         names: ["","","","","","FEI","GU"]
     },
     "Jm": {
-        image: '/images/Jm.webp',
+        image: './images/tiles/Jm.webp',
         zones: ["rice","water","plain","mountain","rice","mine","mountain"],
         names: ["LU","","HUAN","","JIN","LAI",""]
     },
     "Km": {
-        image: '/images/Km.webp',
+        image: './images/tiles/Km.webp',
         zones: ["plain","water","forest","forest","mountain","mountain","water"],
         names: ["SUH","","OVOR","MI","","",""]
     },
     "Lm": {
-        image: '/images/Lm.webp',
+        image: './images/tiles/Lm.webp',
         zones: ["water","water","mine","plain","mine","water","water"],
         names: ["","","XIANG","WEY","TENG","",""]
     },
     "Mm": {
-        image: '/images/Mm.webp',
+        image: './images/tiles/Mm.webp',
         zones: ["water","water","mountain","mountain","forest","plain","mine"],
         names: ["","","","","YANG","ZONG","BAYAN"]
     },
     "Nm": {
-        image: '/images/Nm.webp',
+        image: './images/tiles/Nm.webp',
         zones: ["plain","forest","plain","rice","mine","water","rice"],
         names: ["ZOU","YI","TOV","MOU","GUZA","","BOGD"]
     },
     "Om": {
-        image: '/images/Om.webp',
+        image: './images/tiles/Om.webp',
         zones: ["water","water","mine","mountain","mountain","forest","rice"],
         names: ["","","YING","","","BUL","YU"]
     }

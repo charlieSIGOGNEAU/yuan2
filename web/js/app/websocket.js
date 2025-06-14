@@ -1,3 +1,5 @@
+// apres reconection automatique, il faudrais demander game_details pour verifier si il y aurai pas des changements
+
 import { Auth } from './auth.js';
 import { gameApi } from '../game_logic_yuan/gameApi.js';
 
