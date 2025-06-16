@@ -18,7 +18,6 @@ export const gameApi = {
             // Mettre à jour le gameState avec les nouvelles données
             gameState.update(data.message);
             console.log('🎮 GameState mis à jour:', gameState);
-            console.log('🎮 GameState status:', gameState.game.game_status);
             
             // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
             if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay()) && !this.gameBoard) {
@@ -27,13 +26,12 @@ export const gameApi = {
             }
             // Mise à jour des tiles 3D
             if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay()) && this.gameBoard) {
-                console.log('🎮 Lancement du GameBoard3D');
+                console.log('🎮 update tile GameBoard3D');
                 installationPhase.updateTile3d();
             }
 
             // Ajout de la premiere tile ou choix de la tile a ajouter
             if (gameState.game.game_status === 'installation_phase') {
-                console.log('🎮 installation_phase');
                 installationPhase.addTiles(gameState);
             }
 
@@ -71,6 +69,4 @@ export const gameApi = {
         }
     }
 };
-
-// Fonction pour recevoir les données WebSocket
  

@@ -1,77 +1,77 @@
 export const TILE_CONFIGS = {
     "Am": {
         image: './images/tiles/Am.webp',
-        zones: ["water","mountain","mine","water","forest","mountain","plain"],
+        terrains: ["water","mountain","mine","water","forest","mountain","plain"],
         names: ["","","GE","","ALTAI","","CAO"]
     },
     "Bm": {
         image: './images/tiles/Bm.webp',
-        zones: ["forest","mountain","mine","water","forest","water","plain"],
+        terrains: ["forest","mountain","mine","water","forest","water","plain"],
         names: ["JU","","LI","","HUO","","MAND"]
     },
     "Cm": {
         image: './images/tiles/Cm.webp',
-        zones: ["water","mountain","plain","forest","mountain","mine","mountain"],
+        terrains: ["water","mountain","plain","forest","mountain","mine","mountain"],
         names: ["","","QIN","TAN","","WUZ",""]
     },
     "Dm": {
         image: './images/tiles/Dm.webp',
-        zones: ["plain","water","forest","mine","rice","mountain","water"],
+        terrains: ["plain","water","forest","mine","rice","mountain","water"],
         names: ["CHENG","","ZAV","XU","BAO","",""]
     },
     "Em": {
         image: './images/tiles/Em.webp',
-        zones: ["water","rice","rice","plain","water","water","mountain"],
+        terrains: ["water","rice","rice","plain","water","water","mountain"],
         names: ["","IK","HOV","GVI","","",""]
     },
     "Fm": {
         image: './images/tiles/Fm.webp',
-        zones: ["mountain","mountain","rice","plain","forest","water","mountain"],
+        terrains: ["mountain","mountain","rice","plain","forest","water","mountain"],
         names: ["","","LIANG","KHAL","MAO","","",]
     },
     "Gm": {
         image: './images/tiles/Gm.webp',
-        zones: ["plain","rice","mine","rice","forest","mountain","mountain"],
+        terrains: ["plain","rice","mine","rice","forest","mountain","mountain"],
         names: ["XIA","TANG","SONG","NIE","ULAN","",""]
     },
     "Hm": {
         image: './images/tiles/Hm.webp',
-        zones: ["mine","mine","water","water","mountain","rice","water"],
+        terrains: ["mine","mine","water","water","mountain","rice","water"],
         names: ["BAY","ZHOU","","","","YAN",""]
     },
     "Im": {
         image: './images/tiles/Im.webp',
-        zones: ["mountain","mountain","mountain","mountain","water","rice","forest"],
+        terrains: ["mountain","mountain","mountain","mountain","water","rice","forest"],
         names: ["","","","","","FEI","GU"]
     },
     "Jm": {
         image: './images/tiles/Jm.webp',
-        zones: ["rice","water","plain","mountain","rice","mine","mountain"],
+        terrains: ["rice","water","plain","mountain","rice","mine","mountain"],
         names: ["LU","","HUAN","","JIN","LAI",""]
     },
     "Km": {
         image: './images/tiles/Km.webp',
-        zones: ["plain","water","forest","forest","mountain","mountain","water"],
+        terrains: ["plain","water","forest","forest","mountain","mountain","water"],
         names: ["SUH","","OVOR","MI","","",""]
     },
     "Lm": {
         image: './images/tiles/Lm.webp',
-        zones: ["water","water","mine","plain","mine","water","water"],
+        terrains: ["water","water","mine","plain","mine","water","water"],
         names: ["","","XIANG","WEY","TENG","",""]
     },
     "Mm": {
         image: './images/tiles/Mm.webp',
-        zones: ["water","water","mountain","mountain","forest","plain","mine"],
+        terrains: ["water","water","mountain","mountain","forest","plain","mine"],
         names: ["","","","","YANG","ZONG","BAYAN"]
     },
     "Nm": {
         image: './images/tiles/Nm.webp',
-        zones: ["plain","forest","plain","rice","mine","water","rice"],
+        terrains: ["plain","forest","plain","rice","mine","water","rice"],
         names: ["ZOU","YI","TOV","MOU","GUZA","","BOGD"]
     },
     "Om": {
         image: './images/tiles/Om.webp',
-        zones: ["water","water","mine","mountain","mountain","forest","rice"],
+        terrains: ["water","water","mine","mountain","mountain","forest","rice"],
         names: ["","","YING","","","BUL","YU"]
     }
 }; 

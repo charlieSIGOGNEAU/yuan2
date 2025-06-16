@@ -21,6 +21,7 @@ export class GameBoard3D {
         this.clickStartTime = null; // Pour mesurer la durée du clic
         this.tempTile = null;
         this.tempTileRotation = null;
+        this.tempTilePosition = null;
         this.tempTileSprites = null;
         this.tileTemp = null;
         // Écouteur pour l'événement circleClicked
@@ -119,6 +120,8 @@ export class GameBoard3D {
     }
 
     addTileTemp(imageUrl, position = { q: 0, r: 0}, rotation = 0) {
+        this.tempTilePosition = position;
+        this.tempTileRotation = rotation;
         const textureLoader = new THREE.TextureLoader();
         const texture = textureLoader.load(imageUrl);
         const geometry = new THREE.PlaneGeometry(2.5, 2.5); 
@@ -179,15 +182,17 @@ export class GameBoard3D {
         this.tempTileSprites = [leftSprite, rightSprite, okSprite];
 
         // Retourner un objet avec la position et la rotation
-        return {
-            position: position,
-            rotation: rotation
-        };
+        // return {
+        //     position: position,
+        //     rotation: rotation
+        // };
     }
 
     // Nouvelle méthode pour déplacer la tuile temporaire
     moveTileTemp(position = { q: 0, r: 0 }) {
         if (this.tempTile) {
+            this.tempTilePosition = position;
+            console.log(this.tempTilePosition);
             const pos = this.#hexToCartesian(position);
             
             // Déplacer la tuile principale
@@ -370,6 +375,14 @@ export class GameBoard3D {
             this.tempTileRotation -= 1;
         } else if (sprite === this.tempTileSprites[2]) {
             console.log('Bouton OK cliqué');
+            // Émettre un événement avec les informations de la tile
+            const event = new CustomEvent('tilePlaced', {
+                detail: {
+                    position: this.tempTilePosition,
+                    rotation: this.tempTileRotation
+                }
+            });
+            this.container.dispatchEvent(event);
             this.removeTempTile();
             return;
         }
