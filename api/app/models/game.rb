@@ -2,9 +2,10 @@ class Game < ApplicationRecord
     enum :game_status, {
       waiting_for_players: 0,
       installation_phase: 1,
-      simultaneous_play: 2,
-      completed: 3,
-      abandoned: 4
+      initial_placement: 2,
+      simultaneous_play: 3,
+      completed: 4,
+      abandoned: 5
     }, default: :waiting_for_players
   
     enum :game_type, {

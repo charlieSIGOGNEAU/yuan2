@@ -2,6 +2,7 @@ import { gameState } from './gameState.js';
 import { Game } from '../app/game.js';
 import { installationPhase } from './phases/installationPhase.js';
 import { Auth } from '../app/auth.js';
+import { startingPositions } from './StartingPositions.js';
 
 // Fonctions pour l'API
 export const gameApi = {
@@ -19,14 +20,19 @@ export const gameApi = {
             gameState.update(data.message);
             console.log('🎮 GameState mis à jour:', gameState);
             
+            // Console.log des médoïdes initiaux si le statut est initial_placement
+            if (gameState.game.game_status === 'initial_placement') {
+                startingPositions.calculateAllDistances();
+                const medoids = startingPositions.findInitialMedoids(gameState.game.player_count);
+                console.log('🎯 Médoïdes initiaux pour initial_placement:', medoids);
+            }
+            
             // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
             if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay()) && !this.gameBoard) {
-                console.log('🎮 Lancement du GameBoard3D');
                 this.gameBoard = Game.showGameBoard();
             }
             // Mise à jour des tiles 3D
             if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay()) && this.gameBoard) {
-                console.log('🎮 update tile GameBoard3D');
                 installationPhase.updateTile3d();
             }
 
@@ -43,6 +49,12 @@ export const gameApi = {
         try {
             console.log('📤 Envoi tile à l\'API:', tileData);
             
+            // Déterminer si c'est la dernière tuile
+            const tilesWithoutName = gameState.game.tiles.filter(tile => tile.name === null);
+            console.log('🔍 Tiles sans nom:', tilesWithoutName);
+            const isLastTile = tilesWithoutName.length === 1;
+            console.log('🔍 isLastTile:', isLastTile);
+            
             const response = await fetch(`http://localhost:3000/api/v1/games/${tileData.game_id}/tiles/${tileData.tile_id}/place`, {
                 method: 'POST',
                 headers: {
@@ -53,7 +65,8 @@ export const gameApi = {
                     name: tileData.name,
                     rotation: tileData.rotation,
                     position_q: tileData.position.q,
-                    position_r: tileData.position.r
+                    position_r: tileData.position.r,
+                    is_last_tile: isLastTile
                 })
             });
 

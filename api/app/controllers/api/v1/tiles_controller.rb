@@ -21,12 +21,29 @@ class Api::V1::TilesController < ApplicationController
       position_q: params[:position_q],
       position_r: params[:position_r]
     )
+      # Si c'est la dernière tile, vérifier si toutes les tiles ont leur nom
+       if params[:is_last_tile] == true
+        check_and_advance_to_initial_placement(game)
+      end
+      
       # Diffuser les changements à tous les joueurs
       GameBroadcast.game_broadcast_game_details(game.id)
       
       render json: { success: true, tile: tile }
     else
       render json: { success: false, errors: tile.errors }, status: 422
+    end
+  end
+
+  private
+
+  def check_and_advance_to_initial_placement(game)
+    # Vérifier que toutes les tiles ont leur nom rempli
+    tiles_without_name = game.tiles.where(name: nil)
+    
+    if tiles_without_name.empty?
+      game.update(game_status: :initial_placement)
+      Rails.logger.info "Partie #{game.id} passée en phase initial_placement"
     end
   end
 end 

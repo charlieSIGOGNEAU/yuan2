@@ -374,7 +374,6 @@ export class GameBoard3D {
             console.log('Sprite de rotation droite cliqué');
             this.tempTileRotation -= 1;
         } else if (sprite === this.tempTileSprites[2]) {
-            console.log('Bouton OK cliqué');
             // Émettre un événement avec les informations de la tile
             const event = new CustomEvent('tilePlaced', {
                 detail: {
