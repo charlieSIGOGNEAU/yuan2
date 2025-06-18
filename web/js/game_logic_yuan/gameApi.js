@@ -28,11 +28,11 @@ export const gameApi = {
             }
             
             // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
-            if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay()) && !this.gameBoard) {
+            if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay() || gameState.game.game_status === 'initial_placement') && !this.gameBoard) {
                 this.gameBoard = Game.showGameBoard();
             }
             // Mise à jour des tiles 3D
-            if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay()) && this.gameBoard) {
+            if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay() || gameState.game.game_status === 'initial_placement') && this.gameBoard) {
                 installationPhase.updateTile3d();
             }
 
