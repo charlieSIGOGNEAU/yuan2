@@ -1,6 +1,7 @@
 import { gameState } from './gameState.js';
 import { Game } from '../app/game.js';
 import { installationPhase } from './phases/installationPhase.js';
+import { initialPlacement } from './phases/initial_placement.js';
 import { Auth } from '../app/auth.js';
 import { startingPositions } from './StartingPositions.js';
 
@@ -20,16 +21,14 @@ export const gameApi = {
             gameState.update(data.message);
             console.log('🎮 GameState mis à jour:', gameState);
             
-            // Console.log des médoïdes initiaux si le statut est initial_placement
-            if (gameState.game.game_status === 'initial_placement') {
-                startingPositions.calculateAllDistances();
-                const medoids = startingPositions.findInitialMedoids(gameState.game.player_count);
-                console.log('🎯 Médoïdes initiaux pour initial_placement:', medoids);
-            }
-            
             // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
             if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay() || gameState.game.game_status === 'initial_placement') && !this.gameBoard) {
                 this.gameBoard = Game.showGameBoard();
+            }
+            
+            // Exécuter la phase de placement initial APRÈS création du gameBoard
+            if (gameState.game.game_status === 'initial_placement') {
+                initialPlacement.execute();
             }
             // Mise à jour des tiles 3D
             if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay() || gameState.game.game_status === 'initial_placement') && this.gameBoard) {

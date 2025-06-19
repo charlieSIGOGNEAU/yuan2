@@ -18,14 +18,14 @@ class GameUser {
     constructor(data = {}) {
         this.id = data.id || null;
         this.user_id = data.user_id || null;
-        this.faction = data.faction || '';
+        this.clan = data.clan || '';
         this.user_name = data.user_name || ''; 
     }
 
     update(data) {
         this.id = data.id || this.id;
         this.user_id = data.user_id || this.user_id;
-        this.faction = data.faction || this.faction;
+        this.clan = data.clan || this.clan;
         this.user_name = data.user_name || this.user_name;
     }
 }

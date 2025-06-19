@@ -25,7 +25,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
   create_table "game_users", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "game_id", null: false
-    t.string "faction"
+    t.string "clan"
     t.string "user_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

@@ -97,14 +97,14 @@ export class GameBoard3D {
         window.addEventListener('resize', this.onResize.bind(this));
     }
     //q correspond à un déplacement vers la droite. r correspond à un déplacement en diagonale en haut a droites.
-    #hexToCartesian (position = {q: 0, r: 0}) {
-        return {x: position.q+position.r/2, y: 0, z: -position.r/2*Math.sqrt(3)};
+    #hexToCartesian (position = {q: 0, r: 0, z: 0}) {
+        return {x: position.q+position.r/2, y: position.z || 0, z: -position.r/2*Math.sqrt(3)};
     }
     // Méthode pour ajouter une tuile
-    addTile(imageUrl, position = { q: 0, r: 0}, rotation = 0) {
+    addTile(imageUrl, position = { q: 0, r: 0, z: 0}, rotation = 0, size = 3) {
         const textureLoader = new THREE.TextureLoader();
         const texture = textureLoader.load(imageUrl);
-        const geometry = new THREE.PlaneGeometry(3, 3); 
+        const geometry = new THREE.PlaneGeometry(size, size); 
         const material = new THREE.MeshBasicMaterial({
             map: texture,
             alphaTest: 0.5,

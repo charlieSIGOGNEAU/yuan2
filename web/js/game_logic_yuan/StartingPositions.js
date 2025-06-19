@@ -43,7 +43,7 @@ class StartingPositions {
         
         // Connectés par lac
         if (this.areTerritoriesConnectedByLake(territory1, territory2)) {
-            return 1.5;
+            return 1;
         }
         
         return Infinity; // Pas de connexion directe
@@ -407,26 +407,93 @@ class StartingPositions {
         return currentMedoids;
     }
 
-    // Assigner chaque territoire au médoïde le plus proche
+    // Assigner chaque territoire au médoïde le plus proche avec contraintes d'équilibrage
     assignTerritoriesToMedoids(territories, medoids) {
         const clusters = Array(medoids.length).fill().map(() => []);
         
-        for (const territory of territories) {
-            let closestMedoidIndex = 0;
-            let minDistance = this.getDistance(territory, medoids[0]);
-            
-            for (let i = 1; i < medoids.length; i++) {
-                const distance = this.getDistance(territory, medoids[i]);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestMedoidIndex = i;
-                }
-            }
-            
-            clusters[closestMedoidIndex].push(territory);
+        // Si un seul médoïde, assignation simple
+        if (medoids.length === 1) {
+            clusters[0] = [...territories];
+            console.log(`  Un seul médoïde: ${territories.length} territoires assignés`);
+            return clusters;
         }
         
-        console.log(`  Clusters formés: ${clusters.map(c => c.length).join(', ')} territoires`);
+        // Calculer la taille maximale par cluster (arrondi au supérieur)
+        const maxClusterSize = Math.ceil(territories.length / medoids.length);
+        console.log(`  Taille max par cluster: ${maxClusterSize}`);
+        
+        // 1. Calculer les préférences de chaque territoire
+        const territoryPreferences = territories.map(territory => {
+            // Calculer toutes les distances vers les médoïdes
+            const distances = medoids.map(medoid => this.getDistance(territory, medoid));
+            
+            // Trier pour obtenir les 2 plus petites distances
+            const sortedDistances = [...distances].sort((a, b) => a - b);
+            const closestDistance = sortedDistances[0];
+            const secondClosestDistance = sortedDistances[1];
+            
+            // Trouver l'index du médoïde le plus proche
+            const closestMedoidIndex = distances.indexOf(closestDistance);
+            
+            // Calculer la différence (préférence)
+            const preference = secondClosestDistance - closestDistance;
+            
+            return {
+                territory,
+                closestMedoidIndex,
+                closestDistance,
+                preference,
+                randomTieBreaker: Math.random() // Pour départager les égalités
+            };
+        });
+        
+        // 2. Trier par préférence décroissante (puis par hasard en cas d'égalité)
+        territoryPreferences.sort((a, b) => {
+            if (Math.abs(a.preference - b.preference) < 0.0001) {
+                return a.randomTieBreaker - b.randomTieBreaker;
+            }
+            return b.preference - a.preference; // Ordre décroissant
+        });
+        
+        console.log(`  Préférences calculées, territoire avec plus forte préférence: ${territoryPreferences[0].preference.toFixed(2)}`);
+        
+        // 3. Assigner dans l'ordre de préférence avec contraintes de taille
+        for (const pref of territoryPreferences) {
+            const preferredClusterIndex = pref.closestMedoidIndex;
+            
+            // Vérifier si le cluster préféré a encore de la place
+            if (clusters[preferredClusterIndex].length < maxClusterSize) {
+                clusters[preferredClusterIndex].push(pref.territory);
+            } else {
+                // Cluster plein, trouver le cluster avec le moins de territoires ET qui a encore de la place
+                let bestAlternativeIndex = -1;
+                let minSize = Infinity;
+                
+                for (let i = 0; i < clusters.length; i++) {
+                    if (clusters[i].length < maxClusterSize && clusters[i].length < minSize) {
+                        minSize = clusters[i].length;
+                        bestAlternativeIndex = i;
+                    }
+                }
+                
+                if (bestAlternativeIndex !== -1) {
+                    clusters[bestAlternativeIndex].push(pref.territory);
+                } else {
+                    // Tous les clusters sont pleins, forcer l'assignation au moins plein
+                    let minSizeIndex = 0;
+                    let actualMinSize = clusters[0].length;
+                    for (let i = 1; i < clusters.length; i++) {
+                        if (clusters[i].length < actualMinSize) {
+                            actualMinSize = clusters[i].length;
+                            minSizeIndex = i;
+                        }
+                    }
+                    clusters[minSizeIndex].push(pref.territory);
+                }
+            }
+        }
+        
+        console.log(`  Clusters équilibrés formés: ${clusters.map(c => c.length).join(', ')} territoires`);
         return clusters;
     }
 
