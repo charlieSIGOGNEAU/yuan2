@@ -43,15 +43,15 @@ export class GameBoard3D {
         this.camera.position.set(0, 9, 6);
         this.camera.rotation.set(THREE.MathUtils.degToRad(-60), 0, 0);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; 
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace; 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.container.appendChild(this.renderer.domElement);
         
         // Ajout d'éclairage pour les modèles 3D
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Lumière ambiante
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Lumière ambiante
         this.scene.add(ambientLight);
         
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
         directionalLight.position.set(5, 10, 5);
         directionalLight.castShadow = true;
         this.scene.add(directionalLight);
@@ -124,6 +124,35 @@ export class GameBoard3D {
                 (gltf) => {
                     console.log(`✅ Modèle chargé avec succès: ${modelUrl}`, gltf);
                     const tile = gltf.scene;
+                    
+                    // Corriger l'espace colorimétrique des textures pour éviter la saturation
+                    tile.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach(material => {
+                                // Corriger les textures principales
+                                if (material.map) {
+                                    material.map.colorSpace = THREE.SRGBColorSpace;
+                                    material.map.needsUpdate = true;
+                                }
+                                // Corriger les autres types de textures si présentes
+                                if (material.normalMap) {
+                                    material.normalMap.colorSpace = THREE.LinearSRGBColorSpace;
+                                    material.normalMap.needsUpdate = true;
+                                }
+                                if (material.roughnessMap) {
+                                    material.roughnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+                                    material.roughnessMap.needsUpdate = true;
+                                }
+                                if (material.metalnessMap) {
+                                    material.metalnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+                                    material.metalnessMap.needsUpdate = true;
+                                }
+                                material.needsUpdate = true;
+                            });
+                        }
+                    });
+                    
         const pos = this.#hexToCartesian(position);
         tile.position.set(pos.x, pos.y, pos.z);
                     tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
@@ -156,6 +185,35 @@ export class GameBoard3D {
                 (gltf) => {
                     console.log(`✅ Tuile temporaire chargée avec succès: ${modelUrl}`, gltf);
                     const tile = gltf.scene;
+                    
+                    // Corriger l'espace colorimétrique des textures pour éviter la saturation
+                    tile.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach(material => {
+                                // Corriger les textures principales
+                                if (material.map) {
+                                    material.map.colorSpace = THREE.SRGBColorSpace;
+                                    material.map.needsUpdate = true;
+                                }
+                                // Corriger les autres types de textures si présentes
+                                if (material.normalMap) {
+                                    material.normalMap.colorSpace = THREE.LinearSRGBColorSpace;
+                                    material.normalMap.needsUpdate = true;
+                                }
+                                if (material.roughnessMap) {
+                                    material.roughnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+                                    material.roughnessMap.needsUpdate = true;
+                                }
+                                if (material.metalnessMap) {
+                                    material.metalnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+                                    material.metalnessMap.needsUpdate = true;
+                                }
+                                material.needsUpdate = true;
+                            });
+                        }
+                    });
+                    
         const pos = this.#hexToCartesian(position);
         tile.position.set(pos.x, 0.1, pos.z); // Hauteur fixée à 0.1
                     tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
@@ -235,8 +293,8 @@ export class GameBoard3D {
             
             // Déplacer les sprites de rotation et le bouton OK
             if (this.tempTileSprites) {
-                this.tempTileSprites[0].position.set(pos.x - 0.5, 0.2, pos.z); // Sprite rotation gauche
-                this.tempTileSprites[1].position.set(pos.x + 0.5, 0.2, pos.z); // Sprite rotation droit
+                this.tempTileSprites[0].position.set(pos.x - 1.5, 0.2, pos.z); // Sprite rotation gauche
+                this.tempTileSprites[1].position.set(pos.x + 1.5, 0.2, pos.z); // Sprite rotation droit
                 this.tempTileSprites[2].position.set(pos.x + 1, 0.4, pos.z - 1); // Bouton OK
             }
         }
