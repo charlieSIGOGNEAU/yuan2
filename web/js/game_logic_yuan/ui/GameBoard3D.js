@@ -26,6 +26,18 @@ export class GameBoard3D {
         this.tempTileSprites = null;
         this.tileTemp = null;
         this.gltfLoader = new GLTFLoader(); // Ajouter le loader GLB
+        this.waterMesh = null; // Mesh de référence pour l'eau
+        this.waterGeometry = null; // Géométrie pour les instances
+        this.waterMaterial = null; // Matériau pour les instances
+        this.waterLoaded = false; // État du chargement de l'eau
+        this.waterLoadPromise = null; // Promise pour attendre le chargement
+        
+        // Limites de zoom (correspondant à des hauteurs effectives de 1 à 10)
+        this.minScale = 0.2; // Hauteur max de 10
+        this.maxScale = 5; // Hauteur min de 1
+        
+        // Limites de déplacement du workplane
+        this.maxPanDistance = 40; // Distance maximale de déplacement depuis l'origine
         
         // Écouteur pour l'événement circleClicked
         this.container.addEventListener('circleClicked', (event) => {
@@ -51,7 +63,7 @@ export class GameBoard3D {
         const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Lumière ambiante
         this.scene.add(ambientLight);
         
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
         directionalLight.position.set(5, 10, 5);
         directionalLight.castShadow = true;
         this.scene.add(directionalLight);
@@ -61,7 +73,96 @@ export class GameBoard3D {
         this.workplane = new THREE.Group();
         this.scene.add(this.workplane);
         this.setupEvents();
+        this.loadWaterMesh(); // Charger la mesh eau au démarrage
         this.animate();
+    }
+    
+    // Méthode pour charger la mesh eau au démarrage
+    loadWaterMesh() {
+        console.log('🌊 Chargement de la mesh eau...');
+        
+        this.waterLoadPromise = new Promise((resolve, reject) => {
+            this.gltfLoader.load(
+                './glb/tiles/eau.glb',
+                (gltf) => {
+                    console.log('✅ Mesh eau chargée avec succès', gltf);
+                    
+                    // Stocker la mesh de référence
+                    this.waterMesh = gltf.scene;
+                    
+                    // Corriger l'espace colorimétrique des textures
+                    this.waterMesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach(material => {
+                                if (material.map) {
+                                    material.map.colorSpace = THREE.SRGBColorSpace;
+                                    material.map.needsUpdate = true;
+                                }
+                                material.needsUpdate = true;
+                            });
+                            
+                            // Stocker la géométrie et le matériau pour les instances
+                            if (!this.waterGeometry) {
+                                this.waterGeometry = child.geometry;
+                                this.waterMaterial = child.material;
+                            }
+                        }
+                    });
+                    
+                    this.waterLoaded = true;
+                    console.log('🌊 Mesh eau prête pour l\'instanciation');
+                    resolve(this.waterMesh);
+                },
+                (progress) => {
+                    console.log('📊 Progression chargement eau:', progress);
+                },
+                (error) => {
+                    console.error('❌ Erreur lors du chargement de la mesh eau:', error);
+                    reject(error);
+                }
+            );
+        });
+    }
+    
+    // Méthode pour créer une instance de la mesh eau (synchrone)
+    createWaterInstance() {
+        if (!this.waterLoaded || !this.waterMesh) {
+            console.warn('⚠️ Mesh eau pas encore chargée');
+            return null;
+        }
+        
+        // Cloner la scène entière de l'eau pour créer une instance
+        const waterInstance = this.waterMesh.clone();
+        
+        // Corriger les matériaux clonés pour éviter les conflits
+        waterInstance.traverse((child) => {
+            if (child.isMesh && child.material) {
+                child.material = child.material.clone();
+            }
+        });
+        
+        // L'eau est positionnée relativement à la tuile, donc position (0,0,0) par rapport à son parent
+        waterInstance.position.set(0, 0, 0);
+        
+        console.log('🌊 Instance d\'eau créée');
+        return waterInstance;
+    }
+    
+    // Méthode asynchrone pour créer une instance de la mesh eau
+    async createWaterInstanceAsync() {
+        // Attendre que l'eau soit chargée si ce n'est pas déjà fait
+        if (!this.waterLoaded && this.waterLoadPromise) {
+            console.log('⏳ Attente du chargement de la mesh eau...');
+            try {
+                await this.waterLoadPromise;
+            } catch (error) {
+                console.error('❌ Erreur lors de l\'attente du chargement de l\'eau:', error);
+                return null;
+            }
+        }
+        
+        return this.createWaterInstance();
     }
 
     createCircle(position = {q: 0, r: 0}) {
@@ -116,7 +217,7 @@ export class GameBoard3D {
         return {x: position.q+position.r/2, y: position.z || 0, z: -position.r/2*Math.sqrt(3)};
     }
     // Méthode pour ajouter une tuile
-    addTile(modelUrl, position = { q: 0, r: 0, z: 0}, rotation = 0, size = 3) {
+    addTile(modelUrl, position = { q: 0, r: 0, z: 0}, rotation = 0) {
         console.log(`🔄 Chargement du modèle: ${modelUrl} à la position:`, position);
         return new Promise((resolve, reject) => {
             this.gltfLoader.load(
@@ -158,6 +259,18 @@ export class GameBoard3D {
                     tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
                     // Les modèles sont déjà à la bonne taille (3 unités)
                     console.log(`📍 Position calculée:`, pos, `Rotation: ${rotation}`);
+                    
+                    // Ajouter une instance de la mesh eau (asynchrone)
+                    this.createWaterInstanceAsync().then(waterInstance => {
+                        if (waterInstance) {
+                            // Attacher l'eau comme enfant de la tuile
+                            tile.add(waterInstance);
+                            console.log('🌊 Mesh eau attachée à la tuile');
+                        }
+                    }).catch(error => {
+                        console.warn('⚠️ Impossible d\'ajouter l\'eau à la tuile:', error);
+                    });
+                    
         this.workplane.add(tile);
         this.tiles.push(tile); // Stocke la référence de la tuile
                     console.log(`🎯 Tuile ajoutée au workplane. Total tuiles:`, this.tiles.length);
@@ -215,10 +328,22 @@ export class GameBoard3D {
                     });
                     
         const pos = this.#hexToCartesian(position);
-        tile.position.set(pos.x, 0.1, pos.z); // Hauteur fixée à 0.1
+        tile.position.set(pos.x, 0.2, pos.z); // Hauteur fixée à 0.2
                     tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
                     // Le modèle est déjà à la bonne taille
                     console.log(`📍 Position tuile temporaire:`, pos, `Rotation: ${rotation}`);
+                    
+                    // Ajouter une instance de la mesh eau pour la tuile temporaire (asynchrone)
+                    this.createWaterInstanceAsync().then(waterInstance => {
+                        if (waterInstance) {
+                            // Attacher l'eau comme enfant de la tuile temporaire
+                            tile.add(waterInstance);
+                            console.log('🌊 Mesh eau attachée à la tuile temporaire');
+                        }
+                    }).catch(error => {
+                        console.warn('⚠️ Impossible d\'ajouter l\'eau à la tuile temporaire:', error);
+                    });
+                    
         this.workplane.add(tile);
         this.tileTemp = tile;
 
@@ -231,8 +356,9 @@ export class GameBoard3D {
         const rightSprite = new THREE.Mesh(spriteGeometry, new THREE.MeshBasicMaterial({
             map: rotationTexture,
             alphaTest: 0.5,
+            toneMapped: false // Évite la surexposition
         }));
-                    rightSprite.position.set(pos.x + 1.5, 0.2, pos.z); // Position relative à la tuile principale
+                    rightSprite.position.set(pos.x + 0.5, 0.4, pos.z); // Position relative à la tuile principale
         rightSprite.rotation.x = -Math.PI / 2;
         rightSprite.rotation.z = 0;
         this.workplane.add(rightSprite);
@@ -242,22 +368,29 @@ export class GameBoard3D {
         const leftSprite = new THREE.Mesh(spriteGeometry, new THREE.MeshBasicMaterial({
             map: rotationTexture,
             alphaTest: 0.5,
+            toneMapped: false // Évite la surexposition
         }));
-                    leftSprite.position.set(pos.x - 1.5, 0.2, pos.z); // Position relative à la tuile principale
+                    leftSprite.position.set(pos.x - 0.5, 0.4, pos.z); // Position relative à la tuile principale
         leftSprite.rotation.x = -Math.PI / 2;
         leftSprite.rotation.z = 0;
         leftSprite.scale.x = -1; // Symétrie verticale
         this.workplane.add(leftSprite);
         this.tiles.push(leftSprite);
 
-        // Sprite OK
+        // Sprite OK (optimisé et face caméra)
         const okTexture = textureLoader.load('./images/buttonOk.webp');
+        // Corriger l'espace colorimétrique pour éviter la surexposition
+        okTexture.colorSpace = THREE.SRGBColorSpace;
+        okTexture.needsUpdate = true;
+        
         const okSprite = new THREE.Sprite(new THREE.SpriteMaterial({
             map: okTexture,
             transparent: true,
-            alphaTest: 0.5
+            alphaTest: 0.5,
+            toneMapped: false, // Évite la surexposition due au tone mapping
+            fog: false // N'est pas affecté par le brouillard
         }));
-        okSprite.position.set(pos.x + 1, 0.4, pos.z - 1); // Position relative à la tuile principale
+        okSprite.position.set(pos.x + 1, 0.6, pos.z - 1); // Position relative à la tuile principale
         okSprite.scale.set(1, 1, 1); // Taille du sprite
         this.workplane.add(okSprite);
         this.tiles.push(okSprite);
@@ -289,13 +422,13 @@ export class GameBoard3D {
             const pos = this.#hexToCartesian(position);
             
             // Déplacer la tuile principale
-            this.tempTile.position.set(pos.x, 0.1, pos.z);
+            this.tempTile.position.set(pos.x, 0.2, pos.z);
             
             // Déplacer les sprites de rotation et le bouton OK
             if (this.tempTileSprites) {
-                this.tempTileSprites[0].position.set(pos.x - 1.5, 0.2, pos.z); // Sprite rotation gauche
-                this.tempTileSprites[1].position.set(pos.x + 1.5, 0.2, pos.z); // Sprite rotation droit
-                this.tempTileSprites[2].position.set(pos.x + 1, 0.4, pos.z - 1); // Bouton OK
+                this.tempTileSprites[0].position.set(pos.x - 0.5, 0.4, pos.z); // Sprite rotation gauche
+                this.tempTileSprites[1].position.set(pos.x + 0.5, 0.4, pos.z); // Sprite rotation droit
+                this.tempTileSprites[2].position.set(pos.x + 1, 0.6, pos.z - 1); // Bouton OK
             }
         }
     }
@@ -390,7 +523,23 @@ export class GameBoard3D {
         if (!result.point) return;
 
         const delta = new THREE.Vector3().subVectors(this.dragStart, result.point);
-        this.workplane.position.copy(this.workplaneStartPosition.clone().sub(delta));
+        const newPosition = this.workplaneStartPosition.clone().sub(delta);
+        
+        // Contraindre la position dans les limites
+        this.constrainPosition(newPosition);
+        this.workplane.position.copy(newPosition);
+    }
+    
+    // Méthode pour contraindre la position du workplane dans les limites
+    constrainPosition(position) {
+        const distance = Math.sqrt(position.x * position.x + position.z * position.z);
+        if (distance > this.maxPanDistance) {
+            // Normaliser et limiter à la distance maximale
+            const scale = this.maxPanDistance / distance;
+            position.x *= scale;
+            position.z *= scale;
+            // console.log(`🚫 Déplacement du workplane limité: distance ${distance.toFixed(2)} > max ${this.maxPanDistance}`);
+        }
     }
 
     onPointerUp(e) {
@@ -493,6 +642,16 @@ export class GameBoard3D {
         const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9;
         const mousePoint = result.point;
         
+        // Calculer la nouvelle échelle proposée
+        const currentScale = this.workplane.scale.x; // Utilise x car l'échelle est uniforme
+        const newScale = currentScale * scaleFactor;
+        
+        // Vérifier les limites de zoom
+        if (newScale < this.minScale || newScale > this.maxScale) {
+            // console.log(`🚫 Zoom limité: échelle ${newScale.toFixed(2)} hors limites [${this.minScale}, ${this.maxScale}]`);
+            return; // Ne pas appliquer le zoom
+        }
+        
         const pointToWorkplaneDelta = new THREE.Vector3().subVectors(mousePoint, this.workplane.position);
         
         this.workplane.scale.multiplyScalar(scaleFactor);
@@ -500,6 +659,11 @@ export class GameBoard3D {
         this.workplane.position.add(
             pointToWorkplaneDelta.multiplyScalar(1 - scaleFactor)
         );
+        
+        // Contraindre la position après le zoom
+        this.constrainPosition(this.workplane.position);
+        
+        // console.log(`🔍 Zoom appliqué: échelle ${newScale.toFixed(2)}`);
     }
 
     onResize() {
@@ -541,31 +705,14 @@ export class GameBoard3D {
         this.renderer.render(this.scene, this.camera);
     }
 
-    // Méthode pour ajouter une instance
-    // addInstance(instance) {
-    //     if (!instance.mesh) {
-    //         instance.createMesh();
-    //     }
-        
-    //     this.instances.push(instance);
-    //     this.workplane.add(instance.mesh);
-    //     return instance;
-    // }
-
-    // Méthode pour supprimer une instance
-    // removeInstance(instance) {
-    //     const index = this.instances.indexOf(instance);
-    //     if (index !== -1) {
-    //         this.instances.splice(index, 1);
-    //         this.workplane.remove(instance.mesh);
-    //     }
-    // }
+ 
 
     removeTempTile() {
-        // Supprimer la tuile temporaire (modèle 3D)
+        // Supprimer la tuile temporaire (modèle 3D + eau)
         if (this.tileTemp) {
             this.workplane.remove(this.tileTemp);
             // Pour les modèles GLB, il faut parcourir tous les enfants pour disposer des ressources
+            // Cela inclut maintenant l'eau attachée comme enfant
             this.tileTemp.traverse((child) => {
                 if (child.geometry) {
                     child.geometry.dispose();
@@ -578,6 +725,7 @@ export class GameBoard3D {
                     }
                 }
             });
+            console.log('🗑️ Tuile temporaire (avec eau) supprimée');
             this.tileTemp = null;
         }
 
