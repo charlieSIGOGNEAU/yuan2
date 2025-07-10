@@ -1,6 +1,7 @@
 // attention dans un repere exagonal r, c'est en bas a gauche et q a droite. a modifier lor de la pose des tuiles
 
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export class GameBoard3D {
     constructor(containerId) {
@@ -24,6 +25,8 @@ export class GameBoard3D {
         this.tempTilePosition = null;
         this.tempTileSprites = null;
         this.tileTemp = null;
+        this.gltfLoader = new GLTFLoader(); // Ajouter le loader GLB
+        
         // Écouteur pour l'événement circleClicked
         this.container.addEventListener('circleClicked', (event) => {
             if (this.tempTile) {
@@ -40,9 +43,21 @@ export class GameBoard3D {
         this.camera.position.set(0, 9, 6);
         this.camera.rotation.set(THREE.MathUtils.degToRad(-60), 0, 0);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.outputEncoding = THREE.LinearEncoding; 
+        this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.container.appendChild(this.renderer.domElement);
+        
+        // Ajout d'éclairage pour les modèles 3D
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Lumière ambiante
+        this.scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        this.scene.add(directionalLight);
+        
+        console.log('💡 Éclairage ajouté à la scène');
+        
         this.workplane = new THREE.Group();
         this.scene.add(this.workplane);
         this.setupEvents();
@@ -101,43 +116,56 @@ export class GameBoard3D {
         return {x: position.q+position.r/2, y: position.z || 0, z: -position.r/2*Math.sqrt(3)};
     }
     // Méthode pour ajouter une tuile
-    addTile(imageUrl, position = { q: 0, r: 0, z: 0}, rotation = 0, size = 3) {
-        const textureLoader = new THREE.TextureLoader();
-        const texture = textureLoader.load(imageUrl);
-        const geometry = new THREE.PlaneGeometry(size, size); 
-        const material = new THREE.MeshBasicMaterial({
-            map: texture,
-            alphaTest: 0.5,
-        });
-        const tile = new THREE.Mesh(geometry, material);
+    addTile(modelUrl, position = { q: 0, r: 0, z: 0}, rotation = 0, size = 3) {
+        console.log(`🔄 Chargement du modèle: ${modelUrl} à la position:`, position);
+        return new Promise((resolve, reject) => {
+            this.gltfLoader.load(
+                modelUrl,
+                (gltf) => {
+                    console.log(`✅ Modèle chargé avec succès: ${modelUrl}`, gltf);
+                    const tile = gltf.scene;
         const pos = this.#hexToCartesian(position);
         tile.position.set(pos.x, pos.y, pos.z);
-        tile.rotation.x = -Math.PI / 2;
-        tile.rotation.z = rotation * Math.PI / 3;
+                    tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
+                    // Les modèles sont déjà à la bonne taille (3 unités)
+                    console.log(`📍 Position calculée:`, pos, `Rotation: ${rotation}`);
         this.workplane.add(tile);
         this.tiles.push(tile); // Stocke la référence de la tuile
-        return tile;
+                    console.log(`🎯 Tuile ajoutée au workplane. Total tuiles:`, this.tiles.length);
+                    resolve(tile);
+                },
+                (progress) => {
+                    console.log(`📊 Progression du chargement: ${modelUrl}`, progress);
+                },
+                (error) => {
+                    console.error(`❌ Erreur lors du chargement du modèle ${modelUrl}:`, error);
+                    reject(error);
+                }
+            );
+        });
     }
 
-    addTileTemp(imageUrl, position = { q: 0, r: 0}, rotation = 0) {
+    addTileTemp(modelUrl, position = { q: 0, r: 0}, rotation = 0) {
+        console.log(`🔄 Chargement de la tuile temporaire: ${modelUrl} à la position:`, position);
         this.tempTilePosition = position;
         this.tempTileRotation = rotation;
-        const textureLoader = new THREE.TextureLoader();
-        const texture = textureLoader.load(imageUrl);
-        const geometry = new THREE.PlaneGeometry(2.5, 2.5); 
-        const material = new THREE.MeshBasicMaterial({
-            map: texture,
-            alphaTest: 0.5,
-        });
-        const tile = new THREE.Mesh(geometry, material);
+        
+        return new Promise((resolve, reject) => {
+            this.gltfLoader.load(
+                modelUrl,
+                (gltf) => {
+                    console.log(`✅ Tuile temporaire chargée avec succès: ${modelUrl}`, gltf);
+                    const tile = gltf.scene;
         const pos = this.#hexToCartesian(position);
         tile.position.set(pos.x, 0.1, pos.z); // Hauteur fixée à 0.1
-        tile.rotation.x = -Math.PI / 2;
-        tile.rotation.z = rotation * Math.PI / 3;
+                    tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
+                    // Le modèle est déjà à la bonne taille
+                    console.log(`📍 Position tuile temporaire:`, pos, `Rotation: ${rotation}`);
         this.workplane.add(tile);
         this.tileTemp = tile;
 
-        // Création des deux sprites rotation supplémentaires
+                    // Création des sprites rotation et OK (restent en 2D pour l'interface)
+                    const textureLoader = new THREE.TextureLoader();
         const spriteGeometry = new THREE.PlaneGeometry(1, 1);
         const rotationTexture = textureLoader.load('./images/rotation.webp');
 
@@ -146,7 +174,7 @@ export class GameBoard3D {
             map: rotationTexture,
             alphaTest: 0.5,
         }));
-        rightSprite.position.set(pos.x + 0.5, 0.2, pos.z); // Position relative à la tuile principale
+                    rightSprite.position.set(pos.x + 1.5, 0.2, pos.z); // Position relative à la tuile principale
         rightSprite.rotation.x = -Math.PI / 2;
         rightSprite.rotation.z = 0;
         this.workplane.add(rightSprite);
@@ -157,7 +185,7 @@ export class GameBoard3D {
             map: rotationTexture,
             alphaTest: 0.5,
         }));
-        leftSprite.position.set(pos.x - 0.5, 0.2, pos.z); // Position relative à la tuile principale
+                    leftSprite.position.set(pos.x - 1.5, 0.2, pos.z); // Position relative à la tuile principale
         leftSprite.rotation.x = -Math.PI / 2;
         leftSprite.rotation.z = 0;
         leftSprite.scale.x = -1; // Symétrie verticale
@@ -181,11 +209,18 @@ export class GameBoard3D {
         this.tempTileRotation = rotation;
         this.tempTileSprites = [leftSprite, rightSprite, okSprite];
 
-        // Retourner un objet avec la position et la rotation
-        // return {
-        //     position: position,
-        //     rotation: rotation
-        // };
+                    console.log(`🎯 Tuile temporaire et sprites créés avec succès !`);
+                    resolve(tile);
+                },
+                (progress) => {
+                    // Optionnel: callback de progression
+                },
+                (error) => {
+                    console.error('Erreur lors du chargement du modèle temporaire:', error);
+                    reject(error);
+                }
+            );
+        });
     }
 
     // Nouvelle méthode pour déplacer la tuile temporaire
@@ -349,7 +384,7 @@ export class GameBoard3D {
 
     animateTileTempRotation(targetRotation) {
         if (!this.tileTemp) return;
-        const startRotation = this.tileTemp.rotation.z;
+        const startRotation = this.tileTemp.rotation.y;
         // Corrige la différence d'angle pour prendre le plus court chemin
         let delta = targetRotation - startRotation;
         if (delta > Math.PI) delta -= 2 * Math.PI;
@@ -358,11 +393,11 @@ export class GameBoard3D {
 
         this.animations.push({
             object: this.tileTemp,
-            property: 'rotationZ',
+            property: 'rotationY',
             startTime: performance.now(),
             duration: 150,
-            from: { z: startRotation },
-            to: { z: endRotation }
+            from: { y: startRotation },
+            to: { y: endRotation }
         });
     }
 
@@ -426,9 +461,13 @@ export class GameBoard3D {
             const progress = Math.min(elapsed / animation.duration, 1);
             
             if (animation.property === 'rotationZ') {
-                // Animation de rotation
+                // Animation de rotation Z (sprites 2D)
                 const z = animation.from.z + (animation.to.z - animation.from.z) * progress;
                 animation.object.rotation.z = z;
+            } else if (animation.property === 'rotationY') {
+                // Animation de rotation Y (modèles 3D)
+                const y = animation.from.y + (animation.to.y - animation.from.y) * progress;
+                animation.object.rotation.y = y;
             } else {
                 // Animation d'échelle (déjà existant)
                 const scale = animation.from.scale + (animation.to.scale - animation.from.scale) * progress;
@@ -465,11 +504,22 @@ export class GameBoard3D {
     // }
 
     removeTempTile() {
-        // Supprimer la tuile temporaire
+        // Supprimer la tuile temporaire (modèle 3D)
         if (this.tileTemp) {
             this.workplane.remove(this.tileTemp);
-            this.tileTemp.geometry.dispose();
-            this.tileTemp.material.dispose();
+            // Pour les modèles GLB, il faut parcourir tous les enfants pour disposer des ressources
+            this.tileTemp.traverse((child) => {
+                if (child.geometry) {
+                    child.geometry.dispose();
+                }
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach(material => material.dispose());
+                    } else {
+                        child.material.dispose();
+                    }
+                }
+            });
             this.tileTemp = null;
         }
 

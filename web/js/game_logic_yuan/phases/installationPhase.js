@@ -35,8 +35,13 @@ export const installationPhase = {
 
         // Si aucune tile n'est posée, on commence à (0,0)
         if (playedTilesPositions.length === 0) {
-            gameApi.gameBoard.addTileTemp(TILE_CONFIGS[tileName].image, { q: 0, r: 0 }, 0);
+            gameApi.gameBoard.addTileTemp(TILE_CONFIGS[tileName].model, { q: 0, r: 0 }, 0)
+                .then(() => {
             gameApi.gameBoard.createCircle({ q: 0, r: 0 });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement de la tuile temporaire:', error);
+                });
             return;
         }
 
@@ -44,11 +49,15 @@ export const installationPhase = {
         const adjacentPositions = this.getAllAdjacentTiles(playedTilesPositions);
 
         // Ajouter la tile temporaire à la première position adjacente
-        gameApi.gameBoard.addTileTemp(TILE_CONFIGS[tileName].image, adjacentPositions[0], 0);
-
-        // Créer les cercles pour chaque position adjacente
+        gameApi.gameBoard.addTileTemp(TILE_CONFIGS[tileName].model, adjacentPositions[0], 0)
+            .then(() => {
+                // Créer les cercles pour chaque position adjacente après le chargement de la tuile
         adjacentPositions.forEach(position => {
             gameApi.gameBoard.createCircle(position);
+                });
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement de la tuile temporaire:', error);
         });
 
         // Écouter l'événement tilePlaced
@@ -123,15 +132,18 @@ export const installationPhase = {
             // Vérifier si la tile a un nom mais pas de sprite
             if (tile.name && !tile.sprite) {
                 
-                // Créer le sprite 3D
-                const sprite = gameApi.gameBoard.addTile(
-                    TILE_CONFIGS[tile.name].image,
+                // Créer le modèle 3D (async)
+                gameApi.gameBoard.addTile(
+                    TILE_CONFIGS[tile.name].model,
                     tile.position,
                     tile.rotation
-                );
-                
-                // Stocker le sprite dans la tile
-                tile.sprite = sprite;
+                ).then(model => {
+                    // Stocker le modèle dans la tile
+                    tile.sprite = model;
+                    console.log(`✅ Tuile ${tile.name} chargée à la position:`, tile.position);
+                }).catch(error => {
+                    console.error(`❌ Erreur lors du chargement de la tuile ${tile.name}:`, error);
+                });
             }
         });
     }

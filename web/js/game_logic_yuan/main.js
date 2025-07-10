@@ -1,9 +1,9 @@
-import { GameBoard3D } from './js/ui/GameBoard3D.js';
-import { PlayerSelectionUI } from './js/ui/PlayerSelectionUI.js';
-import { gameSimulator } from './js/network/gameSimulator.js';
-import { gameState } from './js/core/gameState.js';
-import { installationPhase} from './js/phases/installationPhase.js';
-import { TILE_CONFIGS } from './js/pieces/TileTypes.js';
+import { GameBoard3D } from './ui/GameBoard3D.js';
+import { PlayerSelectionUI } from './ui/PlayerSelectionUI.js';
+import { gameSimulator } from './network/gameSimulator.js';
+import { gameState } from './gameState.js';
+import { installationPhase} from './phases/installationPhase.js';
+import { TILE_CONFIGS } from './pieces/TileTypes.js';
 
 // Initialisation de la scène 3D
 const gameBoard = new GameBoard3D('threejs-container');
@@ -40,9 +40,13 @@ if (gameSimulator.plateau.tilesToPlay == null) {  // je devrais aussi plus tard 
 }
 
 //affichage de la premiere tuile
-const image = TILE_CONFIGS[gameState.plateau.playedTiles[0]].image;
+const model = TILE_CONFIGS[gameState.plateau.playedTiles[0]].model;
 console.log(gameState.plateau.playedTiles[0]);
-gameBoard.addTile(image, { q: 0, r: 0},gameState.plateau.playedTilesRotation[0]);
+gameBoard.addTile(model, { q: 0, r: 0},gameState.plateau.playedTilesRotation[0]).then(() => {
+    console.log('Première tuile chargée avec succès');
+}).catch(error => {
+    console.error('Erreur lors du chargement de la première tuile:', error);
+});
 
 //affiche la prochaine tuile et les cercle de choix
 installationPhase.selectedTile(gameState.plateau,gameBoard);

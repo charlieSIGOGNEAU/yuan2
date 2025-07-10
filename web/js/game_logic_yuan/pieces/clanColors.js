@@ -72,24 +72,24 @@ export const BASIC_CLANS = [
 ];
 
 // Export des classes et objets
-export {
-    ClanColor,
-    COLOR_CODES,
-    Mu,
-    Suhey,
-    Weyu,
-    Xiang,
-    Huan,
-    Zhuang,
-    Luong,
-    Goujian,
-    clan_black,
-    clan_red,
-    clan_green,
-    clan_orange,
-    clan_white,
-    clan_blue,
-    clan_purple,
-    clan_yellow
-};
+// export {
+//     ClanColor,
+//     COLOR_CODES,
+//     Mu,
+//     Suhey,
+//     Weyu,
+//     Xiang,
+//     Huan,
+//     Zhuang,
+//     Luong,
+//     Goujian,
+//     clan_black,
+//     clan_red,
+//     clan_green,
+//     clan_orange,
+//     clan_white,
+//     clan_blue,
+//     clan_purple,
+//     clan_yellow
+// };
 
