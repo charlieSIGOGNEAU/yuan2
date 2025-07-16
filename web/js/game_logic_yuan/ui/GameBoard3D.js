@@ -18,6 +18,10 @@ export class GameBoard3D {
         this.dragStart = null;
         this.workplaneStartPosition = null;
         this.activePointerId = null; // Pour suivre le doigt actif
+        
+        // Propriétés pour le drag and drop des villes
+        this.isDraggingCity = false;
+        this.draggedCity = null;
         this.clickStartPosition = null; // Pour détecter les clics
         this.clickStartTime = null; // Pour mesurer la durée du clic
         this.tempTile = null;
@@ -217,6 +221,43 @@ export class GameBoard3D {
     #hexToCartesian (position = {q: 0, r: 0, z: 0}) {
         return {x: position.q+position.r/2, y: position.z || 0, z: -position.r/2*Math.sqrt(3)};
     }
+    #cartesianToHex({ x, y, z }) {
+        // Convertir les coordonnées monde en coordonnées relatives au workplane
+        const relativeX = x - this.workplane.position.x;
+        const relativeZ = z - this.workplane.position.z;
+        
+        const r = -relativeZ / (0.5 * Math.sqrt(3));
+        const q = relativeX - r / 2;
+        return { q: Math.round(q), r: Math.round(r) };
+    }
+
+    // Fonction pour détecter si une ville se trouve à une position donnée
+    detectCityAtPosition(point) {
+        // Convertir en coordonnées hexagonales
+        const hexCoords = this.#cartesianToHex(point);
+        console.log(`📍 Coordonnées hexagonales: q=${hexCoords.q}, r=${hexCoords.r}`);
+        
+        // Chercher s'il y a une ville à ces coordonnées
+        let cityFound = null;
+        this.workplane.traverse((child) => {
+            if (child.userData && 
+                child.userData.type === 'clan_city' && 
+                child.userData.position &&
+                child.userData.position.q === hexCoords.q && 
+                child.userData.position.r === hexCoords.r) {
+                cityFound = child;
+            }
+        });
+        
+        if (cityFound) {
+            console.log(`🏘️ Ville trouvée: ${cityFound.userData.clanName} (${cityFound.userData.color}) à (${hexCoords.q}, ${hexCoords.r})`);
+        } else {
+            console.log(`❌ Aucune ville trouvée à (${hexCoords.q}, ${hexCoords.r})`);
+        }
+        
+        return cityFound;
+    }
+    
 
 
     // Méthode pour ajouter une tuile
@@ -550,6 +591,10 @@ export class GameBoard3D {
         const result = this.getMouseWorld(e);
         if (!result.point) return;
 
+        
+        // Détecter s'il y a une ville à cette position
+        const cityFound = this.detectCityAtPosition(result.point);
+
         // Stocker la position et le temps de départ pour détecter les clics
         this.clickStartPosition = {
             x: e.clientX,
@@ -557,7 +602,17 @@ export class GameBoard3D {
         };
         this.clickStartTime = performance.now();
 
-
+        // Si on a cliqué sur une ville, commencer le drag de la ville
+        if (cityFound) {
+            console.log(`🖱️ Début du drag de la ville ${cityFound.userData.clanName}`);
+            this.isDraggingCity = true;
+            this.draggedCity = cityFound;
+            this.activePointerId = e.pointerId;
+            
+            // Capturer les événements pointer
+            this.container.setPointerCapture(e.pointerId);
+            return; // Ne pas faire le drag du workplane
+        }
 
         // Si on a cliqué sur un objet interactif (à implémenter plus tard)
         if (result.object) {
@@ -566,7 +621,6 @@ export class GameBoard3D {
         }
 
         // Sinon, on commence le glisser-déposer du workplane
-        // (même en mode city drag si on n'a pas cliqué sur une ville)
         this.isDragging = true;
         this.activePointerId = e.pointerId;
         this.dragStart = result.point;
@@ -578,11 +632,24 @@ export class GameBoard3D {
 
     onPointerMove(e) {
         // Ne traiter que les événements du pointer actif
-        if (!this.isDragging || e.pointerId !== this.activePointerId) return;
+        if ((!this.isDragging && !this.isDraggingCity) || e.pointerId !== this.activePointerId) return;
 
         const result = this.getMouseWorld(e);
         if (!result.point) return;
 
+        // Si on est en train de draguer une ville
+        if (this.isDraggingCity && this.draggedCity) {
+            // Convertir en coordonnées relatives au workplane
+            const relativeX = result.point.x - this.workplane.position.x;
+            const relativeZ = result.point.z - this.workplane.position.z;
+            
+            // Déplacer la ville à la position relative du curseur
+            this.draggedCity.position.set(relativeX, this.draggedCity.position.y, relativeZ);
+            console.log(`🏘️ Ville ${this.draggedCity.userData.clanName} déplacée vers (${relativeX.toFixed(2)}, ${relativeZ.toFixed(2)})`);
+            return;
+        }
+
+        // Sinon, déplacer le workplane normalement
         const delta = new THREE.Vector3().subVectors(this.dragStart, result.point);
         const newPosition = this.workplaneStartPosition.clone().sub(delta);
         
@@ -607,7 +674,34 @@ export class GameBoard3D {
         // Ne traiter que les événements du pointer actif
         if (e.pointerId !== this.activePointerId) return;
 
-
+        // Si on était en train de draguer une ville
+        if (this.isDraggingCity && this.draggedCity) {
+            const result = this.getMouseWorld(e);
+            if (result.point) {
+                // Convertir la position finale en coordonnées hexagonales
+                const hexCoords = this.#cartesianToHex(result.point);
+                console.log(`🎯 Placement final de la ville ${this.draggedCity.userData.clanName} à (${hexCoords.q}, ${hexCoords.r})`);
+                
+                // Recalculer la position cartésienne exacte pour aligner sur la grille hexagonale
+                const exactPos = this.#hexToCartesian({ q: hexCoords.q, r: hexCoords.r, z: 0 });
+                this.draggedCity.position.set(exactPos.x, this.draggedCity.position.y, exactPos.z);
+                
+                // Mettre à jour les userData de la ville
+                this.draggedCity.userData.position = { q: hexCoords.q, r: hexCoords.r };
+                console.log(`✅ Ville ${this.draggedCity.userData.clanName} placée définitivement à (${hexCoords.q}, ${hexCoords.r})`);
+            }
+            
+            // Réinitialiser l'état du drag de ville
+            this.isDraggingCity = false;
+            this.draggedCity = null;
+            this.activePointerId = null;
+            this.clickStartPosition = null;
+            this.clickStartTime = null;
+            
+            // Libérer la capture du pointer
+            this.container.releasePointerCapture(e.pointerId);
+            return;
+        }
 
         // Vérifier si c'était un clic (peu de déplacement et durée courte)
         if (this.clickStartPosition && this.clickStartTime) {

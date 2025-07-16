@@ -310,7 +310,7 @@ class Game {
         this.tiles = data.tiles ? data.tiles.map(tile => new Tile(tile)) : [];
         this.actions = data.actions ? data.actions.map(action => new Action(action)) : [];
         this.clans_data = data.clans ? data.clans.map(clan => new Clan(clan)) : [];
-        this.territories = [];  // Initialiser comme un tableau video
+        this.territories = [];  // Initialiser comme un tableau vide
         this.lakes = new Map(); // Map des lacs par ID
     }
 
