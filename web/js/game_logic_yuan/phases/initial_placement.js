@@ -58,11 +58,7 @@ export const initialPlacement = {
             const cities = await Promise.all(cityPromises);
             console.log('🏘️ Toutes les villes ont été placées avec succès:', cities.length);
             
-            // 6. Rendre gameState accessible globalement pour GameBoard3D
-            window.gameState = gameState;
-            
-            // 7. Activer le mode de déplacement des villes
-            gameBoard.enableCityDragMode();
+
         } catch (error) {
             console.error('❌ Erreur lors du placement des villes:', error);
         }

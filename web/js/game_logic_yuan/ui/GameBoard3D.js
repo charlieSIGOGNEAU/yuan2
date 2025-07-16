@@ -13,7 +13,6 @@ export class GameBoard3D {
         this.instances = []; // Stocke les instances de pièces
         this.circles = []; // Stocke les cercles créés
         this.tiles = []; // Stocke les tuiles créées
-        this.cities = []; // Stocke les villes créées
         this.animations = []; // Stocke les animations en cours
         this.isDragging = false;
         this.dragStart = null;
@@ -39,11 +38,6 @@ export class GameBoard3D {
         
         // Limites de déplacement du workplane
         this.maxPanDistance = 40; // Distance maximale de déplacement depuis l'origine
-        
-        // Mode de déplacement des villes
-        this.cityDragMode = false; // Mode actif ou non
-        this.selectedCity = null; // Ville actuellement sélectionnée
-        this.isDraggingCity = false; // En train de déplacer une ville
         
         // Écouteur pour l'événement circleClicked
         this.container.addEventListener('circleClicked', (event) => {
@@ -224,16 +218,7 @@ export class GameBoard3D {
         return {x: position.q+position.r/2, y: position.z || 0, z: -position.r/2*Math.sqrt(3)};
     }
 
-    // Fonction inverse de #hexToCartesian pour convertir les coordonnées cartésiennes en hexagonales
-    #cartesianToHex(cartesian = {x: 0, y: 0, z: 0}) {
-        const r = -2 * cartesian.z / Math.sqrt(3);
-        const q = cartesian.x - r / 2;
-        return {
-            q: Math.round(q),
-            r: Math.round(r),
-            z: cartesian.y || 0
-        };
-    }
+
     // Méthode pour ajouter une tuile
     addTile(modelUrl, position = { q: 0, r: 0, z: 0}, rotation = 0) {
         console.log(`🔄 Chargement du modèle: ${modelUrl} à la position:`, position);
@@ -492,7 +477,6 @@ export class GameBoard3D {
                     };
                     
                     this.workplane.add(cityMesh);
-                    this.cities.push(cityMesh); // Ajouter au tableau des villes
                     console.log(`🏘️ Ville du clan ${clanName} ajoutée au workplane à la position`, pos);
                     resolve(cityMesh);
                 },
@@ -529,38 +513,25 @@ export class GameBoard3D {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(ndc, this.camera);
 
-        // Intersection avec les pièces, les cercles, les sprites de rotation et les villes
+        // Intersection avec les pièces, les cercles et les sprites de rotation
         const instanceMeshes = this.instances.map(i => i.mesh);
         const circleMeshes = this.circles;
         const rotationSprites = this.tempTileSprites || [];
-        const cityMeshes = this.cities;
-        const allMeshes = instanceMeshes.concat(circleMeshes, rotationSprites, cityMeshes);
+        const allMeshes = instanceMeshes.concat(circleMeshes, rotationSprites);
 
         const intersects = raycaster.intersectObjects(allMeshes, true);
         if (intersects.length > 0) {
-            // On cherche si c'est un cercle, une instance, un sprite de rotation ou une ville
+            // On cherche si c'est un cercle, une instance ou un sprite de rotation
             const intersected = intersects[0].object;
             const instance = this.instances.find(i => i.mesh === intersected || i.mesh.children.includes(intersected));
             const circle = this.circles.find(c => c === intersected);
             const rotationSprite = this.tempTileSprites?.find(s => s === intersected);
-            
-            // Chercher la ville (peut être l'objet intersecté ou son parent)
-            let city = this.cities.find(c => c === intersected);
-            if (!city) {
-                // Chercher dans les parents (la ville peut être un groupe avec des enfants)
-                let parent = intersected.parent;
-                while (parent && !city) {
-                    city = this.cities.find(c => c === parent);
-                    parent = parent.parent;
-                }
-            }
 
             return { 
                 point: intersects[0].point, 
                 instance,
                 circle,
-                rotationSprite,
-                city
+                rotationSprite
             };
         }
 
@@ -586,15 +557,7 @@ export class GameBoard3D {
         };
         this.clickStartTime = performance.now();
 
-        // Gestion du mode de déplacement des villes
-        if (this.cityDragMode && result.city) {
-            console.log('🏘️ Ville sélectionnée pour déplacement:', result.city.userData);
-            this.selectedCity = result.city;
-            this.isDraggingCity = true;
-            this.activePointerId = e.pointerId;
-            this.container.setPointerCapture(e.pointerId);
-            return;
-        }
+
 
         // Si on a cliqué sur un objet interactif (à implémenter plus tard)
         if (result.object) {
@@ -615,29 +578,17 @@ export class GameBoard3D {
 
     onPointerMove(e) {
         // Ne traiter que les événements du pointer actif
-        if ((!this.isDragging && !this.isDraggingCity) || e.pointerId !== this.activePointerId) return;
+        if (!this.isDragging || e.pointerId !== this.activePointerId) return;
 
         const result = this.getMouseWorld(e);
         if (!result.point) return;
 
-        // Gestion du déplacement de ville
-        if (this.isDraggingCity && this.selectedCity) {
-            // Déplacer la ville en suivant le pointeur, en gardant Y constant
-            const newPosition = result.point.clone();
-            newPosition.y = this.selectedCity.position.y; // Garder la hauteur Y constante
-            this.selectedCity.position.copy(newPosition);
-            return;
-        }
-
-        // Gestion du déplacement du workplane
-        if (this.isDragging) {
-            const delta = new THREE.Vector3().subVectors(this.dragStart, result.point);
-            const newPosition = this.workplaneStartPosition.clone().sub(delta);
-            
-            // Contraindre la position dans les limites
-            this.constrainPosition(newPosition);
-            this.workplane.position.copy(newPosition);
-        }
+        const delta = new THREE.Vector3().subVectors(this.dragStart, result.point);
+        const newPosition = this.workplaneStartPosition.clone().sub(delta);
+        
+        // Contraindre la position dans les limites
+        this.constrainPosition(newPosition);
+        this.workplane.position.copy(newPosition);
     }
     
     // Méthode pour contraindre la position du workplane dans les limites
@@ -656,51 +607,7 @@ export class GameBoard3D {
         // Ne traiter que les événements du pointer actif
         if (e.pointerId !== this.activePointerId) return;
 
-        // Gestion de la fin du déplacement de ville
-        if (this.isDraggingCity && this.selectedCity) {
-            console.log('🏘️ Fin du déplacement de ville');
-            
-            // Convertir la position actuelle en coordonnées hexagonales
-            const currentCartesian = {
-                x: this.selectedCity.position.x,
-                y: this.selectedCity.position.y,
-                z: this.selectedCity.position.z
-            };
-            const hexPosition = this.#cartesianToHex(currentCartesian);
-            console.log('📍 Position hexagonale calculée:', hexPosition);
-            
-            // Trouver le terrain le plus proche
-            const closestTerrain = this.findClosestTerrain(hexPosition);
-            
-            if (closestTerrain) {
-                // Reconvertir les coordonnées du terrain en cartésiennes
-                const newCartesianPos = this.#hexToCartesian({
-                    q: closestTerrain.position.q,
-                    r: closestTerrain.position.r,
-                    z: 0
-                });
-                
-                // Déplacer la ville vers le terrain
-                this.selectedCity.position.set(newCartesianPos.x, newCartesianPos.y, newCartesianPos.z);
-                
-                // Mettre à jour les userData de la ville
-                this.selectedCity.userData.position = {
-                    q: closestTerrain.position.q,
-                    r: closestTerrain.position.r
-                };
-                
-                console.log(`🏘️ Ville ${this.selectedCity.userData.clanName} déplacée vers le terrain ${closestTerrain.type} à (${closestTerrain.position.q}, ${closestTerrain.position.r})`);
-            } else {
-                console.warn('⚠️ Aucun terrain valide trouvé, la ville reste à sa position');
-            }
-            
-            // Réinitialiser les états
-            this.isDraggingCity = false;
-            this.selectedCity = null;
-            this.activePointerId = null;
-            this.container.releasePointerCapture(e.pointerId);
-            return;
-        }
+
 
         // Vérifier si c'était un clic (peu de déplacement et durée courte)
         if (this.clickStartPosition && this.clickStartTime) {
@@ -900,55 +807,5 @@ export class GameBoard3D {
 
         // Réinitialiser la rotation
         this.tempTileRotation = null;
-    }
-
-    // Active le mode de déplacement des villes
-    enableCityDragMode() {
-        console.log('🏘️ Mode de déplacement des villes activé');
-        this.cityDragMode = true;
-    }
-
-    // Désactive le mode de déplacement des villes
-    disableCityDragMode() {
-        console.log('🏘️ Mode de déplacement des villes désactivé');
-        this.cityDragMode = false;
-        this.selectedCity = null;
-        this.isDraggingCity = false;
-    }
-
-    // Trouve le terrain le plus proche parmi les types autorisés
-    findClosestTerrain(hexPosition) {
-        if (!window.gameState || !window.gameState.game || !window.gameState.game.territories) {
-            console.warn('⚠️ gameState.game.territories non disponible');
-            return null;
         }
-
-        const allowedTypes = ['mine', 'forest', 'plain', 'rice'];
-        const validTerritories = window.gameState.game.territories.filter(territory => 
-            allowedTypes.includes(territory.type)
-        );
-
-        if (validTerritories.length === 0) {
-            console.warn('⚠️ Aucun terrain valide trouvé');
-            return null;
-        }
-
-        let closestTerritory = null;
-        let minDistance = Infinity;
-
-        validTerritories.forEach(territory => {
-            const distance = Math.sqrt(
-                Math.pow(territory.position.q - hexPosition.q, 2) + 
-                Math.pow(territory.position.r - hexPosition.r, 2)
-            );
-            
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestTerritory = territory;
-            }
-        });
-
-        console.log(`🎯 Terrain le plus proche trouvé: ${closestTerritory?.type} à (${closestTerritory?.position.q}, ${closestTerritory?.position.r}), distance: ${minDistance.toFixed(2)}`);
-        return closestTerritory;
-    }
-} 
+}  
