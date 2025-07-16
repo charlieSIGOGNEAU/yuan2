@@ -326,8 +326,15 @@ export class GameBoard3D {
                         console.warn('⚠️ Impossible d\'ajouter l\'eau à la tuile:', error);
                     });
                     
-        this.workplane.add(tile);
-        this.tiles.push(tile); // Stocke la référence de la tuile
+                            // Désactiver les collisions pour cette tuile
+                    tile.traverse((child) => {
+                        if (child.isMesh) {
+                            child.raycast = function() {}; // Désactive le raycast
+                        }
+                    });
+                    
+                    this.workplane.add(tile);
+                    this.tiles.push(tile); // Stocke la référence de la tuile
                     console.log(`🎯 Tuile ajoutée au workplane. Total tuiles:`, this.tiles.length);
                     resolve(tile);
                 },
@@ -399,8 +406,15 @@ export class GameBoard3D {
                         console.warn('⚠️ Impossible d\'ajouter l\'eau à la tuile temporaire:', error);
                     });
                     
-        this.workplane.add(tile);
-        this.tileTemp = tile;
+                            // Désactiver les collisions pour cette tuile temporaire
+                    tile.traverse((child) => {
+                        if (child.isMesh) {
+                            child.raycast = function() {}; // Désactive le raycast
+                        }
+                    });
+                    
+                    this.workplane.add(tile);
+                    this.tileTemp = tile;
 
                     // Création des sprites rotation et OK (restent en 2D pour l'interface)
                     const textureLoader = new THREE.TextureLoader();
@@ -528,6 +542,13 @@ export class GameBoard3D {
                         color: colorHex
                     };
                     
+                    // Désactiver les collisions pour cette ville
+                    cityMesh.traverse((child) => {
+                        if (child.isMesh) {
+                            child.raycast = function() {}; // Désactive le raycast
+                        }
+                    });
+                    
                     this.workplane.add(cityMesh);
                     console.log(`🏘️ Ville du clan ${clanName} ajoutée au workplane à la position`, pos);
                     resolve(cityMesh);
@@ -626,8 +647,8 @@ export class GameBoard3D {
         }
 
         // Si on a cliqué sur un objet interactif (à implémenter plus tard)
-        if (result.object) {
-            this.handleObjectClick(result.object);
+        if (result.instance) {
+            this.handleObjectClick(result.instance);
             return;
         }
 

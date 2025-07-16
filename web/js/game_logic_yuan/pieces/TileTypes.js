@@ -1,4 +1,4 @@
-    export const TILE_CONFIGS = {
+export const TILE_CONFIGS = {
     "Am": {
         model: './glb/tiles/Am.glb',
         terrains: ["water","mountain","mine","water","forest","mountain","plain"],
@@ -75,13 +75,13 @@
         names: ["","","YING","","","BUL","YU"]
     }
 }; 
-    export function tileInGame(numPlayers) {
-        return {
-        2: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm"],
-        3: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm"],
-        4: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om"]
-        }[numPlayers];
-    }
-    
+export function tileInGame(numPlayers) {
+    return {
+      2: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm"],
+      3: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm"],
+      4: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om"]
+    }[numPlayers];
+  }
+  
 
 
