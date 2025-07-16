@@ -87,11 +87,40 @@ class Game < ApplicationRecord
 
     def initialize_game
       Rails.logger.info "Initialisation de la partie #{id}"
+      create_clans_from_string if read_attribute(:clans).present?
       create_tiles
       update(game_status: :installation_phase)
     rescue => e
       Rails.logger.error "ERROR during game initialization for game #{id}: #{e.message}"
       raise
+    end
+
+    def create_clans_from_string
+      return unless read_attribute(:clans).present?
+      
+      clan_names = read_attribute(:clans).split(' ')
+      clan_colors = ['red', 'yellow', 'white', 'blue', 'green', 'orange', 'purple', 'black']
+      
+      # Positions de départ par défaut (exemple pour 3 clans)
+      start_positions = [
+        { q: 0, r: 0 },
+        { q: 3, r: 0 },
+        { q: -3, r: 3 }
+      ]
+      
+      clan_names.each_with_index do |clan_name, index|
+        color = clan_colors[index] || 'gray'
+        position = start_positions[index] || { q: 0, r: 0 }
+        
+        clans.create(
+          name: clan_name,
+          color: color,
+          start_q: position[:q],
+          start_r: position[:r],
+          received_turn: 0,
+          received_chao: 0
+        )
+      end
     end
   
     def create_tiles

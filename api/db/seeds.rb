@@ -1,5 +1,8 @@
 Tile.delete_all
+Action.delete_all
+Encher.delete_all
 GameUser.delete_all
+Clan.delete_all
 Game.delete_all
 User.delete_all
 

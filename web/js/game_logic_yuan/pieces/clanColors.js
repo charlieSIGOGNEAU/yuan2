@@ -38,14 +38,14 @@ const Luong = new ClanColor('Luong', COLOR_CODES.purple, 'purple');
 const Goujian = new ClanColor('Goujian', COLOR_CODES.yellow, 'yellow');
 
 // Les 8 clans BASIC (nommés par leur couleur)
-const clan_black = new ClanColor('Black', COLOR_CODES.black, 'black');
-const clan_red = new ClanColor('Red', COLOR_CODES.red, 'red');
-const clan_green = new ClanColor('Green', COLOR_CODES.green, 'green');
-const clan_orange = new ClanColor('Orange', COLOR_CODES.orange, 'orange');
-const clan_white = new ClanColor('White', COLOR_CODES.white, 'white');
-const clan_blue = new ClanColor('Blue', COLOR_CODES.blue, 'blue');
-const clan_purple = new ClanColor('Purple', COLOR_CODES.purple, 'purple');
-const clan_yellow = new ClanColor('Yellow', COLOR_CODES.yellow, 'yellow');
+const black_clan = new ClanColor('Black', COLOR_CODES.black, 'black');
+const red_clan = new ClanColor('Red', COLOR_CODES.red, 'red');
+const green_clan = new ClanColor('Green', COLOR_CODES.green, 'green');
+const orange_clan = new ClanColor('Orange', COLOR_CODES.orange, 'orange');
+const white_clan = new ClanColor('White', COLOR_CODES.white, 'white');
+const blue_clan = new ClanColor('Blue', COLOR_CODES.blue, 'blue');
+const purple_clan = new ClanColor('Purple', COLOR_CODES.purple, 'purple');
+const yellow_clan = new ClanColor('Yellow', COLOR_CODES.yellow, 'yellow');
 
 // Tableau des clans ASYMMETRIC
 export const ASYMMETRIC_CLANS = [
@@ -61,14 +61,14 @@ export const ASYMMETRIC_CLANS = [
 
 // Tableau des clans BASIC
 export const BASIC_CLANS = [
-    clan_black,
-    clan_red,
-    clan_green,
-    clan_orange,
-    clan_white,
-    clan_blue,
-    clan_purple,
-    clan_yellow
+    black_clan,
+    red_clan,
+    green_clan,
+    orange_clan,
+    white_clan,
+    blue_clan,
+    purple_clan,
+    yellow_clan
 ];
 
 // Export des classes et objets

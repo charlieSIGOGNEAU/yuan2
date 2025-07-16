@@ -27,8 +27,8 @@ export const gameApi = {
             }
             
             // Exécuter la phase de placement initial APRÈS création du gameBoard
-            if (gameState.game.game_status === 'initial_placement') {
-                initialPlacement.execute();
+            if (gameState.game.game_status === 'initial_placement' && this.gameBoard) {
+                initialPlacement.execute(this.gameBoard);
             }
             // Mise à jour des tiles 3D
             if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay() || gameState.game.game_status === 'initial_placement') && this.gameBoard) {

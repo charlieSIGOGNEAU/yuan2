@@ -7,7 +7,7 @@ export const initialPlacement = {
     placedClans: [], // Stockage des clans placés avec leurs infos
 
     // Fonction principale pour gérer le placement initial
-    execute() {
+    async execute(gameBoard) {
         console.log('🎯 Démarrage de la phase initial_placement');
         
         // 1. Calculer les distances et trouver les médoïdes
@@ -15,82 +15,57 @@ export const initialPlacement = {
         const medoids = startingPositions.findInitialMedoids(gameState.game.player_count);
         console.log('📍 Médoïdes trouvés:', medoids.map(m => `(${m.position.q}, ${m.position.r})`));
         
-        // 2. Assigner des clans aléatoires aux médoïdes
-        const clanAssignments = this.assignRandomClans(medoids);
-        console.log('🏯 Assignations clan/médoïde:', clanAssignments);
+        // 2. Récupérer la liste des clans depuis gameState
+        const gameClans = gameState.game.clans_data || [];
+        console.log('🏛️ Clans trouvés dans gameState:', gameClans);
         
-        // 3. Placer les tuiles sur le plateau
-        this.placeClanTiles(clanAssignments);
+        // 3. Créer une map des couleurs depuis clanColors.js
+        const colorMap = new Map();
+        BASIC_CLANS.forEach(clan => {
+            colorMap.set(clan.color_name, clan.color_hex);
+        });
+        console.log('🎨 Carte des couleurs:', colorMap);
         
-        return clanAssignments;
-    },
-
-    // Assigner des clans aléatoires aux médoïdes
-    assignRandomClans(medoids) {
-        const assignments = [];
-        const availableClans = [...BASIC_CLANS]; // Copie pour éviter de modifier l'original
-        
-        for (let i = 0; i < medoids.length; i++) {
+        // 4. Assigner et placer les villes des clans aux positions des médoïdes
+        const cityPromises = [];
+        for (let i = 0; i < Math.min(gameClans.length, medoids.length); i++) {
+            const clan = gameClans[i];
             const medoid = medoids[i];
+            const colorHex = colorMap.get(clan.color) || '#FFFFFF'; // Couleur par défaut si non trouvée
             
-            // Choisir un clan aléatoire parmi ceux disponibles
-            const randomIndex = Math.floor(Math.random() * availableClans.length);
-            const selectedClan = availableClans[randomIndex];
+            console.log(`🏘️ Placement du clan ${clan.name} (${clan.color}) à la position (${medoid.position.q}, ${medoid.position.r})`);
             
-            // Retirer le clan de la liste pour éviter les doublons
-            availableClans.splice(randomIndex, 1);
+            // Créer la ville avec la couleur du clan
+            const cityPromise = gameBoard.addClanCity(
+                { q: medoid.position.q, r: medoid.position.r },
+                colorHex,
+                clan.name
+            );
             
-            const assignment = {
-                position: medoid.position,
-                clan: selectedClan,
-                medoidIndex: i
-            };
+            cityPromises.push(cityPromise);
             
-            assignments.push(assignment);
-            console.log(`🏯 Médoïde ${i + 1} à (${medoid.position.q}, ${medoid.position.r}) assigné au clan ${selectedClan.name} (${selectedClan.color_hex}, ${selectedClan.color_name})`);
+            // Stocker les informations du clan placé
+            this.placedClans.push({
+                clan: clan,
+                medoid: medoid,
+                color: colorHex,
+                position: medoid.position
+            });
         }
         
-        return assignments;
+        // 5. Attendre que toutes les villes soient chargées
+        try {
+            const cities = await Promise.all(cityPromises);
+            console.log('🏘️ Toutes les villes ont été placées avec succès:', cities.length);
+            
+            // 6. Rendre gameState accessible globalement pour GameBoard3D
+            window.gameState = gameState;
+            
+            // 7. Activer le mode de déplacement des villes
+            gameBoard.enableCityDragMode();
+        } catch (error) {
+            console.error('❌ Erreur lors du placement des villes:', error);
+        }
     },
 
-    // Placer les tuiles des clans sur le plateau 3D
-    placeClanTiles(clanAssignments) {
-        if (!gameApi.gameBoard) {
-            console.error('❌ GameBoard3D non disponible pour placer les tuiles');
-            return;
-        }
-
-        this.placedClans = []; // Réinitialiser le stockage
-        
-        for (const assignment of clanAssignments) {
-            const imageUrl = this.getClanImageUrl(assignment.clan);
-            const position = assignment.position;
-            
-            console.log(`🎨 Placement tuile clan ${assignment.clan.name} à (${position.q}, ${position.r}) avec image: ${imageUrl}`);
-            
-            // Placer la tuile sur le plateau 3D avec taille 0.5 et hauteur 0.02
-            const positionWithHeight = { ...position, z: 0.1 };
-            const tile3D = gameApi.gameBoard.addTile(imageUrl, positionWithHeight, 0, 0.5);
-            
-            // Stocker les informations de la tuile placée
-            const placedClan = {
-                tile3D: tile3D,
-                position: position,
-                clan: assignment.clan,
-                medoidIndex: assignment.medoidIndex,
-                imageUrl: imageUrl
-            };
-            
-            this.placedClans.push(placedClan);
-            
-            console.log(`✅ Tuile clan ${assignment.clan.name} placée avec succès`);
-        }
-        
-        console.log(`🏁 ${this.placedClans.length} tuiles de clans placées sur le plateau`);
-    },
-
-    // Construire l'URL de l'image du clan basée sur color_name
-    getClanImageUrl(clan) {
-        return `./images/pieces/${clan.color_name}City.png`;
-    }
 };
