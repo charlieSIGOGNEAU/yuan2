@@ -223,12 +223,23 @@ export class GameBoard3D {
     }
     #cartesianToHex({ x, y, z }) {
         // Convertir les coordonnées monde en coordonnées relatives au workplane
-        const relativeX = x - this.workplane.position.x;
-        const relativeZ = z - this.workplane.position.z;
+        const relativeX = (x - this.workplane.position.x) / this.workplane.scale.x;
+        const relativeZ = (z - this.workplane.position.z) / this.workplane.scale.z;
         
         const r = -relativeZ / (0.5 * Math.sqrt(3));
         const q = relativeX - r / 2;
         return { q: Math.round(q), r: Math.round(r) };
+    }
+
+    // Version sans arrondir pour le calcul de distances
+    #cartesianToHexFloat({ x, y, z }) {
+        // Convertir les coordonnées monde en coordonnées relatives au workplane
+        const relativeX = (x - this.workplane.position.x) / this.workplane.scale.x;
+        const relativeZ = (z - this.workplane.position.z) / this.workplane.scale.z;
+        
+        const r = -relativeZ / (0.5 * Math.sqrt(3));
+        const q = relativeX - r / 2;
+        return { q: q, r: r }; // Pas d'arrondir
     }
 
     // Fonction pour détecter si une ville se trouve à une position donnée
@@ -639,13 +650,12 @@ export class GameBoard3D {
 
         // Si on est en train de draguer une ville
         if (this.isDraggingCity && this.draggedCity) {
-            // Convertir en coordonnées relatives au workplane
-            const relativeX = result.point.x - this.workplane.position.x;
-            const relativeZ = result.point.z - this.workplane.position.z;
+            // Convertir en coordonnées relatives au workplane (en tenant compte de l'échelle)
+            const relativeX = (result.point.x - this.workplane.position.x) / this.workplane.scale.x;
+            const relativeZ = (result.point.z - this.workplane.position.z) / this.workplane.scale.z;
             
             // Déplacer la ville à la position relative du curseur
             this.draggedCity.position.set(relativeX, this.draggedCity.position.y, relativeZ);
-            console.log(`🏘️ Ville ${this.draggedCity.userData.clanName} déplacée vers (${relativeX.toFixed(2)}, ${relativeZ.toFixed(2)})`);
             return;
         }
 
@@ -678,17 +688,77 @@ export class GameBoard3D {
         if (this.isDraggingCity && this.draggedCity) {
             const result = this.getMouseWorld(e);
             if (result.point) {
-                // Convertir la position finale en coordonnées hexagonales
-                const hexCoords = this.#cartesianToHex(result.point);
-                console.log(`🎯 Placement final de la ville ${this.draggedCity.userData.clanName} à (${hexCoords.q}, ${hexCoords.r})`);
+                // Convertir la position en coordonnées hexagonales sans arrondir
+                const floatCoords = this.#cartesianToHexFloat(result.point);
+                console.log(`🎯 Position de relâchement: q=${floatCoords.q.toFixed(3)}, r=${floatCoords.r.toFixed(3)}`);
                 
-                // Recalculer la position cartésienne exacte pour aligner sur la grille hexagonale
-                const exactPos = this.#hexToCartesian({ q: hexCoords.q, r: hexCoords.r, z: 0 });
-                this.draggedCity.position.set(exactPos.x, this.draggedCity.position.y, exactPos.z);
+                // Position d'origine de la ville qu'on déplace
+                const originalPos = this.draggedCity.userData.position;
+                console.log(`📍 Position d'origine de la ville: q=${originalPos.q}, r=${originalPos.r}`);
                 
-                // Mettre à jour les userData de la ville
-                this.draggedCity.userData.position = { q: hexCoords.q, r: hexCoords.r };
-                console.log(`✅ Ville ${this.draggedCity.userData.clanName} placée définitivement à (${hexCoords.q}, ${hexCoords.r})`);
+                // Récupérer tous les territoires occupés par des villes (sauf la ville actuelle)
+                const occupiedTerritories = new Set();
+                this.workplane.traverse((child) => {
+                    if (child.userData && 
+                        child.userData.type === 'clan_city' && 
+                        child !== this.draggedCity && // Exclure la ville qu'on déplace
+                        child.userData.position) {
+                        const key = `${child.userData.position.q},${child.userData.position.r}`;
+                        occupiedTerritories.add(key);
+                    }
+                });
+
+                
+                // Trouver le terrain valide le plus proche
+                if (window.gameState && window.gameState.game && window.gameState.game.territories) {
+                    const validTerrainTypes = ['mine', 'forest', 'plain', 'rice'];
+                    const territories = window.gameState.game.territories;
+                    
+                    let closestTerrain = null;
+                    let minDistance = Infinity;
+                    let validTerrainCount = 0;
+                    let availableTerrainCount = 0;
+                    
+                    for (const terrain of territories) {
+                        // Vérifier si c'est un terrain valide
+                        if (!validTerrainTypes.includes(terrain.type)) continue;
+                        validTerrainCount++;
+                        
+                        // Vérifier si le terrain n'est pas occupé (sauf si c'est la position d'origine)
+                        const terrainKey = `${terrain.position.q},${terrain.position.r}`;
+                        const isOrigin = terrain.position.q === originalPos.q && terrain.position.r === originalPos.r;
+                        if (occupiedTerritories.has(terrainKey) && !isOrigin) {
+                            continue;
+                        }
+                        availableTerrainCount++;
+                        
+                        // Calculer la distance
+                        const dx = floatCoords.q - terrain.position.q;
+                        const dy = floatCoords.r - terrain.position.r;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestTerrain = terrain;
+                        }
+                    }
+                    
+                    if (closestTerrain) {
+                        console.log(`🎯 Terrain choisi: ${closestTerrain.type} à (${closestTerrain.position.q}, ${closestTerrain.position.r})`);
+                        
+                        // Placer la ville sur le terrain choisi
+                        const exactPos = this.#hexToCartesian({ q: closestTerrain.position.q, r: closestTerrain.position.r, z: 0 });
+                        this.draggedCity.position.set(exactPos.x, this.draggedCity.position.y, exactPos.z);
+                        
+                        // Mettre à jour les userData
+                        this.draggedCity.userData.position = { q: closestTerrain.position.q, r: closestTerrain.position.r };
+                        console.log(`✅ Ville ${this.draggedCity.userData.clanName} placée sur ${closestTerrain.type} à (${closestTerrain.position.q}, ${closestTerrain.position.r})`);
+                    } else {
+                        console.error(`❌ Aucun terrain valide disponible pour la ville ${this.draggedCity.userData.clanName}`);
+                    }
+                } else {
+                    console.error('❌ gameState non disponible');
+                }
             }
             
             // Réinitialiser l'état du drag de ville

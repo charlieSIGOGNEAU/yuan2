@@ -419,4 +419,7 @@ class GameState {
 // Instance globale du gameState (vide au départ)
 export const gameState = new GameState();
 
+// Rendre gameState accessible globalement pour les fonctions utilitaires
+window.gameState = gameState;
+
 
