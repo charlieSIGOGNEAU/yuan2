@@ -17,11 +17,15 @@ class Game < ApplicationRecord
     has_many :users, through: :game_users
     has_many :tiles, dependent: :destroy
     has_many :actions, dependent: :destroy
+    has_many :clans, dependent: :destroy
+    has_many :enchers, dependent: :destroy
   
     validates :game_status, presence: true
     validates :game_type, presence: true
     validates :player_count, presence: true, numericality: { only_integer: true}
   
+    before_create :set_clans_for_quick_game
+
     def self.find_or_create_waiting_game(user)
       existing_game_for_user = Game.joins(:game_users)
                                     .where(game_users: { user_id: user.id })
@@ -74,8 +78,13 @@ class Game < ApplicationRecord
     def can_add_player?
       waiting_for_players? && game_users.count < player_count
     end
-  
-  
+
+    def set_clans_for_quick_game
+      if quick_game?
+        write_attribute(:clans, "red_clan yellow_clan white_clan")
+      end
+    end
+
     def initialize_game
       Rails.logger.info "Initialisation de la partie #{id}"
       create_tiles

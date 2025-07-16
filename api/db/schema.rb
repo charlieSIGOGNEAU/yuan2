@@ -22,13 +22,39 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
     t.index ["game_user_id"], name: "index_actions_on_game_user_id"
   end
 
+  create_table "clans", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.string "color"
+    t.string "name"
+    t.integer "start_q"
+    t.integer "start_r"
+    t.integer "received_turn"
+    t.integer "received_chao"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_clans_on_game_id"
+  end
+
+  create_table "enchers", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.integer "game_user_id", null: false
+    t.integer "turn"
+    t.integer "chao"
+    t.boolean "victory"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_enchers_on_game_id"
+    t.index ["game_user_id"], name: "index_enchers_on_game_user_id"
+  end
+
   create_table "game_users", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "game_id", null: false
-    t.string "clan"
+    t.integer "clan_id"
     t.string "user_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["clan_id"], name: "index_game_users_on_clan_id"
     t.index ["game_id"], name: "index_game_users_on_game_id"
     t.index ["user_id", "game_id"], name: "index_game_users_on_user_id_and_game_id", unique: true
     t.index ["user_id"], name: "index_game_users_on_user_id"
@@ -38,6 +64,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
     t.integer "game_status", default: 0, null: false
     t.integer "game_type", default: 0, null: false
     t.integer "player_count"
+    t.string "clans"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -70,6 +97,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
 
   add_foreign_key "actions", "game_users"
   add_foreign_key "actions", "games"
+  add_foreign_key "clans", "games"
+  add_foreign_key "enchers", "game_users"
+  add_foreign_key "enchers", "games"
+  add_foreign_key "game_users", "clans"
   add_foreign_key "game_users", "games"
   add_foreign_key "game_users", "users"
   add_foreign_key "tiles", "game_users"

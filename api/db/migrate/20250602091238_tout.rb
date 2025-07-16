@@ -16,6 +16,19 @@ class Tout < ActiveRecord::Migration[7.2]
       t.integer :game_status, default: 0, null: false
       t.integer :game_type, default: 0, null: false
       t.integer :player_count
+      t.string :clans
+
+      t.timestamps
+    end
+
+    create_table :clans do |t|
+      t.references :game, null: false, foreign_key: true
+      t.string :color
+      t.string :name
+      t.integer :start_q
+      t.integer :start_r
+      t.integer :received_turn
+      t.integer :received_chao
 
       t.timestamps
     end
@@ -35,7 +48,7 @@ class Tout < ActiveRecord::Migration[7.2]
     create_table :game_users do |t|
       t.references :user, null: false, foreign_key: true
       t.references :game, null: false, foreign_key: true
-      t.string :clan
+      t.references :clan, foreign_key: true
       t.string :user_name
 
       t.timestamps
@@ -46,6 +59,16 @@ class Tout < ActiveRecord::Migration[7.2]
       t.references :game, null: false, foreign_key: true
       t.string :action
       t.integer :turn
+
+      t.timestamps
+    end
+
+    create_table :enchers do |t|
+      t.references :game, null: false, foreign_key: true
+      t.references :game_user, null: false, foreign_key: true
+      t.integer :turn
+      t.integer :chao
+      t.boolean :victory
 
       t.timestamps
     end
