@@ -2,6 +2,7 @@ import { gameState } from '../gameState.js';
 import { startingPositions } from '../StartingPositions.js';
 import { BASIC_CLANS } from '../pieces/clanColors.js';
 import { gameApi } from '../gameApi.js';
+import { uiManager } from '../ui/UIManager.js';
 
 export const initialPlacement = {
     placedClans: [], // Stockage des clans placés avec leurs infos
@@ -62,6 +63,9 @@ export const initialPlacement = {
         } catch (error) {
             console.error('❌ Erreur lors du placement des villes:', error);
         }
+
+        // 6. message info
+        uiManager.updateInfoPanel('Replace les villes si besoin, puis valide.');
     },
 
 };

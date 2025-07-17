@@ -4,6 +4,7 @@ import { installationPhase } from './phases/installationPhase.js';
 import { initialPlacement } from './phases/initial_placement.js';
 import { Auth } from '../app/auth.js';
 import { startingPositions } from './StartingPositions.js';
+import { uiManager } from './ui/UIManager.js';
 
 // Fonctions pour l'API
 export const gameApi = {
@@ -11,7 +12,7 @@ export const gameApi = {
 
     
     // Futures fonctions pour envoyer à l'API
-    handleGameMessage(data) {
+    async handleGameMessage(data) {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
             console.log('📨 Message reçu:', data);
         }  
@@ -24,6 +25,14 @@ export const gameApi = {
             // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
             if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay() || gameState.game.game_status === 'initial_placement') && !this.gameBoard) {
                 this.gameBoard = Game.showGameBoard();
+                
+                // Charger l'interface UI après la création du gameboard
+                if (!uiManager.gameUI) {
+                    await uiManager.loadGameUI();
+                    
+                    // Exemple d'utilisation du panneau d'informations
+                    uiManager.updateInfoPanel('');
+                }
             }
             
             // Exécuter la phase de placement initial APRÈS création du gameBoard
