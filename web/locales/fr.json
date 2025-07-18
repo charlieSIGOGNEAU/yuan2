@@ -5,6 +5,9 @@
         "instructions": "Replace les villes si besoin, puis valide.",
         "title": "Phase de placement initial"
       },
+      "bidding": {
+        "instructions": "Enchéris pour choisir en 1er ta position parmi celles encore entourées."
+      },
       "installation": {
         "title": "Phase d'installation"
       }

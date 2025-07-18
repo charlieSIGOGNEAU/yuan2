@@ -26,7 +26,7 @@ export class I18nManager {
 
         try {
             console.log(`🌍 Chargement des traductions pour: ${language}`);
-            const response = await fetch(`./locales/${language}.json`);
+            const response = await fetch(`./locales/${language}.json?v=${Date.now()}`);
             
             if (!response.ok) {
                 throw new Error(`Fichier de langue ${language} non trouvé`);

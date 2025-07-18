@@ -2,6 +2,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { meepleManager } from '../pieces/MeepleManager.js';
 
 export class GameBoard3D {
     constructor(containerId) {
@@ -25,12 +26,14 @@ export class GameBoard3D {
         this.draggedCity = null;
         this.clickStartPosition = null; // Pour détecter les clics
         this.clickStartTime = null; // Pour mesurer la durée du clic
+        this.cityDragEnabled = false; // Contrôle l'activation du drag & drop des villes
         this.tempTile = null;
         this.tempTileRotation = null;
         this.tempTilePosition = null;
         this.tempTileSprites = null;
         this.tileTemp = null;
         this.gltfLoader = new GLTFLoader(); // Ajouter le loader GLB
+        this.meepleManager = meepleManager; // Référence au gestionnaire de meeples
         this.waterMesh = null; // Mesh de référence pour l'eau
         this.waterGeometry = null; // Géométrie pour les instances
         this.waterMaterial = null; // Matériau pour les instances
@@ -173,15 +176,35 @@ export class GameBoard3D {
 
     createCircle(position = {q: 0, r: 0}) {
         const textureLoader = new THREE.TextureLoader();
-        const texture = textureLoader.load('./images/cercle.webp');
         const geometry = new THREE.PlaneGeometry(1.8, 1.8);
+        
+        // Créer d'abord le matériau sans texture
         const material = new THREE.MeshBasicMaterial({
-            map: texture,
             transparent: true,
             opacity: 0.8,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            color: 0xffffff // Couleur temporaire en attendant la texture
         });
+        
         const circle = new THREE.Mesh(geometry, material);
+        
+        // Charger la texture avec callbacks
+        const texture = textureLoader.load(
+            './images/cercle.webp',
+            // onLoad
+            (loadedTexture) => {
+                loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                material.map = loadedTexture;
+                material.needsUpdate = true;
+                console.log('✅ Texture cercle chargée');
+            },
+            // onProgress (optionnel)
+            undefined,
+            // onError
+            (error) => {
+                console.warn('⚠️ Erreur chargement texture cercle:', error);
+            }
+        );
         const pos = this.#hexToCartesian(position);
         circle.position.set(pos.x, pos.y, pos.z);
         circle.rotation.x = -Math.PI / 2; // Pour le mettre à plat sur le plan
@@ -420,14 +443,30 @@ export class GameBoard3D {
                     // Création des sprites rotation et OK (restent en 2D pour l'interface)
                     const textureLoader = new THREE.TextureLoader();
         const spriteGeometry = new THREE.PlaneGeometry(1, 1);
-        const rotationTexture = textureLoader.load('./images/rotation.webp');
 
-        // Premier sprite rotation à droite
-        const rightSprite = new THREE.Mesh(spriteGeometry, new THREE.MeshBasicMaterial({
-            map: rotationTexture,
+        // Premier sprite rotation à droite - créer d'abord le matériau sans texture
+        const rightMaterial = new THREE.MeshBasicMaterial({
             alphaTest: 0.5,
-            toneMapped: false // Évite la surexposition
-        }));
+            toneMapped: false,
+            transparent: true,
+            color: 0xffffff
+        });
+        const rightSprite = new THREE.Mesh(spriteGeometry, rightMaterial);
+        
+        // Charger la texture de rotation avec callback
+        const rotationTexture = textureLoader.load(
+            './images/rotation.webp',
+            (loadedTexture) => {
+                loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                // Appliquer la texture aux deux matériaux
+                rightMaterial.map = loadedTexture;
+                rightMaterial.needsUpdate = true;
+                leftMaterial.map = loadedTexture;
+                leftMaterial.needsUpdate = true;
+            },
+            undefined,
+            (error) => console.warn('⚠️ Erreur chargement texture rotation:', error)
+        );
                     rightSprite.position.set(pos.x + 0.5, 0.4, pos.z); // Position relative à la tuile principale
         rightSprite.rotation.x = -Math.PI / 2;
         rightSprite.rotation.z = 0;
@@ -435,11 +474,13 @@ export class GameBoard3D {
         this.tiles.push(rightSprite);
 
         // Deuxième sprite rotation à gauche (avec symétrie verticale)
-        const leftSprite = new THREE.Mesh(spriteGeometry, new THREE.MeshBasicMaterial({
-            map: rotationTexture,
+        const leftMaterial = new THREE.MeshBasicMaterial({
             alphaTest: 0.5,
-            toneMapped: false // Évite la surexposition
-        }));
+            toneMapped: false,
+            transparent: true,
+            color: 0xffffff
+        });
+        const leftSprite = new THREE.Mesh(spriteGeometry, leftMaterial);
                     leftSprite.position.set(pos.x - 0.5, 0.4, pos.z); // Position relative à la tuile principale
         leftSprite.rotation.x = -Math.PI / 2;
         leftSprite.rotation.z = 0;
@@ -448,18 +489,26 @@ export class GameBoard3D {
         this.tiles.push(leftSprite);
 
         // Sprite OK (optimisé et face caméra)
-        const okTexture = textureLoader.load('./images/buttonOk.webp');
-        // Corriger l'espace colorimétrique pour éviter la surexposition
-        okTexture.colorSpace = THREE.SRGBColorSpace;
-        okTexture.needsUpdate = true;
-        
-        const okSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-            map: okTexture,
+        const okMaterial = new THREE.SpriteMaterial({
             transparent: true,
             alphaTest: 0.5,
-            toneMapped: false, // Évite la surexposition due au tone mapping
-            fog: false // N'est pas affecté par le brouillard
-        }));
+            toneMapped: false,
+            fog: false,
+            color: 0xffffff
+        });
+        const okSprite = new THREE.Sprite(okMaterial);
+        
+        // Charger la texture OK avec callback
+        const okTexture = textureLoader.load(
+            './images/buttonOk.webp',
+            (loadedTexture) => {
+                loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                okMaterial.map = loadedTexture;
+                okMaterial.needsUpdate = true;
+            },
+            undefined,
+            (error) => console.warn('⚠️ Erreur chargement texture buttonOk:', error)
+        );
         okSprite.position.set(pos.x + 1, 0.6, pos.z - 1); // Position relative à la tuile principale
         okSprite.scale.set(1, 1, 1); // Taille du sprite
         this.workplane.add(okSprite);
@@ -572,6 +621,127 @@ export class GameBoard3D {
         });
     }
 
+    // Initialiser les meeples avec les couleurs des clans
+    async initializeMeeplesWithClans(clansData = []) {
+        console.log('🎭 Initialisation des meeples avec les couleurs des clans...');
+        
+        try {
+            // Précharger tous les types de meeples
+            await this.meepleManager.preloadAllMeeples();
+            
+            // Créer des instances pré-colorées pour chaque type de meeple colorable
+            const colorableMeeples = ['ville', 'village', 'guerrier', '2villes'];
+            
+            for (const meepleType of colorableMeeples) {
+                const instances = this.meepleManager.createMeeplesByClans(meepleType, clansData);
+                console.log(`🎨 ${instances.length} instances de ${meepleType} créées pour les clans`);
+            }
+            
+            console.log('✅ Meeples initialisés avec succès pour tous les clans');
+            
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'initialisation des meeples:', error);
+            throw error;
+        }
+    }
+
+    // Ajouter un meeple au plateau (version optimisée)
+    addMeeple(type, position = { q: 0, r: 0, z: 0 }, colorHex = null, userData = {}) {
+        console.log(`🎭 Ajout du meeple ${type} à la position:`, position);
+        
+        // Créer une instance du meeple
+        const meepleInstance = this.meepleManager.createMeepleInstance(type, colorHex, userData);
+        
+        if (!meepleInstance) {
+            console.error(`❌ Impossible de créer l'instance du meeple ${type}`);
+            return null;
+        }
+        
+        // Convertir les coordonnées hexagonales en cartésiennes
+        const pos = this.#hexToCartesian(position);
+        meepleInstance.position.set(pos.x, pos.y + (position.z || 0), pos.z);
+        
+        // Désactiver les collisions pour ce meeple
+        meepleInstance.traverse((child) => {
+            if (child.isMesh) {
+                child.raycast = function() {}; // Désactive le raycast
+            }
+        });
+        
+        // Ajouter au workplane
+        this.workplane.add(meepleInstance);
+        
+        console.log(`🎭 Meeple ${type} ajouté au plateau à la position`, pos);
+        return meepleInstance;
+    }
+
+    // Méthode pour créer une ville de clan (optimisée avec le MeepleManager)
+    addClanCityOptimized(position = { q: 0, r: 0 }, colorHex = '#FFFFFF', clanName = 'Unknown', isInitialPlacement = false) {
+        console.log(`🏘️ Ajout de la ville optimisée pour le clan ${clanName} (${colorHex}) à la position:`, position);
+        
+        // Utiliser le nouveau système de meeples
+        const cityMesh = this.addMeeple('ville', position, colorHex, {
+            type: 'clan_city',
+            clanName: clanName,
+            position: position,
+            color: colorHex
+        });
+        
+        if (!cityMesh) {
+            console.error(`❌ Impossible de créer la ville pour le clan ${clanName}`);
+            return null;
+        }
+        
+        // Stocker la référence si c'est pour l'initial placement
+        if (isInitialPlacement) {
+            this.initialPlacementCities.push(cityMesh);
+            console.log(`📝 Ville du clan ${clanName} stockée pour suppression ultérieure (total: ${this.initialPlacementCities.length})`);
+        }
+        
+        return Promise.resolve(cityMesh);
+    }
+
+    // Méthode de test pour le système de meeples
+    async testMeepleSystem() {
+        console.log('🧪 Test du système de meeples...');
+        
+        try {
+            // Test 1: Préchargement
+            await this.meepleManager.preloadMeepleModel('ville');
+            console.log('✅ Test 1: Préchargement réussi');
+            
+            // Test 2: Création d'instance colorée
+            const redCity = this.meepleManager.createMeepleInstance('ville', '#FF0000', {
+                testInstance: true
+            });
+            
+            if (redCity) {
+                console.log('✅ Test 2: Instance colorée créée');
+                
+                // Test 3: Ajout au plateau
+                const pos = this.#hexToCartesian({ q: 0, r: 0 });
+                redCity.position.set(pos.x, pos.y, pos.z);
+                this.workplane.add(redCity);
+                console.log('✅ Test 3: Meeple ajouté au plateau');
+                
+                // Nettoyer après test
+                setTimeout(() => {
+                    this.workplane.remove(redCity);
+                    console.log('🧹 Test: Meeple de test supprimé');
+                }, 3000);
+            }
+            
+            // Test 4: Informations du système
+            console.log('📊 Types disponibles:', this.meepleManager.getAvailableMeepleTypes());
+            console.log('📊 Ville préchargée:', this.meepleManager.isMeepleLoaded('ville'));
+            
+            console.log('✅ Tous les tests du système de meeples réussis !');
+            
+        } catch (error) {
+            console.error('❌ Erreur lors des tests:', error);
+        }
+    }
+
     removeAllCircles() {
         // Supprime tous les cercles du workplane
         this.circles.forEach(circle => {
@@ -582,6 +752,23 @@ export class GameBoard3D {
         });
         // Vide le tableau des cercles
         this.circles = [];
+    }
+
+    // Fonction pour activer le drag & drop des villes (phase initial_placement)
+    enableCityDrag() {
+        this.cityDragEnabled = true;
+        console.log('🔓 Drag & drop des villes activé');
+    }
+
+    // Fonction pour désactiver le drag & drop des villes
+    disableCityDrag() {
+        this.cityDragEnabled = false;
+        // Arrêter tout drag en cours
+        if (this.isDraggingCity) {
+            this.isDraggingCity = false;
+            this.draggedCity = null;
+        }
+        console.log('🔒 Drag & drop des villes désactivé');
     }
 
     // Fonction pour supprimer les villes du placement initial uniquement
@@ -681,8 +868,8 @@ export class GameBoard3D {
         if (!result.point) return;
 
         
-        // Détecter s'il y a une ville à cette position
-        const cityFound = this.detectCityAtPosition(result.point);
+        // Détecter s'il y a une ville à cette position seulement si le drag est activé
+        const cityFound = this.cityDragEnabled ? this.detectCityAtPosition(result.point) : null;
 
         // Stocker la position et le temps de départ pour détecter les clics
         this.clickStartPosition = {
@@ -691,8 +878,8 @@ export class GameBoard3D {
         };
         this.clickStartTime = performance.now();
 
-        // Si on a cliqué sur une ville, commencer le drag de la ville
-        if (cityFound) {
+        // Si on a cliqué sur une ville et que le drag est activé, commencer le drag de la ville
+        if (cityFound && this.cityDragEnabled) {
             console.log(`🖱️ Début du drag de la ville ${cityFound.userData.clanName}`);
             this.isDraggingCity = true;
             this.draggedCity = cityFound;
@@ -726,8 +913,8 @@ export class GameBoard3D {
         const result = this.getMouseWorld(e);
         if (!result.point) return;
 
-        // Si on est en train de draguer une ville
-        if (this.isDraggingCity && this.draggedCity) {
+        // Si on est en train de draguer une ville (et que le drag est activé)
+        if (this.isDraggingCity && this.draggedCity && this.cityDragEnabled) {
             // Convertir en coordonnées relatives au workplane (en tenant compte de l'échelle)
             const relativeX = (result.point.x - this.workplane.position.x) / this.workplane.scale.x;
             const relativeZ = (result.point.z - this.workplane.position.z) / this.workplane.scale.z;
@@ -762,8 +949,8 @@ export class GameBoard3D {
         // Ne traiter que les événements du pointer actif
         if (e.pointerId !== this.activePointerId) return;
 
-        // Si on était en train de draguer une ville
-        if (this.isDraggingCity && this.draggedCity) {
+        // Si on était en train de draguer une ville (et que le drag est activé)
+        if (this.isDraggingCity && this.draggedCity && this.cityDragEnabled) {
             const result = this.getMouseWorld(e);
             if (result.point) {
                 // Convertir la position en coordonnées hexagonales sans arrondir

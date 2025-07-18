@@ -12,8 +12,8 @@ export class UIManager {
     // Charger l'interface UI du jeu
     async loadGameUI() {
         try {
-            // Charger le HTML de l'interface
-            const response = await fetch('./partials/game-ui.html');
+            // Charger le HTML de l'interface avec un paramètre pour éviter le cache
+            const response = await fetch(`./partials/game-ui.html?v=${Date.now()}`);
             const htmlContent = await response.text();
             
             // Injecter l'interface dans le body
@@ -21,10 +21,10 @@ export class UIManager {
             uiContainer.innerHTML = htmlContent;
             document.body.appendChild(uiContainer.firstElementChild);
             
-            // Charger le CSS de l'interface
+            // Charger le CSS de l'interface avec un paramètre pour éviter le cache
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = './css/game-ui.css';
+            link.href = `./css/game-ui.css?v=${Date.now()}`;
             document.head.appendChild(link);
             
             // Références vers les éléments UI
@@ -34,43 +34,15 @@ export class UIManager {
             this.validationBar = document.getElementById('validation-bar');
             this.biddingBar = document.getElementById('rectangle-action-bar');
             
-            // Vérifier que l'interface est bien présente
-            if (this.gameUI) {
-                console.log('🎨 Interface UI trouvée dans le DOM');
-                console.log('📏 Dimensions overlay:', this.gameUI.offsetWidth, 'x', this.gameUI.offsetHeight);
-                
-                if (this.infoPanel) {
-                    console.log('ℹ️ Panneau info trouvé');
-                    console.log('📝 Contenu panneau:', this.infoPanel.textContent);
-                } else {
-                    console.error('❌ Panneau info non trouvé');
-                }
-                
-                if (this.playerActionBar) {
-                    console.log('🎮 Barre d\'actions du joueur trouvée');
-                } else {
-                    console.error('❌ Barre d\'actions du joueur non trouvée');
-                }
-                
-                if (this.validationBar) {
-                    console.log('✅ Barre de validation trouvée');
-                } else {
-                    console.error('❌ Barre de validation non trouvée');
-                }
-                
-                if (this.biddingBar) {
-                    console.log('🎯 Barre de bidding trouvée');
-                } else {
-                    console.error('❌ Barre de bidding non trouvée');
-                }
-            } else {
-                console.error('❌ Interface UI non trouvée dans le DOM');
-            }
-            
             // Configuration des event listeners
             this.setupUIEventListeners();
             
             console.log('🎨 Interface UI chargée avec succès');
+            
+            // Petit délai pour s'assurer que le DOM est bien mis à jour
+            setTimeout(() => {
+                this.setupUIEventListeners();
+            }, 100);
             
         } catch (error) {
             console.error('❌ Erreur lors du chargement de l\'interface UI:', error);
@@ -89,7 +61,6 @@ export class UIManager {
         const settingsButtons = document.querySelectorAll('.action-menu');
         settingsButtons.forEach(button => {
             button.addEventListener('click', () => {
-                console.log('⚙️ Bouton settings cliqué');
                 this.handleSettingsClick();
             });
         });
@@ -98,7 +69,6 @@ export class UIManager {
         const validateButtons = document.querySelectorAll('.action-validate');
         validateButtons.forEach(button => {
             button.addEventListener('click', () => {
-                console.log('✅ Bouton validation cliqué');
                 this.handleValidateClick();
             });
         });
@@ -107,7 +77,6 @@ export class UIManager {
         const lessButton = document.querySelector('.bidding-less');
         if (lessButton) {
             lessButton.addEventListener('click', () => {
-                console.log('➖ Bouton moins cliqué');
                 this.handleBiddingLessClick();
             });
         }
@@ -115,7 +84,6 @@ export class UIManager {
         const moreButton = document.querySelector('.bidding-more');
         if (moreButton) {
             moreButton.addEventListener('click', () => {
-                console.log('➕ Bouton plus cliqué');
                 this.handleBiddingMoreClick();
             });
         }
@@ -129,10 +97,7 @@ export class UIManager {
 
     // Action du bouton validation (partagée par toutes les interfaces)
     handleValidateClick() {
-        console.log('✔️ Validation de l\'action...');
-        
         // Déterminer quelle action de validation exécuter selon le contexte
-        // Pour l'instant, on va détecter si on est en phase initial_placement
         const gameStatus = window.gameState?.game?.game_status;
         
         if (gameStatus === 'initial_placement') {
@@ -145,15 +110,11 @@ export class UIManager {
 
     // Validation spécifique pour la phase de placement initial
     handleInitialPlacementValidation() {
-        console.log('🏘️ Validation du placement initial des villes');
-        
         // Importer dynamiquement pour éviter les dépendances circulaires
         import('../gameApi.js').then(apiModule => {
             const gameBoard = apiModule.gameApi.gameBoard;
             
             if (gameBoard) {
-                console.log('📍 Récupération des positions actuelles des villes depuis GameBoard3D...');
-                
                 // Récupérer toutes les villes placées avec leurs positions actuelles
                 const clansData = [];
                 gameBoard.workplane.traverse((child) => {
@@ -168,12 +129,10 @@ export class UIManager {
                 });
                 
                 if (clansData.length > 0) {
-                    console.log('🏛️ Données actuelles des clans à envoyer:', clansData);
-                    
                     // Appeler la fonction d'envoi de l'API
                     apiModule.gameApi.sendClansToApi(clansData);
                 } else {
-                    console.warn('⚠️ Aucune ville trouvée dans GameBoard3D');
+                    console.warn('⚠️ Aucune ville trouvée pour validation');
                 }
             } else {
                 console.error('❌ GameBoard3D non disponible');
@@ -220,7 +179,6 @@ export class UIManager {
         if (this.playerActionBar) {
             this.playerActionBar.style.display = 'flex';
             this.currentActionBar = this.playerActionBar;
-            console.log('🎮 Barre d\'actions complète affichée');
         } else {
             console.warn('⚠️ Barre d\'actions complète non initialisée');
         }
@@ -232,19 +190,17 @@ export class UIManager {
         if (this.validationBar) {
             this.validationBar.style.display = 'flex';
             this.currentActionBar = this.validationBar;
-            console.log('✅ Barre de validation affichée');
         } else {
             console.warn('⚠️ Barre de validation non initialisée');
         }
     }
 
-    // Fonction pour afficher la barre de bidding (settings + 2 rectangles + check)
+    // Fonction pour afficher la barre de bidding (settings + info + boutons + check)
     showBiddingBar() {
         this.hideAllActionBars();
         if (this.biddingBar) {
             this.biddingBar.style.display = 'flex';
             this.currentActionBar = this.biddingBar;
-            console.log('🎯 Barre de bidding affichée');
         } else {
             console.warn('⚠️ Barre de bidding non initialisée');
         }
@@ -253,32 +209,90 @@ export class UIManager {
     // Fonction pour masquer toutes les barres (alias pour compatibilité)
     hidePlayerActionBar() {
         this.hideAllActionBars();
-        console.log('🎮 Toutes les barres d\'actions masquées');
     }
 
-    // Fonction pour mettre à jour le texte de bidding (x/y)
+    // Fonction pour mettre à jour la fraction de bidding (numérateur/dénominateur)
     updateBiddingText(current, max) {
-        const chaoText = document.querySelector('.chao-text');
-        if (chaoText) {
-            chaoText.textContent = `: ${current}/${max}`;
-            console.log(`🎯 Texte de bidding mis à jour: ${current}/${max}`);
-        } else {
-            console.warn('⚠️ Élément chao-text non trouvé');
-        }
+        const updateFraction = () => {
+            // Essayer plusieurs sélecteurs pour trouver les éléments
+            let numerator = document.querySelector('.chao-numerator') || 
+                           document.querySelector('.numerator') ||
+                           document.querySelector('#rectangle-action-bar .chao-numerator');
+                           
+            let denominator = document.querySelector('.chao-denominator') || 
+                             document.querySelector('.denominator') ||
+                             document.querySelector('#rectangle-action-bar .chao-denominator');
+            
+            if (numerator && denominator) {
+                numerator.textContent = current.toString();
+                denominator.textContent = max.toString();
+                return true;
+            }
+            return false;
+        };
+
+        const tryUpdate = (attempt = 1, maxAttempts = 5) => {
+            if (updateFraction()) {
+                return; // Succès
+            }
+            
+            if (attempt < maxAttempts) {
+                const delay = attempt * 100; // Délai progressif: 100, 200, 300, 400ms
+                setTimeout(() => tryUpdate(attempt + 1, maxAttempts), delay);
+            } else {
+                console.warn(`⚠️ Éléments de fraction non trouvés après ${maxAttempts} tentatives`);
+                // Si la barre est visible mais les éléments fraction manquent, forcer une recréation
+                const rectangleBar = document.querySelector('#rectangle-action-bar');
+                if (rectangleBar && rectangleBar.style.display !== 'none') {
+                    this.createFallbackFraction(current, max);
+                }
+            }
+        };
+
+        // Commencer les tentatives
+        tryUpdate();
     }
 
     // Gestion du clic sur le bouton moins
     handleBiddingLessClick() {
         console.log('➖ Action: Diminuer la mise');
         // TODO: Implémenter la logique de diminution
-        // Pour l'instant, juste un placeholder
     }
 
     // Gestion du clic sur le bouton plus  
     handleBiddingMoreClick() {
         console.log('➕ Action: Augmenter la mise');
         // TODO: Implémenter la logique d'augmentation
-        // Pour l'instant, juste un placeholder
+    }
+
+    // Méthode de fallback pour créer les éléments de fraction manquants
+    createFallbackFraction(current, max) {
+        const biddingBar = document.querySelector('.bidding-info-case');
+        if (!biddingBar) {
+            console.error('❌ Barre de bidding introuvable pour le fallback');
+            return;
+        }
+
+        // Chercher ou créer les éléments manquants
+        let numerator = biddingBar.querySelector('.chao-numerator');
+        let denominator = biddingBar.querySelector('.chao-denominator');
+        
+        if (!numerator || !denominator) {
+            // Créer la structure manquante comme fallback
+            const fractionContainer = biddingBar.querySelector('.chao-fraction') || 
+                                    biddingBar.querySelector('.diagonal-fraction');
+            
+            if (fractionContainer) {
+                fractionContainer.innerHTML = `
+                    <span class="chao-numerator numerator">${current}</span>
+                    <span class="slash">/</span>
+                    <span class="chao-denominator denominator">${max}</span>
+                `;
+                console.log('✅ Éléments de fraction recréés par fallback');
+            } else {
+                console.error('❌ Container de fraction introuvable');
+            }
+        }
     }
 }
 

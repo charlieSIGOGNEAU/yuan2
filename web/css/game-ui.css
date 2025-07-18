@@ -138,34 +138,76 @@
 /* Case d'information bidding (2x largeur) avec dégradé transparent */
 .bidding-info-case {
     flex: 2;
-    aspect-ratio: 2/1;
+    aspect-ratio: 2/1; /* Rectangle 2x plus large que haut, même hauteur que les cases carrées */
     background: linear-gradient(135deg, rgba(136, 136, 136, 0.8), rgba(136, 136, 136, 0.2));
     border-radius: 8px;
     border: 2px solid rgba(102, 102, 102, 0.5);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start; /* Alignement à gauche */
     color: #ffffff;
-    padding: 0 8px;
-    gap: 8px;
+    padding: 4px; /* Réduit de 8px à 4px */
+    gap: 6px; /* Réduit de 12px à 6px */
     pointer-events: none; /* Pas cliquable */
+    overflow: hidden; /* Évite le débordement */
 }
 
-/* Icône chao dans la case d'information */
+/* Icône chao dans la case d'information - positionnée à gauche */
 .chao-icon {
-    height: 80%;
+    height: 100%; 
     width: auto;
     object-fit: contain;
     flex-shrink: 0;
+    order: 1; /* Force à gauche */
 }
 
-/* Texte chao dans la case d'information */
-.chao-text {
-    font-size: 16px;
+/* Séparateur deux points entre l'image et la fraction */
+.chao-separator {
+    font-size: 1.5em; /* Taille relative */
     font-weight: bold;
     color: #ffffff;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    flex-shrink: 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    order: 2; /* Entre l'image et la fraction */
+}
+
+/* Container pour la fraction stylisée */
+.chao-fraction {
+    flex: 1; /* Prend le reste de l'espace */
+    order: 3; /* Après l'image et le séparateur */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Style de fraction diagonale */
+.diagonal-fraction {
+    display: inline-flex;
+    align-items: center;
+    font-size: 1.5em; /* Taille relative, 50% plus grande que la normale */
+    font-family: serif;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    letter-spacing: -0.05em; /* Rapproche les caractères */
+}
+
+/* Numérateur (nombre du dessus) */
+.numerator {
+    transform: translateY(-0.3em);
+    margin-right: 0.02em; /* Réduit de 0.05em à 0.02em */
+}
+
+/* Dénominateur (nombre du dessous) */
+.denominator {
+    transform: translateY(0.3em);
+    margin-left: 0.02em; /* Réduit de 0.05em à 0.02em */
+}
+
+/* Barre oblique */
+.slash {
+    transform: rotate(20deg);
+    margin: 0 0.02em; /* Réduit de 0.05em à 0.02em */
+    font-size: 0.9em; /* Légèrement plus petite que les nombres */
 }
 
 /* Boutons bidding (moins et plus) sans fond */

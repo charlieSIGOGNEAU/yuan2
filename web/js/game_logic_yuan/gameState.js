@@ -183,7 +183,8 @@ class Territory {
             r: data.position_r ?? 0
         };
         this.user_id = data.user_id || null;
-        this.construction_type = data.construction_type || null;
+        this.construction_type = data.construction_type || null; // village, ville, 2villes
+        this.rempart = data.protection_type || null; // fortifiee, indestruible
         this.armee = data.armee || 0;  
     }
 
@@ -193,6 +194,7 @@ class Territory {
         this.position_r = data.position_r || this.position_r;
         this.user_id = data.user_id || this.user_id;
         this.construction_type = data.construction_type || this.construction_type;
+        this.rempart = data.protection_type || this.protection_type;
         this.armee = data.armee || this.armee;
     }
 

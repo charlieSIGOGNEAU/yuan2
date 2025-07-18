@@ -74,10 +74,11 @@ export const initialPlacement = {
         }
 
         // 6. message info
-        uiManager.updateInfoPanel(i18n.t('game.phases.initial_placement.instructions'));
-        
-        // 7. Afficher la barre d'actions du joueur avec 6 cases
+        uiManager.updateInfoPanel(i18n.t('game.phases.initial_placement.instructions'));    
         uiManager.showValidationBar();
+        
+        // 7. Activer le drag & drop des villes pour permettre le repositionnement
+        gameBoard.enableCityDrag();
     },
 
 };

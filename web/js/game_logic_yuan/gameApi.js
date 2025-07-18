@@ -131,14 +131,21 @@ export const gameApi = {
             if (data.success) {
                 console.log('✅ Clans envoyés avec succès:', data);
                 
-                // Mettre à jour l'interface utilisateur
-                uiManager.updateInfoPanel('Positions des villes validées !');
+                // Désactiver le drag & drop des villes (phase terminée)
+                if (this.gameBoard) {
+                    this.gameBoard.disableCityDrag();
+                    // Optionnel: supprimer les villes du placement initial
+                    this.gameBoard.removeInitialPlacementCities();
+                }
                 
-                // Masquer l'interface d'actions après validation
-                setTimeout(() => {
-                    uiManager.hideAllActionBars();
-                    uiManager.updateInfoPanel('');
-                }, 2000);
+                // // Mettre à jour l'interface utilisateur
+                // uiManager.updateInfoPanel('Positions des villes validées !');
+                
+                // // Masquer l'interface d'actions après validation
+                // setTimeout(() => {
+                //     uiManager.hideAllActionBars();
+                //     uiManager.updateInfoPanel('');
+                // }, 2000);
                 
             } else {
                 console.error('❌ Erreur lors de l\'envoi des clans:', data);
