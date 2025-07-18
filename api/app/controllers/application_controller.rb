@@ -1,5 +1,5 @@
 class ApplicationController < ActionController::API
-  before_action :authenticate_request, except: [:login]
+  # L'authentification sera définie dans chaque contrôleur selon ses besoins
 
   private
 

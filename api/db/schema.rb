@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_17_185150) do
   create_table "actions", force: :cascade do |t|
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false
@@ -64,7 +64,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
     t.integer "game_status", default: 0, null: false
     t.integer "game_type", default: 0, null: false
     t.integer "player_count"
-    t.string "clans"
+    t.string "clan_names"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -93,6 +93,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "language", default: "fr", null: false
   end
 
   add_foreign_key "actions", "game_users"

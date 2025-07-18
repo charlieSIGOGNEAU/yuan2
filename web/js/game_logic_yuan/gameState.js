@@ -22,8 +22,8 @@ class Clan {
         this.name = data.name || '';
         this.start_q = data.start_q || 0;
         this.start_r = data.start_r || 0;
-        this.received_turn = data.received_turn || 0;
-        this.received_chao = data.received_chao || 0;
+        this.received_turn = data.received_turn ?? null;
+        this.received_chao = data.received_chao ?? null;
     }
 
     update(data) {
@@ -33,8 +33,8 @@ class Clan {
         this.name = data.name || this.name;
         this.start_q = data.start_q || this.start_q;
         this.start_r = data.start_r || this.start_r;
-        this.received_turn = data.received_turn || this.received_turn;
-        this.received_chao = data.received_chao || this.received_chao;
+        this.received_turn = data.received_turn ?? this.received_turn;
+        this.received_chao = data.received_chao ?? this.received_chao;
     }
 }
 
@@ -303,13 +303,13 @@ class Game {
         this.game_status = data.game_status || '';
         this.game_type = data.game_type || '';
         this.player_count = data.player_count || 0;
-        this.clans = data.clans || '';
+        this.clan_names = data.clan_names || '';
         
         // Relations
         this.game_users = data.game_users ? data.game_users.map(gu => new GameUser(gu)) : [];
         this.tiles = data.tiles ? data.tiles.map(tile => new Tile(tile)) : [];
         this.actions = data.actions ? data.actions.map(action => new Action(action)) : [];
-        this.clans_data = data.clans ? data.clans.map(clan => new Clan(clan)) : [];
+        this.clans = data.clans ? data.clans.map(clan => new Clan(clan)) : [];
         this.territories = [];  // Initialiser comme un tableau vide
         this.lakes = new Map(); // Map des lacs par ID
     }
@@ -319,8 +319,8 @@ class Game {
         this.game_status = data.game_status || this.game_status;
         this.game_type = data.game_type || this.game_type;
         this.player_count = data.player_count || this.player_count;
-        this.clans = data.clans || this.clans;
-
+        this.clan_names = data.clan_names || this.clan_names;
+        
         // Mise à jour des game_users
         if (data.game_users) {
             // Créer un map des game_users existants
@@ -369,9 +369,9 @@ class Game {
 
         // Mise à jour des clans
         if (data.clans) {
-            const existingClans = new Map(this.clans_data.map(clan => [clan.id, clan]));
+            const existingClans = new Map(this.clans.map(clan => [clan.id, clan]));
             
-            this.clans_data = data.clans.map(clanData => {
+            this.clans = data.clans.map(clanData => {
                 const existing = existingClans.get(clanData.id);
                 if (existing) {
                     existing.update(clanData);
@@ -409,10 +409,24 @@ class GameState {
     isInstallationPhase() {
         return this.game.game_status === 'installation_phase';
     }
+    
+    isnotwaiting_for_players() {
+        return this.game.game_status !== 'waiting_for_players';
+    }
 
     // Méthode pour vérifier si on est en jeu simultané
     isSimultaneousPlay() {
         return this.game.game_status === 'simultaneous_play';
+    }
+
+    // Méthode pour vérifier si on est le joueur avec l'ID le plus bas
+    isLowestIdPlayer() {
+        if (!this.myGameUserId || this.game.game_users.length === 0) {
+            return false;
+        }
+        
+        const lowestId = Math.min(...this.game.game_users.map(gu => gu.id));
+        return this.myGameUserId === lowestId;
     }
 }
 

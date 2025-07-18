@@ -2,16 +2,16 @@ import { gameState } from './gameState.js';
 import { Game } from '../app/game.js';
 import { installationPhase } from './phases/installationPhase.js';
 import { initialPlacement } from './phases/initial_placement.js';
+import { biddingPhase } from './phases/biddingPhase.js';
 import { Auth } from '../app/auth.js';
 import { startingPositions } from './StartingPositions.js';
 import { uiManager } from './ui/UIManager.js';
+import { i18n } from '../core/i18n.js';
 
 // Fonctions pour l'API
 export const gameApi = {
     gameBoard: null,
 
-    
-    // Futures fonctions pour envoyer à l'API
     async handleGameMessage(data) {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
             console.log('📨 Message reçu:', data);
@@ -23,24 +23,38 @@ export const gameApi = {
             console.log('🎮 GameState mis à jour:', gameState);
             
             // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
-            if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay() || gameState.game.game_status === 'initial_placement') && !this.gameBoard) {
+            if (gameState.game.game_status !== 'waiting_for_players' && !this.gameBoard) {
                 this.gameBoard = Game.showGameBoard();
                 
                 // Charger l'interface UI après la création du gameboard
                 if (!uiManager.gameUI) {
                     await uiManager.loadGameUI();
                     
-                    // Exemple d'utilisation du panneau d'informations
+                    // S'assurer que les traductions sont initialisées avec la langue de l'utilisateur
+                    if (Auth.currentUser && Auth.currentUser.language && !i18n.loadedLanguages.has(Auth.currentUser.language)) {
+                        await i18n.initialize(Auth.currentUser.language);
+                    }
+                    
+                    // ici on peut rajouter des information entre les guimets qui s'aficheron par decu le game board3d
                     uiManager.updateInfoPanel('');
                 }
             }
             
             // Exécuter la phase de placement initial APRÈS création du gameBoard
-            if (gameState.game.game_status === 'initial_placement' && this.gameBoard) {
+            // Seul le joueur avec l'ID le plus bas peut exécuter cette phase
+            if (gameState.game.game_status === 'initial_placement' && this.gameBoard && gameState.isLowestIdPlayer()) {
+                console.log('🎯 Exécution de la phase de placement initial (joueur ID le plus bas)');
                 initialPlacement.execute(this.gameBoard);
             }
+            
+            // Exécuter la phase de bidding
+            if (gameState.game.game_status === 'bidding_phase' && this.gameBoard) {
+                console.log('🎯 Exécution de la phase de bidding');
+                biddingPhase.execute(this.gameBoard);
+            }
+            
             // Mise à jour des tiles 3D
-            if ((gameState.isInstallationPhase() || gameState.isSimultaneousPlay() || gameState.game.game_status === 'initial_placement') && this.gameBoard) {
+            if (gameState.game.game_status !== 'waiting_for_players' && this.gameBoard) {
                 installationPhase.updateTile3d();
             }
 
@@ -87,6 +101,52 @@ export const gameApi = {
             }
         } catch (error) {
             console.error('❌ Erreur réseau lors de l\'envoi de la tile:', error);
+        }
+    },
+
+    // Envoyer les positions des clans à l'API
+    async sendClansToApi(clansData) {
+        try {
+            console.log('📤 Envoi des clans à l\'API:', clansData);
+            
+            const gameId = gameState.game.id;
+            if (!gameId) {
+                console.error('❌ ID de jeu manquant');
+                return;
+            }
+            
+            const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/clans`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Auth.authToken}`
+                },
+                body: JSON.stringify({
+                    clans: clansData
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Clans envoyés avec succès:', data);
+                
+                // Mettre à jour l'interface utilisateur
+                uiManager.updateInfoPanel('Positions des villes validées !');
+                
+                // Masquer l'interface d'actions après validation
+                setTimeout(() => {
+                    uiManager.hideAllActionBars();
+                    uiManager.updateInfoPanel('');
+                }, 2000);
+                
+            } else {
+                console.error('❌ Erreur lors de l\'envoi des clans:', data);
+                uiManager.updateInfoPanel('Erreur lors de la validation');
+            }
+        } catch (error) {
+            console.error('❌ Erreur réseau lors de l\'envoi des clans:', error);
+            uiManager.updateInfoPanel('Erreur de connexion');
         }
     }
 };

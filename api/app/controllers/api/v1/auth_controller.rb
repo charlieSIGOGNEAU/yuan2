@@ -1,4 +1,6 @@
 class Api::V1::AuthController < ApplicationController
+  before_action :authenticate_request, except: [:login]
+  
   # POST /api/v1/auth/login
   def login
     puts "🔐 Tentative de connexion avec: #{params[:name]}"
@@ -24,7 +26,8 @@ class Api::V1::AuthController < ApplicationController
           message: "Connexion réussie",
           user: {
             id: user.id,
-            name: user.name
+            name: user.name,
+            language: user.language
           },
           token: token
         }, status: :ok
@@ -53,7 +56,8 @@ class Api::V1::AuthController < ApplicationController
         success: true,
         user: {
           id: current_user.id,
-          name: current_user.name
+          name: current_user.name,
+          language: current_user.language
         }
       }
     else

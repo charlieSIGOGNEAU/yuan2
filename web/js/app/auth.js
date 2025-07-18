@@ -1,6 +1,7 @@
 import { LoginPage } from './login.js';
 import { MenuPage } from './menu.js';
 import { WebSocketClient } from './websocket.js';
+import { i18n } from '../core/i18n.js';
 
 // Module d'authentification simplifié
 export const Auth = {
@@ -22,6 +23,10 @@ export const Auth = {
                 this.authToken = data.token;
                 this.currentUser = data.user;
                 console.log('✅ Connexion réussie:', this.currentUser.name);
+                console.log('🌍 Langue utilisateur:', this.currentUser.language);
+                
+                // Initialiser le système de traductions avec la langue de l'utilisateur
+                await i18n.initialize(this.currentUser.language);
                 
                 // Démarrer la connexion WebSocket après l'authentification, connect() est une methode de WebSocket.js
                 await WebSocketClient.connect();

@@ -14,6 +14,7 @@ export class GameBoard3D {
         this.circles = []; // Stocke les cercles créés
         this.tiles = []; // Stocke les tuiles créées
         this.animations = []; // Stocke les animations en cours
+        this.initialPlacementCities = []; // Stocke les villes du placement initial
         this.isDragging = false;
         this.dragStart = null;
         this.workplaneStartPosition = null;
@@ -53,7 +54,7 @@ export class GameBoard3D {
         this.init();
     }
     
-
+    
     init() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
@@ -333,8 +334,8 @@ export class GameBoard3D {
                         }
                     });
                     
-                    this.workplane.add(tile);
-                    this.tiles.push(tile); // Stocke la référence de la tuile
+        this.workplane.add(tile);
+        this.tiles.push(tile); // Stocke la référence de la tuile
                     console.log(`🎯 Tuile ajoutée au workplane. Total tuiles:`, this.tiles.length);
                     resolve(tile);
                 },
@@ -413,8 +414,8 @@ export class GameBoard3D {
                         }
                     });
                     
-                    this.workplane.add(tile);
-                    this.tileTemp = tile;
+        this.workplane.add(tile);
+        this.tileTemp = tile;
 
                     // Création des sprites rotation et OK (restent en 2D pour l'interface)
                     const textureLoader = new THREE.TextureLoader();
@@ -503,7 +504,7 @@ export class GameBoard3D {
     }
 
     // Méthode pour ajouter une ville de clan
-    addClanCity(position = { q: 0, r: 0 }, colorHex = '#FFFFFF', clanName = 'Unknown') {
+    addClanCity(position = { q: 0, r: 0 }, colorHex = '#FFFFFF', clanName = 'Unknown', isInitialPlacement = false) {
         console.log(`🏘️ Chargement de la ville pour le clan ${clanName} (${colorHex}) à la position:`, position);
         
         return new Promise((resolve, reject) => {
@@ -550,6 +551,13 @@ export class GameBoard3D {
                     });
                     
                     this.workplane.add(cityMesh);
+                    
+                    // Stocker la référence si c'est pour l'initial placement
+                    if (isInitialPlacement) {
+                        this.initialPlacementCities.push(cityMesh);
+                        console.log(`📝 Ville du clan ${clanName} stockée pour suppression ultérieure (total: ${this.initialPlacementCities.length})`);
+                    }
+                    
                     console.log(`🏘️ Ville du clan ${clanName} ajoutée au workplane à la position`, pos);
                     resolve(cityMesh);
                 },
@@ -574,6 +582,55 @@ export class GameBoard3D {
         });
         // Vide le tableau des cercles
         this.circles = [];
+    }
+
+    // Fonction pour supprimer les villes du placement initial uniquement
+    removeInitialPlacementCities() {
+        console.log('🗑️ Suppression des villes du placement initial...');
+        console.log(`🏘️ ${this.initialPlacementCities.length} villes du placement initial à supprimer`);
+        
+        // Supprimer chaque ville stockée
+        this.initialPlacementCities.forEach((city, index) => {
+            console.log(`🗑️ Suppression de la ville ${city.userData.clanName} (${city.userData.color})`);
+            
+            // Supprimer du workplane
+            this.workplane.remove(city);
+            
+            // Libérer les ressources en parcourant tous les enfants
+            city.traverse((child) => {
+                if (child.geometry) {
+                    child.geometry.dispose();
+                }
+                if (child.material) {
+                    // Gérer les matériaux multiples ou simples
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach(material => {
+                            // Libérer les textures
+                            if (material.map) material.map.dispose();
+                            if (material.normalMap) material.normalMap.dispose();
+                            if (material.roughnessMap) material.roughnessMap.dispose();
+                            if (material.metalnessMap) material.metalnessMap.dispose();
+                            material.dispose();
+                        });
+                    } else {
+                        // Libérer les textures
+                        if (child.material.map) child.material.map.dispose();
+                        if (child.material.normalMap) child.material.normalMap.dispose();
+                        if (child.material.roughnessMap) child.material.roughnessMap.dispose();
+                        if (child.material.metalnessMap) child.material.metalnessMap.dispose();
+                        child.material.dispose();
+                    }
+                }
+            });
+        });
+        
+        const removedCount = this.initialPlacementCities.length;
+        
+        // Vider le tableau après suppression
+        this.initialPlacementCities = [];
+        
+        console.log(`✅ ${removedCount} villes du placement initial supprimées avec succès`);
+        return removedCount;
     }
 
     getMouseWorld(e) {
@@ -992,5 +1049,5 @@ export class GameBoard3D {
 
         // Réinitialiser la rotation
         this.tempTileRotation = null;
-        }
-}  
+    }
+} 

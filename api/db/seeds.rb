@@ -6,12 +6,12 @@ Clan.delete_all
 Game.delete_all
 User.delete_all
 
-User.create(name: "user1")
-User.create(name: "user2")
-User.create(name: "user3")
-User.create(name: "user4")
-User.create(name: "user5")
-User.create(name: "user6")
+User.create(name: "user1", language: "fr")
+User.create(name: "user2", language: "fr")
+User.create(name: "user3", language: "fr")
+User.create(name: "user4", language: "fr")
+User.create(name: "user5", language: "fr")
+User.create(name: "user6", language: "fr")
 
 
 

@@ -19,6 +19,9 @@ Rails.application.routes.draw do
             post :place
           end
         end
+        
+        # Routes de clans
+        resources :clans, only: [:create]
       end
     end
   end

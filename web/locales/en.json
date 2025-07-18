@@ -1,0 +1,36 @@
+{
+  "game": {
+    "phases": {
+      "initial_placement": {
+        "instructions": "Move cities if needed, then validate.",
+        "title": "Initial placement phase"
+      },
+      "installation": {
+        "title": "Installation phase"
+      }
+    },
+    "ui": {
+      "loading": "Loading...",
+      "waiting": "Waiting...",
+      "your_turn": "Your turn",
+      "game_over": "Game over"
+    },
+    "actions": {
+      "validate": "Validate",
+      "cancel": "Cancel",
+      "place": "Place",
+      "move": "Move"
+    }
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "save": "Save",
+    "load": "Load"
+  }
+} 

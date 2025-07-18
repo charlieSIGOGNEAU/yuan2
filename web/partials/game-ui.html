@@ -2,4 +2,68 @@
 <div id="game-ui-overlay" class="game-ui-overlay">
     <!-- Zone d'informations en haut -->
     <div id="info-panel" class="info-panel"></div>
+    
+    <!-- Barre d'actions du joueur avec 6 cases -->
+    <div id="player-action-bar" class="player-action-bar" style="display: none;">
+        <!-- Roue crantée pour le menu options -->
+        <div class="action-case action-menu">
+            <img src="./svg/settings.svg" alt="Menu" class="action-icon">
+        </div>
+        
+        <!-- 4 cases d'actions centrales -->
+        <div class="action-case action-slot"></div>
+        <div class="action-case action-slot"></div>
+        <div class="action-case action-slot"></div>
+        <div class="action-case action-slot"></div>
+        
+        <!-- Validation avec check vert -->
+        <div class="action-case action-validate">
+            <img src="./svg/check.svg" alt="Valider" class="action-icon">
+        </div>
+    </div>
+    
+    <!-- Interface de validation simple (settings + check seulement) -->
+    <div id="validation-bar" class="player-action-bar" style="display: none;">
+        <!-- Roue crantée pour le menu options -->
+        <div class="action-case action-menu">
+            <img src="./svg/settings.svg" alt="Menu" class="action-icon">
+        </div>
+        
+        <!-- Espacement flexible pour centrer -->
+        <div style="flex: 4;"></div>
+        
+        <!-- Validation avec check vert -->
+        <div class="action-case action-validate">
+            <img src="./svg/check.svg" alt="Valider" class="action-icon">
+        </div>
+    </div>
+    
+    <!-- Interface de bidding (settings + info + moins + plus + check) -->
+    <div id="rectangle-action-bar" class="player-action-bar" style="display: none;">
+        <!-- Roue crantée pour le menu options -->
+        <div class="action-case action-menu">
+            <img src="./svg/settings.svg" alt="Menu" class="action-icon">
+        </div>
+        
+        <!-- Case d'information dynamique avec l'image chao et le texte -->
+        <div class="bidding-info-case">
+            <img src="./images/chaoDetoureVierge.webp" alt="Chao" class="chao-icon">
+            <span class="chao-text">: 0/0</span>
+        </div>
+        
+        <!-- Bouton moins -->
+        <div class="action-case bidding-button bidding-less">
+            <img src="./svg/less.svg" alt="Moins" class="action-icon">
+        </div>
+        
+        <!-- Bouton plus -->
+        <div class="action-case bidding-button bidding-more">
+            <img src="./svg/more.svg" alt="Plus" class="action-icon">
+        </div>
+        
+        <!-- Validation avec check vert -->
+        <div class="action-case action-validate">
+            <img src="./svg/check.svg" alt="Valider" class="action-icon">
+        </div>
+    </div>
 </div> 

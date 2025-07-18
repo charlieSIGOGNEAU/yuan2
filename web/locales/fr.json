@@ -1,0 +1,36 @@
+{
+  "game": {
+    "phases": {
+      "initial_placement": {
+        "instructions": "Replace les villes si besoin, puis valide.",
+        "title": "Phase de placement initial"
+      },
+      "installation": {
+        "title": "Phase d'installation"
+      }
+    },
+    "ui": {
+      "loading": "Chargement...",
+      "waiting": "En attente...",
+      "your_turn": "À votre tour",
+      "game_over": "Partie terminée"
+    },
+    "actions": {
+      "validate": "Valider",
+      "cancel": "Annuler",
+      "place": "Placer",
+      "move": "Déplacer"
+    }
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "yes": "Oui",
+    "no": "Non",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "save": "Sauvegarder",
+    "load": "Charger"
+  }
+} 
