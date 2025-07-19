@@ -7,6 +7,10 @@ export class UIManager {
         this.validationBar = null;
         this.biddingBar = null;
         this.currentActionBar = null; // Référence vers la barre actuellement affichée
+        
+        // Variables pour le bidding
+        this.currentBid = 0; // Valeur actuelle du numérateur
+        this.maxBid = 6; // Valeur maximale du dénominateur
     }
 
     // Charger l'interface UI du jeu
@@ -39,11 +43,6 @@ export class UIManager {
             
             console.log('🎨 Interface UI chargée avec succès');
             
-            // Petit délai pour s'assurer que le DOM est bien mis à jour
-            setTimeout(() => {
-                this.setupUIEventListeners();
-            }, 100);
-            
         } catch (error) {
             console.error('❌ Erreur lors du chargement de l\'interface UI:', error);
         }
@@ -57,36 +56,49 @@ export class UIManager {
 
     // Configuration des event listeners partagés (settings et check)
     setupSharedActionListeners() {
+        // Supprimer les anciens listeners s'ils existent pour éviter les doublons
+        this.removeExistingListeners();
+        
         // Tous les boutons settings dans toutes les interfaces
         const settingsButtons = document.querySelectorAll('.action-menu');
         settingsButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                this.handleSettingsClick();
-            });
+            button.addEventListener('click', this.handleSettingsClick.bind(this));
         });
 
         // Tous les boutons de validation dans toutes les interfaces
         const validateButtons = document.querySelectorAll('.action-validate');
         validateButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                this.handleValidateClick();
-            });
+            button.addEventListener('click', this.handleValidateClick.bind(this));
         });
 
         // Boutons bidding (moins et plus)
         const lessButton = document.querySelector('.bidding-less');
         if (lessButton) {
-            lessButton.addEventListener('click', () => {
-                this.handleBiddingLessClick();
-            });
+            lessButton.addEventListener('click', this.handleBiddingLessClick.bind(this));
         }
 
         const moreButton = document.querySelector('.bidding-more');
         if (moreButton) {
-            moreButton.addEventListener('click', () => {
-                this.handleBiddingMoreClick();
-            });
+            moreButton.addEventListener('click', this.handleBiddingMoreClick.bind(this));
         }
+    }
+
+    // Supprimer les event listeners existants pour éviter les doublons
+    removeExistingListeners() {
+        // Cloner et remplacer les éléments pour supprimer tous les event listeners
+        const elementsToClean = [
+            ...document.querySelectorAll('.action-menu'),
+            ...document.querySelectorAll('.action-validate'),
+            ...document.querySelectorAll('.bidding-less'),
+            ...document.querySelectorAll('.bidding-more')
+        ];
+
+        elementsToClean.forEach(element => {
+            if (element && element.parentNode) {
+                const newElement = element.cloneNode(true);
+                element.parentNode.replaceChild(newElement, element);
+            }
+        });
     }
 
     // Action du bouton settings (partagée par toutes les interfaces)
@@ -212,7 +224,11 @@ export class UIManager {
     }
 
     // Fonction pour mettre à jour la fraction de bidding (numérateur/dénominateur)
-    updateBiddingText(current, max) {
+    updateBiddingText(current = this.currentBid, max = this.maxBid) {
+        // Stocker les valeurs pour les boutons
+        this.currentBid = current;
+        this.maxBid = max;
+        
         const updateFraction = () => {
             // Essayer plusieurs sélecteurs pour trouver les éléments
             let numerator = document.querySelector('.chao-numerator') || 
@@ -255,14 +271,24 @@ export class UIManager {
 
     // Gestion du clic sur le bouton moins
     handleBiddingLessClick() {
-        console.log('➖ Action: Diminuer la mise');
-        // TODO: Implémenter la logique de diminution
+        if (this.currentBid > 0) {
+            this.currentBid--;
+            this.updateBiddingText();
+            console.log(`➖ Mise diminuée: ${this.currentBid}/${this.maxBid}`);
+        } else {
+            console.log('➖ Impossible de diminuer: valeur minimale atteinte (0)');
+        }
     }
 
     // Gestion du clic sur le bouton plus  
     handleBiddingMoreClick() {
-        console.log('➕ Action: Augmenter la mise');
-        // TODO: Implémenter la logique d'augmentation
+        if (this.currentBid < this.maxBid) {
+            this.currentBid++;
+            this.updateBiddingText();
+            console.log(`➕ Mise augmentée: ${this.currentBid}/${this.maxBid}`);
+        } else {
+            console.log(`➕ Impossible d'augmenter: valeur maximale atteinte (${this.maxBid})`);
+        }
     }
 
     // Méthode de fallback pour créer les éléments de fraction manquants

@@ -1,5 +1,6 @@
 // Classes pour les modèles backend
 import { TILE_CONFIGS } from './pieces/TileTypes.js';
+import { meepleManager } from './pieces/MeepleManager.js';
 
 
 class User {
@@ -185,7 +186,12 @@ class Territory {
         this.user_id = data.user_id || null;
         this.construction_type = data.construction_type || null; // village, ville, 2villes
         this.rempart = data.protection_type || null; // fortifiee, indestruible
-        this.armee = data.armee || 0;  
+        this.warriors = []; // Tableau des mesh de guerriers (remplace armee)
+        this.color = data.color || null; // Couleur du clan pour ce territoire
+        
+        // Références aux mesh 3D
+        this.construction_mesh = null; // Mesh de la construction (village, ville, 2villes)
+        this.rempart_mesh = null; // Mesh du rempart (fortifiee, indestruible)
     }
 
     update(data) {
@@ -195,7 +201,206 @@ class Territory {
         this.user_id = data.user_id || this.user_id;
         this.construction_type = data.construction_type || this.construction_type;
         this.rempart = data.protection_type || this.protection_type;
-        this.armee = data.armee || this.armee;
+        this.color = data.color || this.color;
+        // Note: warriors n'est pas mis à jour via data, il est géré par les méthodes
+    }
+
+    // Obtenir la position cartésienne de ce territoire
+    getCartesianPosition(gameBoard) {
+        return gameBoard.hexToCartesian(this.position);
+    }
+
+    // Positions décalées pour les guerriers (selon les spécifications)
+    getWarriorPositions(count) {
+        const basePos = this.position;
+        const positions = [
+            { q: basePos.q + 0.25, r: basePos.r - 0.35 }, // 1er warrior
+            { q: basePos.q + 0.25, r: basePos.r + 0 },    // 2ème warrior  
+            { q: basePos.q + 0,    r: basePos.r - 0.35 }, // 3ème warrior
+            { q: basePos.q + 0,    r: basePos.r + 0.35 }, // 4ème warrior
+            { q: basePos.q - 0.25, r: basePos.r + 0 }     // 5ème warrior
+        ];
+        return positions.slice(0, count);
+    }
+
+    // Créer la mesh de construction
+    createConstruction(gameBoard, meepleManager) {
+        if (!this.construction_type || !this.color || this.construction_mesh) {
+            return; // Pas de construction à créer ou déjà créée
+        }
+
+        console.log(`🏗️ Création de ${this.construction_type} (${this.color}) sur territoire (${this.position.q}, ${this.position.r})`);
+        
+        // Créer l'instance du meeple
+        const mesh = meepleManager.createMeepleInstance(this.construction_type, this.color, {
+            territory: this,
+            type: 'construction'
+        });
+
+        if (mesh) {
+            // Positionner à la position exacte du territoire
+            const pos = this.getCartesianPosition(gameBoard);
+            mesh.position.set(pos.x, pos.y, pos.z);
+            
+            // Désactiver les collisions
+            mesh.traverse((child) => {
+                if (child.isMesh) {
+                    child.raycast = function() {};
+                }
+            });
+
+            // Ajouter au workplane
+            gameBoard.workplane.add(mesh);
+            this.construction_mesh = mesh;
+            
+            console.log(`✅ Construction ${this.construction_type} créée à`, pos);
+        }
+    }
+
+    // Créer la mesh de rempart
+    createRempart(gameBoard, meepleManager) {
+        if (!this.rempart || this.rempart_mesh) {
+            return; // Pas de rempart à créer ou déjà créé
+        }
+
+        console.log(`🛡️ Création de ${this.rempart} sur territoire (${this.position.q}, ${this.position.r})`);
+        
+        // Utiliser le type 'fortification' du MeepleManager (non colorable)
+        const mesh = meepleManager.createMeepleInstance('fortification', null, {
+            territory: this,
+            type: 'rempart',
+            rempartType: this.rempart
+        });
+
+        if (mesh) {
+            // Positionner à la position exacte du territoire
+            const pos = this.getCartesianPosition(gameBoard);
+            
+            // Gérer les différences selon le type de rempart
+            if (this.rempart === 'indestruible') {
+                // Indestructible : rotation 180° et surélevé
+                mesh.position.set(pos.x, pos.y + 0.02, pos.z);
+                mesh.rotation.y = Math.PI; // 180 degrés
+                console.log(`🔄 Rempart indestructible : rotation 180° et +0.02 en hauteur`);
+            } else {
+                // Fortifiée : position normale
+                mesh.position.set(pos.x, pos.y, pos.z);
+            }
+            
+            // Désactiver les collisions
+            mesh.traverse((child) => {
+                if (child.isMesh) {
+                    child.raycast = function() {};
+                }
+            });
+
+            // Ajouter au workplane
+            gameBoard.workplane.add(mesh);
+            this.rempart_mesh = mesh;
+            
+            console.log(`✅ Rempart ${this.rempart} créé à`, pos);
+        }
+    }
+
+    // Créer les mesh de guerriers
+    createWarriors(gameBoard, meepleManager, count) {
+        if (!this.color || count <= 0) {
+            return; // Pas de guerriers à créer
+        }
+
+        console.log(`⚔️ Création de ${count} guerriers (${this.color}) sur territoire (${this.position.q}, ${this.position.r})`);
+        
+        // Supprimer les anciens guerriers d'abord
+        this.removeWarriors(gameBoard);
+        
+        // Obtenir les positions pour les guerriers
+        const positions = this.getWarriorPositions(count);
+        
+        for (let i = 0; i < count; i++) {
+            const mesh = meepleManager.createMeepleInstance('guerrier', this.color, {
+                territory: this,
+                type: 'warrior',
+                index: i
+            });
+
+            if (mesh) {
+                // Positionner selon le décalage défini
+                const pos = gameBoard.hexToCartesian(positions[i]);
+                mesh.position.set(pos.x, pos.y, pos.z);
+                
+                // Désactiver les collisions
+                mesh.traverse((child) => {
+                    if (child.isMesh) {
+                        child.raycast = function() {};
+                    }
+                });
+
+                // Ajouter au workplane et stocker
+                gameBoard.workplane.add(mesh);
+                this.warriors.push(mesh);
+                
+                console.log(`✅ Guerrier ${i+1} créé à`, pos);
+            }
+        }
+    }
+
+    // Supprimer la construction
+    removeConstruction(gameBoard) {
+        if (this.construction_mesh) {
+            console.log(`🗑️ Suppression de la construction sur territoire (${this.position.q}, ${this.position.r})`);
+            gameBoard.workplane.remove(this.construction_mesh);
+            this.construction_mesh = null;
+        }
+    }
+
+    // Supprimer le rempart
+    removeRempart(gameBoard) {
+        if (this.rempart_mesh) {
+            console.log(`🗑️ Suppression du rempart sur territoire (${this.position.q}, ${this.position.r})`);
+            gameBoard.workplane.remove(this.rempart_mesh);
+            this.rempart_mesh = null;
+        }
+    }
+
+    // Supprimer tous les guerriers
+    removeWarriors(gameBoard) {
+        if (this.warriors.length > 0) {
+            console.log(`🗑️ Suppression de ${this.warriors.length} guerriers sur territoire (${this.position.q}, ${this.position.r})`);
+            this.warriors.forEach(warrior => {
+                gameBoard.workplane.remove(warrior);
+            });
+            this.warriors = [];
+        }
+    }
+
+    // Supprimer toutes les mesh de ce territoire
+    removeAllMeshes(gameBoard) {
+        this.removeConstruction(gameBoard);
+        this.removeRempart(gameBoard);
+        this.removeWarriors(gameBoard);
+        console.log(`🧹 Toutes les mesh supprimées du territoire (${this.position.q}, ${this.position.r})`);
+    }
+
+    // Mettre à jour les mesh selon les données actuelles
+    updateMeshes(gameBoard, meepleManager) {
+        console.log(`🔄 Mise à jour des mesh pour territoire (${this.position.q}, ${this.position.r})`);
+        
+        // Créer/mettre à jour la construction
+        if (this.construction_type && !this.construction_mesh) {
+            this.createConstruction(gameBoard, meepleManager);
+        } else if (!this.construction_type && this.construction_mesh) {
+            this.removeConstruction(gameBoard);
+        }
+        
+        // Créer/mettre à jour le rempart
+        if (this.rempart && !this.rempart_mesh) {
+            this.createRempart(gameBoard, meepleManager);
+        } else if (!this.rempart && this.rempart_mesh) {
+            this.removeRempart(gameBoard);
+        }
+        
+        // Note: Pour les guerriers, utiliser createWarriors() avec le count désiré
+        // car elle gère automatiquement la suppression/recréation
     }
 
     getAdjacentTerritories() {

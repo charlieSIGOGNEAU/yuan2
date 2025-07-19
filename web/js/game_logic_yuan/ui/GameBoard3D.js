@@ -205,7 +205,7 @@ export class GameBoard3D {
                 console.warn('⚠️ Erreur chargement texture cercle:', error);
             }
         );
-        const pos = this.#hexToCartesian(position);
+        const pos = this.hexToCartesian(position);
         circle.position.set(pos.x, pos.y, pos.z);
         circle.rotation.x = -Math.PI / 2; // Pour le mettre à plat sur le plan
         
@@ -242,7 +242,7 @@ export class GameBoard3D {
         window.addEventListener('resize', this.onResize.bind(this));
     }
     //q correspond à un déplacement vers la droite. r correspond à un déplacement en diagonale en haut a droites.
-    #hexToCartesian (position = {q: 0, r: 0, z: 0}) {
+    hexToCartesian(position = {q: 0, r: 0, z: 0}) {
         return {x: position.q+position.r/2, y: position.z || 0, z: -position.r/2*Math.sqrt(3)};
     }
     #cartesianToHex({ x, y, z }) {
@@ -333,7 +333,7 @@ export class GameBoard3D {
                         }
                     });
                     
-        const pos = this.#hexToCartesian(position);
+        const pos = this.hexToCartesian(position);
         tile.position.set(pos.x, pos.y, pos.z);
                     tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
                     // Les modèles sont déjà à la bonne taille (3 unités)
@@ -413,7 +413,7 @@ export class GameBoard3D {
                         }
                     });
                     
-        const pos = this.#hexToCartesian(position);
+        const pos = this.hexToCartesian(position);
         tile.position.set(pos.x, 0.2, pos.z); // Hauteur fixée à 0.2
                     tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
                     // Le modèle est déjà à la bonne taille
@@ -538,7 +538,7 @@ export class GameBoard3D {
         if (this.tempTile) {
             this.tempTilePosition = position;
             console.log(this.tempTilePosition);
-            const pos = this.#hexToCartesian(position);
+            const pos = this.hexToCartesian(position);
             
             // Déplacer la tuile principale
             this.tempTile.position.set(pos.x, 0.2, pos.z);
@@ -581,7 +581,7 @@ export class GameBoard3D {
                     });
                     
                     // Convertir les coordonnées hexagonales en cartésiennes
-                    const pos = this.#hexToCartesian(position);
+                    const pos = this.hexToCartesian(position);
                     cityMesh.position.set(pos.x, pos.y, pos.z);
                     
                     // Stocker des informations sur le clan dans userData
@@ -658,7 +658,7 @@ export class GameBoard3D {
         }
         
         // Convertir les coordonnées hexagonales en cartésiennes
-        const pos = this.#hexToCartesian(position);
+        const pos = this.hexToCartesian(position);
         meepleInstance.position.set(pos.x, pos.y + (position.z || 0), pos.z);
         
         // Désactiver les collisions pour ce meeple
@@ -719,7 +719,7 @@ export class GameBoard3D {
                 console.log('✅ Test 2: Instance colorée créée');
                 
                 // Test 3: Ajout au plateau
-                const pos = this.#hexToCartesian({ q: 0, r: 0 });
+                const pos = this.hexToCartesian({ q: 0, r: 0 });
                 redCity.position.set(pos.x, pos.y, pos.z);
                 this.workplane.add(redCity);
                 console.log('✅ Test 3: Meeple ajouté au plateau');
@@ -1012,7 +1012,7 @@ export class GameBoard3D {
                         console.log(`🎯 Terrain choisi: ${closestTerrain.type} à (${closestTerrain.position.q}, ${closestTerrain.position.r})`);
                         
                         // Placer la ville sur le terrain choisi
-                        const exactPos = this.#hexToCartesian({ q: closestTerrain.position.q, r: closestTerrain.position.r, z: 0 });
+                        const exactPos = this.hexToCartesian({ q: closestTerrain.position.q, r: closestTerrain.position.r, z: 0 });
                         this.draggedCity.position.set(exactPos.x, this.draggedCity.position.y, exactPos.z);
                         
                         // Mettre à jour les userData
@@ -1237,4 +1237,58 @@ export class GameBoard3D {
         // Réinitialiser la rotation
         this.tempTileRotation = null;
     }
+
+// Méthode de démonstration pour le nouveau système Territory
+async testTerritorySystem() {
+    console.log('🧪 Test du nouveau système Territory...');
+    
+    try {
+        // Vérifier qu'on a des territoires
+        if (!window.gameState?.game?.territories?.length) {
+            console.warn('⚠️ Aucun territoire disponible pour le test');
+            return;
+        }
+        
+        // Prendre le premier territoire disponible
+        const territory = window.gameState.game.territories[0];
+        console.log(`🎯 Test sur territoire (${territory.position.q}, ${territory.position.r}) de type ${territory.type}`);
+        
+        // Configurer le territoire pour le test
+        territory.color = '#FF0000'; // Rouge pour test
+        territory.construction_type = 'ville';
+        territory.rempart = 'fortifiee';
+        
+        // Test 1: Créer une construction
+        console.log('📦 Test 1: Création de construction...');
+        territory.createConstruction(this, this.meepleManager);
+        
+        // Test 2: Créer des guerriers (3 pour tester le positionnement)
+        setTimeout(() => {
+            console.log('⚔️ Test 2: Création de 3 guerriers...');
+            territory.createWarriors(this, this.meepleManager, 3);
+            
+            // Test 3: Mettre à jour le nombre de guerriers après 2 secondes
+            setTimeout(() => {
+                console.log('🔄 Test 3: Mise à jour vers 5 guerriers...');
+                territory.createWarriors(this, this.meepleManager, 5);
+                
+                // Test 4: Nettoyage après 3 secondes
+                setTimeout(() => {
+                    console.log('🧹 Test 4: Nettoyage complet...');
+                    territory.removeAllMeshes(this);
+                    
+                    // Réinitialiser le territoire
+                    territory.color = null;
+                    territory.construction_type = null;
+                    territory.rempart = null;
+                    
+                    console.log('✅ Test du système Territory terminé !');
+                }, 3000);
+            }, 2000);
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Erreur lors du test Territory:', error);
+    }
+}
 } 
