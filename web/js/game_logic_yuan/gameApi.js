@@ -4,7 +4,7 @@ import { installationPhase } from './phases/installationPhase.js';
 import { initialPlacement } from './phases/initial_placement.js';
 import { biddingPhase } from './phases/biddingPhase.js';
 import { Auth } from '../app/auth.js';
-import { startingPositions } from './StartingPositions.js';
+import { startingSpotSelectionPhase } from './phases/startingSpotSelectionPhase.js';
 import { uiManager } from './ui/UIManager.js';
 import { i18n } from '../core/i18n.js';
 
@@ -16,6 +16,14 @@ export const gameApi = {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
             console.log('📨 Message reçu:', data);
         }  
+        
+        // Gestion du message d'attente des autres joueurs
+        if (data.message.type === 'waiting_for_other_players') {
+            console.log('⏳ Message d\'attente reçu:', data);
+            uiManager.updateInfoPanel(i18n.t('game.ui.waiting_for_others'));
+            return;
+        }
+        
         
         if (data.message && data.message.type === 'game_details') {
             // Mettre à jour le gameState avec les nouvelles données
@@ -61,6 +69,10 @@ export const gameApi = {
             // Ajout de la premiere tile ou choix de la tile a ajouter
             if (gameState.game.game_status === 'installation_phase') {
                 installationPhase.addTiles(gameState);
+            }
+
+            if (gameState.game.game_status === 'starting_spot_selection') {
+                startingSpotSelectionPhase.execute(gameState,this.gameBoard);
             }
 
         } 
@@ -138,21 +150,49 @@ export const gameApi = {
                     this.gameBoard.removeInitialPlacementCities();
                 }
                 
-                // // Mettre à jour l'interface utilisateur
-                // uiManager.updateInfoPanel('Positions des villes validées !');
-                
-                // // Masquer l'interface d'actions après validation
-                // setTimeout(() => {
-                //     uiManager.hideAllActionBars();
-                //     uiManager.updateInfoPanel('');
-                // }, 2000);
-                
             } else {
                 console.error('❌ Erreur lors de l\'envoi des clans:', data);
                 uiManager.updateInfoPanel('Erreur lors de la validation');
             }
         } catch (error) {
             console.error('❌ Erreur réseau lors de l\'envoi des clans:', error);
+            uiManager.updateInfoPanel('Erreur de connexion');
+        }
+    },
+
+    // Envoyer les données de bidding à l'API
+    async sendBiddingToApi(chao, turn = 0) {
+        try {
+            
+            const gameId = gameState.game.id;
+            const myGameUser = gameState.getMyGameUser();
+            
+            const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/bidding`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Auth.authToken}`
+                },
+                body: JSON.stringify({
+                    game_user_id: myGameUser.id,
+                    chao: chao,
+                    turn: turn
+                })
+            });
+            console.log('📤 Envoi des données de bidding à l\'API:', { chao, turn });
+
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Bidding envoyé avec succès:', data);
+                
+            } else {
+                console.error('❌ Erreur lors de l\'envoi du bidding:', data);
+                uiManager.updateInfoPanel('Erreur lors de l\'envoi de la mise');
+            }
+        } catch (error) {
+            console.error('❌ Erreur réseau lors de l\'envoi du bidding:', error);
             uiManager.updateInfoPanel('Erreur de connexion');
         }
     }

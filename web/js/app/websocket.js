@@ -88,6 +88,21 @@ export const WebSocketClient = {
             identifier: JSON.stringify({ channel: 'GameChannel' })
         };
         this.send(subscribeMessage);
+        
+        // S'abonner au canal utilisateur personnel
+        if (Auth.currentUser && Auth.currentUser.id) {
+            this.subscribeToUserChannel(Auth.currentUser.id);
+        }
+    },
+
+    // S'abonner au canal utilisateur personnel
+    subscribeToUserChannel(userId) {
+        const subscribeMessage = {
+            command: 'subscribe',
+            identifier: JSON.stringify({ channel: 'UserChannel', user_id: userId })
+        };
+        this.send(subscribeMessage);
+        console.log(`👤 Abonnement au canal utilisateur: user_${userId}`);
     },
 
     // Envoyer un message

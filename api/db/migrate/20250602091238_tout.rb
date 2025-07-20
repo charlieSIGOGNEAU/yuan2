@@ -8,6 +8,7 @@ class Tout < ActiveRecord::Migration[7.2]
   
     create_table :users do |t|
       t.string :name
+      t.string :language, default: 'fr', null: false
 
       t.timestamps
     end
@@ -16,7 +17,8 @@ class Tout < ActiveRecord::Migration[7.2]
       t.integer :game_status, default: 0, null: false
       t.integer :game_type, default: 0, null: false
       t.integer :player_count
-      t.string :clans
+      t.string :clan_names
+      t.integer :biddings_left
 
       t.timestamps
     end
@@ -63,7 +65,7 @@ class Tout < ActiveRecord::Migration[7.2]
       t.timestamps
     end
 
-    create_table :enchers do |t|
+    create_table :biddings do |t|
       t.references :game, null: false, foreign_key: true
       t.references :game_user, null: false, foreign_key: true
       t.integer :turn

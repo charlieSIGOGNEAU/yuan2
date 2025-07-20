@@ -1290,5 +1290,5 @@ async testTerritorySystem() {
     } catch (error) {
         console.error('❌ Erreur lors du test Territory:', error);
     }
-}
+    }
 } 

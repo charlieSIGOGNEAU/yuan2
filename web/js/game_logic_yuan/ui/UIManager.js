@@ -114,6 +114,8 @@ export class UIManager {
         
         if (gameStatus === 'initial_placement') {
             this.handleInitialPlacementValidation();
+        } else if (gameStatus === 'bidding_phase') {
+            this.handleBiddingValidation();
         } else {
             console.log('📝 Validation générique - contexte non défini');
             // TODO: Ajouter d'autres types de validation selon le contexte
@@ -149,6 +151,15 @@ export class UIManager {
             } else {
                 console.error('❌ GameBoard3D non disponible');
             }
+        });
+    }
+
+    // Validation spécifique pour la phase de bidding
+    handleBiddingValidation() {
+        // Importer dynamiquement pour éviter les dépendances circulaires
+        import('../gameApi.js').then(apiModule => {
+            // Envoyer la valeur actuelle du numérateur (chao) avec turn par défaut à 0
+            apiModule.gameApi.sendBiddingToApi(this.currentBid, 0);
         });
     }
 

@@ -527,7 +527,7 @@ class Game {
         this.game_type = data.game_type || this.game_type;
         this.player_count = data.player_count || this.player_count;
         this.clan_names = data.clan_names || this.clan_names;
-        
+
         // Mise à jour des game_users
         if (data.game_users) {
             // Créer un map des game_users existants

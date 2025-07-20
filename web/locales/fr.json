@@ -15,6 +15,7 @@
     "ui": {
       "loading": "Chargement...",
       "waiting": "En attente...",
+      "waiting_for_others": "En attente des autres joueurs...",
       "your_turn": "À votre tour",
       "game_over": "Partie terminée"
     },

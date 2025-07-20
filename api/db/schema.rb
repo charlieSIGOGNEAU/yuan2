@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_17_185150) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
   create_table "actions", force: :cascade do |t|
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false
@@ -20,6 +20,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_185150) do
     t.datetime "updated_at", null: false
     t.index ["game_id"], name: "index_actions_on_game_id"
     t.index ["game_user_id"], name: "index_actions_on_game_user_id"
+  end
+
+  create_table "biddings", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.integer "game_user_id", null: false
+    t.integer "turn"
+    t.integer "chao"
+    t.boolean "victory"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_biddings_on_game_id"
+    t.index ["game_user_id"], name: "index_biddings_on_game_user_id"
   end
 
   create_table "clans", force: :cascade do |t|
@@ -33,18 +45,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_185150) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["game_id"], name: "index_clans_on_game_id"
-  end
-
-  create_table "enchers", force: :cascade do |t|
-    t.integer "game_id", null: false
-    t.integer "game_user_id", null: false
-    t.integer "turn"
-    t.integer "chao"
-    t.boolean "victory"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["game_id"], name: "index_enchers_on_game_id"
-    t.index ["game_user_id"], name: "index_enchers_on_game_user_id"
   end
 
   create_table "game_users", force: :cascade do |t|
@@ -65,6 +65,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_185150) do
     t.integer "game_type", default: 0, null: false
     t.integer "player_count"
     t.string "clan_names"
+    t.integer "biddings_left"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -91,16 +92,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_17_185150) do
 
   create_table "users", force: :cascade do |t|
     t.string "name"
+    t.string "language", default: "fr", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "language", default: "fr", null: false
   end
 
   add_foreign_key "actions", "game_users"
   add_foreign_key "actions", "games"
+  add_foreign_key "biddings", "game_users"
+  add_foreign_key "biddings", "games"
   add_foreign_key "clans", "games"
-  add_foreign_key "enchers", "game_users"
-  add_foreign_key "enchers", "games"
   add_foreign_key "game_users", "clans"
   add_foreign_key "game_users", "games"
   add_foreign_key "game_users", "users"

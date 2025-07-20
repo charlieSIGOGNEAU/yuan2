@@ -4,9 +4,10 @@ class Game < ApplicationRecord
       installation_phase: 1,
       initial_placement: 2,
       bidding_phase: 3,
-      simultaneous_play: 4,
-      completed: 5,
-      abandoned: 6
+      starting_spot_selection: 4,
+      simultaneous_play: 5,
+      completed: 6,
+      abandoned: 7
     }, default: :waiting_for_players
   
     enum :game_type, {
@@ -19,7 +20,7 @@ class Game < ApplicationRecord
     has_many :tiles, dependent: :destroy
     has_many :actions, dependent: :destroy
     has_many :clans, dependent: :destroy
-    has_many :enchers, dependent: :destroy
+    has_many :biddings, dependent: :destroy
   
     validates :game_status, presence: true
     validates :game_type, presence: true
@@ -89,7 +90,7 @@ class Game < ApplicationRecord
     def initialize_game
       Rails.logger.info "Initialisation de la partie #{id}"
       create_tiles
-      update(game_status: :installation_phase)
+      update(game_status: :installation_phase, biddings_left: player_count - 1)
     rescue => e
       Rails.logger.error "ERROR during game initialization for game #{id}: #{e.message}"
       raise

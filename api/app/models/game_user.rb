@@ -2,7 +2,7 @@ class GameUser < ApplicationRecord
     belongs_to :user
     belongs_to :game
     belongs_to :clan, optional: true
-    has_many :enchers, dependent: :destroy
+    has_many :biddings, dependent: :destroy
   
     validates :user_name, presence: true
   

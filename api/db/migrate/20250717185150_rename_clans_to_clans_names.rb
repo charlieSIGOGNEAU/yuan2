@@ -1,5 +1,0 @@
-class RenameClansToClansNames < ActiveRecord::Migration[7.2]
-  def change
-    rename_column :games, :clans, :clan_names
-  end
-end
