@@ -6,6 +6,15 @@ export class MeepleManager {
         this.gltfLoader = new GLTFLoader();
         this.loadedModels = new Map(); // Cache des modèles préchargés
         this.loadPromises = new Map(); // Promises de chargement pour éviter les doublons
+        this.instances = [];
+        this.modelPreloader = null;
+        
+        // Supprimer les propriétés liées à l'eau
+        // this.waterMesh = null;
+        // this.waterGeometry = null;
+        // this.waterMaterial = null;
+        // this.waterLoaded = false;
+        // this.waterLoadPromise = null;
         
         // Types de meeples et leurs caractéristiques
         this.meepleTypes = {
@@ -246,6 +255,11 @@ export class MeepleManager {
         this.loadPromises.clear();
         console.log('✅ Cache des meeples nettoyé');
     }
+    
+    // Supprimer les méthodes liées à l'eau
+    // loadWaterMesh() { ... }
+    // createWaterInstance() { ... }
+    // createWaterInstanceAsync() { ... }
 }
 
 // Instance unique du gestionnaire de meeples

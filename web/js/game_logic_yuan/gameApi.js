@@ -18,7 +18,7 @@ export const gameApi = {
         }  
         
         // Gestion du message d'attente des autres joueurs
-        if (data.message.type === 'waiting_for_other_players') {
+        if (data.message && data.message.type === 'waiting_for_other_players') {
             console.log('⏳ Message d\'attente reçu:', data);
             uiManager.updateInfoPanel(i18n.t('game.ui.waiting_for_others'));
             return;

@@ -11,8 +11,8 @@ export const biddingPhase = {
         
         // Précharger les modèles nécessaires
         if (gameBoard?.meepleManager) {
-            await gameBoard.meepleManager.preloadMeepleModel('ville');
-            await gameBoard.meepleManager.preloadMeepleModel('guerrier');
+            // await gameBoard.meepleManager.preloadMeepleModel('ville');
+            // await gameBoard.meepleManager.preloadMeepleModel('guerrier');
             await gameBoard.meepleManager.preloadMeepleModel('fortification');
         }
         

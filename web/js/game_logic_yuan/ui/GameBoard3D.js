@@ -6,6 +6,7 @@ import { meepleManager } from '../pieces/MeepleManager.js';
 
 export class GameBoard3D {
     constructor(containerId) {
+        
         console.log('GameBoard3D constructor');
         this.container = document.getElementById(containerId);
         // Désactiver les comportements tactiles par défaut
@@ -34,6 +35,8 @@ export class GameBoard3D {
         this.tileTemp = null;
         this.gltfLoader = new GLTFLoader(); // Ajouter le loader GLB
         this.meepleManager = meepleManager; // Référence au gestionnaire de meeples
+        
+        // Remettre les propriétés liées à l'eau
         this.waterMesh = null; // Mesh de référence pour l'eau
         this.waterGeometry = null; // Géométrie pour les instances
         this.waterMaterial = null; // Matériau pour les instances
@@ -54,11 +57,15 @@ export class GameBoard3D {
             }
         });
 
-        this.init();
+        // Démarrer l'initialisation asynchrone
+        this.initAsync().catch(error => {
+            console.error('❌ Erreur lors de l\'initialisation:', error);
+        });
     }
     
     
-    init() {
+    async initAsync() {
+        // Créer d'abord la scène Three.js
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
         this.camera.position.set(0, 9, 6);
@@ -69,7 +76,7 @@ export class GameBoard3D {
         this.container.appendChild(this.renderer.domElement);
         
         // Ajout d'éclairage pour les modèles 3D
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Lumière ambiante
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1);
         this.scene.add(ambientLight);
         
         const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -81,12 +88,29 @@ export class GameBoard3D {
         
         this.workplane = new THREE.Group();
         this.scene.add(this.workplane);
+        
+        // Maintenant précharger les modèles
+        console.log('📦 Préchargement des modèles...');
+        // Charger l'eau via le MeepleManager
+        this.loadWaterMesh();
+        await this.meepleManager.preloadMeepleModel('ville');
+        await this.meepleManager.preloadMeepleModel('guerrier');
+        await this.meepleManager.preloadMeepleModel('fortification');
+        await this.meepleManager.preloadMeepleModel('temple');
+        await this.meepleManager.preloadMeepleModel('2villes');
+        console.log('✅ Modèles préchargés');
+        
+        // Continuer avec l'initialisation normale
+        this.init();
+    }
+    
+    init() {
+        // Seulement les événements et l'animation
         this.setupEvents();
-        this.loadWaterMesh(); // Charger la mesh eau au démarrage
         this.animate();
     }
     
-    // Méthode pour charger la mesh eau au démarrage
+    // Remettre les méthodes liées à l'eau
     loadWaterMesh() {
         console.log('🌊 Chargement de la mesh eau...');
         
@@ -134,7 +158,6 @@ export class GameBoard3D {
         });
     }
     
-    // Méthode pour créer une instance de la mesh eau (synchrone)
     createWaterInstance() {
         if (!this.waterLoaded || !this.waterMesh) {
             console.warn('⚠️ Mesh eau pas encore chargée');
@@ -158,7 +181,6 @@ export class GameBoard3D {
         return waterInstance;
     }
     
-    // Méthode asynchrone pour créer une instance de la mesh eau
     async createWaterInstanceAsync() {
         // Attendre que l'eau soit chargée si ce n'est pas déjà fait
         if (!this.waterLoaded && this.waterLoadPromise) {
@@ -339,7 +361,7 @@ export class GameBoard3D {
                     // Les modèles sont déjà à la bonne taille (3 unités)
                     console.log(`📍 Position calculée:`, pos, `Rotation: ${rotation}`);
                     
-                    // Ajouter une instance de la mesh eau (asynchrone)
+                    // Utiliser le MeepleManager pour l'eau
                     this.createWaterInstanceAsync().then(waterInstance => {
                         if (waterInstance) {
                             // Attacher l'eau comme enfant de la tuile
@@ -419,7 +441,7 @@ export class GameBoard3D {
                     // Le modèle est déjà à la bonne taille
                     console.log(`📍 Position tuile temporaire:`, pos, `Rotation: ${rotation}`);
                     
-                    // Ajouter une instance de la mesh eau pour la tuile temporaire (asynchrone)
+                    // Utiliser le MeepleManager pour l'eau
                     this.createWaterInstanceAsync().then(waterInstance => {
                         if (waterInstance) {
                             // Attacher l'eau comme enfant de la tuile temporaire
