@@ -4,9 +4,9 @@ import { installationPhase } from './phases/installationPhase.js';
 import { initialPlacement } from './phases/initial_placement.js';
 import { biddingPhase } from './phases/biddingPhase.js';
 import { Auth } from '../app/auth.js';
-import { startingSpotSelectionPhase } from './phases/startingSpotSelectionPhase.js';
 import { uiManager } from './ui/UIManager.js';
 import { i18n } from '../core/i18n.js';
+import { simultaneousPlayPhase } from './phases/simultaneous-play-phase.js';
 
 // Fonctions pour l'API
 export const gameApi = {
@@ -33,7 +33,7 @@ export const gameApi = {
             // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
             if (gameState.game.game_status !== 'waiting_for_players' && !this.gameBoard) {
                 this.gameBoard = Game.showGameBoard();
-                
+            
                 // Charger l'interface UI après la création du gameboard
                 if (!uiManager.gameUI) {
                     await uiManager.loadGameUI();
@@ -45,20 +45,7 @@ export const gameApi = {
                     
                     // ici on peut rajouter des information entre les guimets qui s'aficheron par decu le game board3d
                     uiManager.updateInfoPanel('');
-                }
             }
-            
-            // Exécuter la phase de placement initial APRÈS création du gameBoard
-            // Seul le joueur avec l'ID le plus bas peut exécuter cette phase
-            if (gameState.game.game_status === 'initial_placement' && this.gameBoard && gameState.isLowestIdPlayer()) {
-                console.log('🎯 Exécution de la phase de placement initial (joueur ID le plus bas)');
-                initialPlacement.execute(this.gameBoard);
-            }
-            
-            // Exécuter la phase de bidding
-            if (gameState.game.game_status === 'bidding_phase' && this.gameBoard) {
-                console.log('🎯 Exécution de la phase de bidding');
-                biddingPhase.execute(this.gameBoard);
             }
             
             // Mise à jour des tiles 3D
@@ -71,8 +58,24 @@ export const gameApi = {
                 installationPhase.addTiles(gameState);
             }
 
-            if (gameState.game.game_status === 'starting_spot_selection') {
-                startingSpotSelectionPhase.execute(gameState,this.gameBoard);
+            
+            // Exécuter la phase de placement initial APRÈS création du gameBoard
+            // Seul le joueur avec l'ID le plus bas peut exécuter cette phase
+            if (gameState.game.game_status === 'initial_placement' && this.gameBoard && gameState.isLowestIdPlayer()) {
+                console.log('🎯 Exécution de la phase de placement initial (joueur ID le plus bas)');
+                initialPlacement.execute(this.gameBoard);
+            }
+
+            // Exécuter la phase de bidding
+            if (gameState.game.game_status === 'bidding_phase' && this.gameBoard) {
+                console.log('🎯 Exécution de la phase de bidding');
+                biddingPhase.biddingPhase(this.gameBoard);
+            }
+
+            // exécuter la phasse de simultaneous_play
+            if (gameState.game.game_status === 'simultaneous_play' && this.gameBoard) {
+                console.log('🎯 Exécution de la phase de simultaneous_play');
+                simultaneousPlayPhase.simultaneousPlayPhase(this.gameBoard);
             }
 
         } 
@@ -160,13 +163,16 @@ export const gameApi = {
         }
     },
 
-    // Envoyer les données de bidding à l'API
-    async sendBiddingToApi(chao, turn = 0) {
+    // Envoyer la sélection de clan et l'enchère à l'API
+    async sendClanBiddingToApi(clanId, chao) {
         try {
-            
+            const turn = gameState.game.biddings_turn;
             const gameId = gameState.game.id;
             const myGameUser = gameState.getMyGameUser();
             
+            console.log(`📤 Envoi clan + enchère à l'API: clan=${clanId}, chao=${chao}, turn=${turn}`);
+
+            // Envoyer clan_id, game_user_id et chao au bidding_controller
             const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/bidding`, {
                 method: 'POST',
                 headers: {
@@ -175,26 +181,36 @@ export const gameApi = {
                 },
                 body: JSON.stringify({
                     game_user_id: myGameUser.id,
+                    clan_id: clanId,
                     chao: chao,
                     turn: turn
                 })
             });
-            console.log('📤 Envoi des données de bidding à l\'API:', { chao, turn });
-
 
             const data = await response.json();
             
             if (data.success) {
-                console.log('✅ Bidding envoyé avec succès:', data);
+                console.log('✅ Clan et enchère envoyés avec succès:', data);
+                
+                // Nettoyer la phase
+                import('./phases/biddingPhase.js').then(module => {
+                    module.biddingPhase.cleanupPhase();
+                });
+                
+                // Masquer toutes les barres d'action
+                uiManager.hideAllActionBars();
+                
+                // Afficher un message de confirmation
+                uiManager.updateInfoPanel('Enchère envoyée, en attente des autres joueurs...');
                 
             } else {
-                console.error('❌ Erreur lors de l\'envoi du bidding:', data);
+                console.error('❌ Erreur lors de l\'envoi clan + enchère:', data);
                 uiManager.updateInfoPanel('Erreur lors de l\'envoi de la mise');
             }
         } catch (error) {
-            console.error('❌ Erreur réseau lors de l\'envoi du bidding:', error);
+            console.error('❌ Erreur réseau lors de l\'envoi clan + enchère:', error);
             uiManager.updateInfoPanel('Erreur de connexion');
         }
-    }
+    },
 };
  

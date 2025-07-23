@@ -7,7 +7,9 @@ class Api::V1::BiddingController < ApplicationController
   def create
     puts "💰 Tentative de création d'une enchère pour le jeu #{@game.id} par le joueur #{@game_user.id}"
     puts "📝 Données reçues: chao=#{params[:chao]}, turn=#{params[:turn]}"
-        # Vérifier que le game_user_id correspond bien au joueur authentifié
+    puts "🎮 biddings_turn actuel: #{@game.biddings_turn}"
+    
+    # Vérifier que le game_user_id correspond bien au joueur authentifié
     if params[:game_user_id].to_i != @game_user.id
       puts "❌ Game user ID invalide: reçu #{params[:game_user_id]}, attendu #{@game_user.id}"
       render json: {
@@ -17,16 +19,21 @@ class Api::V1::BiddingController < ApplicationController
       return
     end
 
+    # Utiliser biddings_turn comme turn si turn n'est pas spécifié
+    current_turn = params[:turn] || @game.biddings_turn
+    puts "🎯 Turn utilisé: #{current_turn}"
+
     # Vérifier si une enchère existe déjà pour ce game_user et ce turn
     existing_bidding = Bidding.find_by(
       game_id: @game.id,
       game_user_id: @game_user.id,
-      turn: params[:turn] || 0
+      turn: current_turn
     )
     
     if existing_bidding
       puts "🔄 Mise à jour de l'enchère existante pour ce joueur à ce tour"
       existing_bidding.chao = params[:chao].to_i
+      existing_bidding.clan_id = params[:clan_id]  # Mettre à jour le clan_id
       
       if existing_bidding.save
         puts "✅ Enchère mise à jour avec succès: #{existing_bidding.chao} chao pour le joueur #{@game_user.user_name}"
@@ -50,8 +57,9 @@ class Api::V1::BiddingController < ApplicationController
       game_id: @game.id,
       game_user_id: @game_user.id,
       chao: params[:chao].to_i,
-      turn: params[:turn] || 0,
-      victory: false
+      turn: current_turn,
+      victory: false,
+      clan_id: params[:clan_id]  # Ajouter le clan_id
     )
 
     if bidding.save
@@ -106,7 +114,7 @@ class Api::V1::BiddingController < ApplicationController
     
     puts "📊 Enchères du turn #{current_turn}: #{biddings_count}/#{players_count}"
     
-    if biddings_count == players_count
+    if biddings_count == players_count - current_turn + 1
       puts "🏆 Toutes les enchères sont terminées pour ce turn, tentative de finalisation..."
       
       # DÉTERMINER LE GAGNANT AVANT LE VERROU (optimisation)
@@ -116,6 +124,21 @@ class Api::V1::BiddingController < ApplicationController
       
       puts "🎯 Gagnant potentiel identifié: #{winning_bidding&.game_user&.user_name} avec #{winning_bidding&.chao} chao"
       
+      # Récupérer le clan_id depuis les paramètres de l'enchère gagnante
+      if winning_bidding
+        # Chercher l'enchère avec le clan_id dans les paramètres
+        winning_bidding_with_clan = @game.biddings.where(turn: current_turn)
+                                         .joins(:game_user)
+                                         .where("biddings.clan_id IS NOT NULL")
+                                         .order(chao: :desc, id: :asc)
+                                         .first
+        
+        if winning_bidding_with_clan
+          winning_bidding = winning_bidding_with_clan
+          puts "🎯 Enchère gagnante avec clan_id trouvée: #{winning_bidding.clan_id}"
+        end
+      end
+      
       # PROTECTION RACE CONDITION : Verrou atomique sur le statut de la game
       winner_determined = false
       
@@ -124,17 +147,34 @@ class Api::V1::BiddingController < ApplicationController
         
         # Vérifier que la game est encore en bidding_phase
         if @game.bidding_phase?
-          puts "🔒 Verrou acquis, changement de statut bidding_phase → starting_spot_selection"
+          puts "🔒 Verrou acquis, traitement de la victoire d'enchère"
+
+          # Incrémenter biddings_turn
+          new_biddings_turn = @game.biddings_turn + 1
+          @game.update!(biddings_turn: new_biddings_turn)
+          puts "🎮 biddings_turn incrémenté: #{new_biddings_turn}"
           
-          # Changer le statut atomiquement (un seul thread peut réussir)
-          @game.update!(game_status: :starting_spot_selection)
-          
-          # Marquer le gagnant (déjà déterminé avant le verrou)
+          # Attribuer le clan_id au game_user gagnant
           if winning_bidding
+            winning_game_user = winning_bidding.game_user
+            clan_id = params[:clan_id] || winning_bidding.clan_id
+            
+            if clan_id
+              winning_game_user.update!(clan_id: clan_id)
+              winner_name = winning_game_user.user_name
+              puts "🎉 Clan #{clan_id} attribué au gagnant #{winner_name} avec #{winning_bidding.chao} chao"
+            end
+            
+            # Marquer l'enchère comme victorieuse
             winning_bidding.update!(victory: true)
-            winner_name = winning_bidding.game_user.user_name
-            puts "🎉 Gagnant confirmé: #{winner_name} avec #{winning_bidding.chao} chao (ID: #{winning_bidding.id})"
             winner_determined = true
+          end
+          
+          # Vérifier si tous les tours d'enchères sont terminés
+          if new_biddings_turn >= @game.player_count
+            puts "🏁 Tous les tours d'enchères terminés, passage en simultaneous_play"
+            @game.update!(game_status: :simultaneous_play)
+            puts "🎮 Statut de la game changé: bidding_phase → simultaneous_play"
           end
         else
           puts "⚠️ Un autre joueur a déjà finalisé ce tour (statut: #{@game.game_status})"

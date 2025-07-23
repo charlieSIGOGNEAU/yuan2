@@ -141,14 +141,38 @@ export class MeepleManager {
     }
 
     // Créer une instance d'un meeple avec couleur optionnelle
-    createMeepleInstance(type, colorHex = null, userData = {}) {
-        const baseModel = this.loadedModels.get(type);
+    async createMeepleInstance(type, colorHex = null, userData = {}) {
+        // Vérifier si le modèle est déjà chargé
+        let baseModel = this.loadedModels.get(type);
+        
+        // Si pas encore chargé, attendre qu'il soit en cours de chargement
+        if (!baseModel && this.loadPromises.has(type)) {
+            console.log(`⏳ Attente du chargement du modèle ${type}...`);
+            try {
+                baseModel = await this.loadPromises.get(type);
+                console.log(`✅ Modèle ${type} chargé avec succès`);
+            } catch (error) {
+                console.error(`❌ Erreur lors du chargement du modèle ${type}:`, error);
+                return null;
+            }
+        }
+        
+        // Si toujours pas de modèle, essayer de le précharger
         if (!baseModel) {
-            console.error(`❌ Modèle ${type} non préchargé. Appelez preloadMeepleModel() d'abord.`);
-            return null;
+            console.log(`🔄 Préchargement du modèle ${type}...`);
+            try {
+                baseModel = await this.preloadMeepleModel(type);
+            } catch (error) {
+                console.error(`❌ Impossible de précharger le modèle ${type}:`, error);
+                return null;
+            }
         }
 
         const meepleInfo = this.meepleTypes[type];
+        if (!meepleInfo) {
+            console.error(`❌ Type de meeple ${type} non reconnu`);
+            return null;
+        }
         
         // Cloner le modèle pour créer une instance
         const instance = baseModel.clone();

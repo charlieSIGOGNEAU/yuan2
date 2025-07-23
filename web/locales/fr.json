@@ -6,10 +6,18 @@
         "title": "Phase de placement initial"
       },
       "bidding": {
-        "instructions": "Enchéris pour choisir en 1er ta position parmi celles encore entourées."
+        "instructions": "Choisis ton clan et enchéris — le plus offrant obtient le clan qu’il a choisi.",
+        "waiting_for_others": "En attente que les autres joueurs fassent leurs enchères...",
+        "bid_on_clan": "Vous avez enchéri {{chao}} chao sur le clan {{color}}"
       },
       "installation": {
         "title": "Phase d'installation"
+      },
+      "starting_spot_selection": {
+        "winner_instructions": "Sélectionne ton emplacement de départ parmi les cercles, puis valide.",
+        "waiting_for_winner": "En attente du choix de position de départ du joueur {{winnerName}} qui a gagné l'enchère avec {{chao}} chao",
+        "waiting_generic": "En attente du choix de position de départ...",
+        "validate_clan_selection": "Valide pour choisir le clan {{color}}"
       }
     },
     "ui": {
@@ -36,5 +44,15 @@
     "previous": "Précédent",
     "save": "Sauvegarder",
     "load": "Charger"
+  },
+  "colors": {
+    "black": "noir",
+    "red": "rouge",
+    "green": "vert",
+    "orange": "orange",
+    "white": "blanc",
+    "blue": "bleu",
+    "purple": "violet",
+    "yellow": "jaune"
   }
 } 

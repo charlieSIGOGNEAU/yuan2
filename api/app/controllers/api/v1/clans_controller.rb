@@ -1,6 +1,6 @@
 class Api::V1::ClansController < ApplicationController
   before_action :authenticate_request
-  before_action :find_game
+  before_action :find_game, only: [:create]
 
   # POST /api/v1/games/:game_id/clans
   def create

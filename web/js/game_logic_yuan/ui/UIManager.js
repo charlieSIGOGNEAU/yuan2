@@ -1,4 +1,6 @@
 // Gestionnaire de l'interface utilisateur
+import { gameApi } from '../gameApi.js';
+
 export class UIManager {
     constructor() {
         this.gameUI = null;
@@ -6,6 +8,7 @@ export class UIManager {
         this.playerActionBar = null;
         this.validationBar = null;
         this.biddingBar = null;
+        this.menuOnlyBar = null; // Nouvelle barre avec seulement le menu
         this.currentActionBar = null; // Référence vers la barre actuellement affichée
         
         // Variables pour le bidding
@@ -37,6 +40,7 @@ export class UIManager {
             this.playerActionBar = document.getElementById('player-action-bar');
             this.validationBar = document.getElementById('validation-bar');
             this.biddingBar = document.getElementById('rectangle-action-bar');
+            this.menuOnlyBar = document.getElementById('menu-only-bar'); // Nouvelle barre
             
             // Configuration des event listeners
             this.setupUIEventListeners();
@@ -109,16 +113,17 @@ export class UIManager {
 
     // Action du bouton validation (partagée par toutes les interfaces)
     handleValidateClick() {
-        // Déterminer quelle action de validation exécuter selon le contexte
-        const gameStatus = window.gameState?.game?.game_status;
+        console.log('🔘 Bouton de validation cliqué');
         
-        if (gameStatus === 'initial_placement') {
+        // Vérifier le statut du jeu pour déterminer l'action
+        if (gameState.game.game_status === 'initial_placement') {
             this.handleInitialPlacementValidation();
-        } else if (gameStatus === 'bidding_phase') {
+        } else if (gameState.game.game_status === 'bidding_phase') {
             this.handleBiddingValidation();
+        } else if (gameState.game.game_status === 'starting_spot_selection') {
+            this.handleStartingSpotSelectionValidation();
         } else {
-            console.log('📝 Validation générique - contexte non défini');
-            // TODO: Ajouter d'autres types de validation selon le contexte
+            console.log('⚠️ Statut de jeu non géré pour la validation:', gameState.game.game_status);
         }
     }
 
@@ -156,11 +161,33 @@ export class UIManager {
 
     // Validation spécifique pour la phase de bidding
     handleBiddingValidation() {
-        // Importer dynamiquement pour éviter les dépendances circulaires
-        import('../gameApi.js').then(apiModule => {
-            // Envoyer la valeur actuelle du numérateur (chao) avec turn par défaut à 0
-            apiModule.gameApi.sendBiddingToApi(this.currentBid, 0);
+        console.log('💰 Validation de l\'enchère');
+        
+        // Importer biddingPhase pour accéder au clan sélectionné
+        import('../phases/biddingPhase.js').then(module => {
+            const biddingPhase = module.biddingPhase;
+            
+            // Vérifier si un clan est sélectionné
+            if (!biddingPhase.selectedClan) {
+                console.log('❌ Aucun clan sélectionné');
+                uiManager.updateInfoPanel('Veuillez sélectionner un clan');
+                return;
+            }
+            
+            // Récupérer la valeur actuelle de l'enchère
+            const currentBid = this.currentBid;
+            console.log(`💰 Envoi de l'enchère: ${currentBid} chao pour le clan ${biddingPhase.selectedClan.name}`);
+            
+            // Envoyer le clan et l'enchère à l'API
+            gameApi.sendClanBiddingToApi(biddingPhase.selectedClan.id, currentBid);
         });
+    }
+
+    handleStartingSpotSelectionValidation() {
+        console.log('🎯 Validation de la sélection de position de départ');
+        
+        // Appeler la fonction de validation via gameApi
+        gameApi.sendClanSelectionToApi();
     }
 
     // Fonction pour mettre à jour le panneau d'informations
@@ -193,6 +220,8 @@ export class UIManager {
         if (this.playerActionBar) this.playerActionBar.style.display = 'none';
         if (this.validationBar) this.validationBar.style.display = 'none';
         if (this.biddingBar) this.biddingBar.style.display = 'none';
+        if (this.menuOnlyBar) this.menuOnlyBar.style.display = 'none';
+        
         this.currentActionBar = null;
     }
 
@@ -227,6 +256,179 @@ export class UIManager {
         } else {
             console.warn('⚠️ Barre de bidding non initialisée');
         }
+    }
+
+    // Fonction pour afficher la barre avec seulement le menu
+    showMenuOnlyBar() {
+        this.hideAllActionBars();
+        if (this.menuOnlyBar) {
+            this.menuOnlyBar.style.display = 'flex';
+            this.currentActionBar = this.menuOnlyBar;
+        } else {
+            console.warn('⚠️ Barre menu-only non initialisée');
+        }
+    }
+
+    // Fonction pour afficher la barre d'information de la phase simultaneous_play
+    showSimultaneousPlayInfoBar() {
+        // Masquer toutes les autres barres
+        this.hideAllActionBars();
+        
+        // Créer la barre d'information si elle n'existe pas
+        let infoBar = document.getElementById('simultaneous-play-info-bar');
+        if (!infoBar) {
+            infoBar = this.createSimultaneousPlayInfoBar();
+        }
+        
+        // Afficher la barre
+        if (infoBar) {
+            infoBar.style.display = 'flex';
+            console.log('🎯 Barre d\'information simultaneous_play affichée');
+        }
+    }
+
+    // Fonction pour créer la barre d'information de la phase simultaneous_play
+    createSimultaneousPlayInfoBar() {
+        // Créer le conteneur principal
+        const infoBar = document.createElement('div');
+        infoBar.id = 'simultaneous-play-info-bar';
+        infoBar.className = 'simultaneous-play-info-bar';
+        
+        // Créer les 5 carrés
+        for (let i = 0; i < 5; i++) {
+            const square = document.createElement('div');
+            square.className = 'info-square';
+            
+            // Premier carré avec l'icône de riz, le cercle et l'icône de maison
+            if (i === 0) {
+                const riceIcon = document.createElement('img');
+                riceIcon.src = './images/icon/riceIcon.webp';
+                riceIcon.alt = 'Riz';
+                riceIcon.className = 'rice-icon';
+                square.appendChild(riceIcon);
+                
+                const homeCircle = document.createElement('div');
+                homeCircle.className = 'home-circle';
+                square.appendChild(homeCircle);
+                
+                const homeText = document.createElement('input');
+                homeText.type = 'text';
+                homeText.className = 'home-text';
+                homeText.value = '2';
+                square.appendChild(homeText);
+                
+                const homeIcon = document.createElement('img');
+                homeIcon.src = './images/icon/homeIcon.webp';
+                homeIcon.alt = 'Maison';
+                homeIcon.className = 'home-icon';
+                square.appendChild(homeIcon);
+            }
+            // Deuxième carré avec l'icône de forêt, le cercle et l'icône de bouclier
+            else if (i === 1) {
+                const forestIcon = document.createElement('img');
+                forestIcon.src = './images/icon/forestIcon.webp';
+                forestIcon.alt = 'Forêt';
+                forestIcon.className = 'forest-icon';
+                square.appendChild(forestIcon);
+                
+                const shieldCircle = document.createElement('div');
+                shieldCircle.className = 'shield-circle';
+                square.appendChild(shieldCircle);
+                
+                const shieldText = document.createElement('input');
+                shieldText.type = 'text';
+                shieldText.className = 'shield-text';
+                shieldText.value = '0';
+                square.appendChild(shieldText);
+                
+                const shieldIcon = document.createElement('img');
+                shieldIcon.src = './images/icon/shieldIcon.webp';
+                shieldIcon.alt = 'Bouclier';
+                shieldIcon.className = 'shield-icon';
+                square.appendChild(shieldIcon);
+            }
+            // Troisième carré avec l'icône de forêt, le cercle et l'icône d'épée
+            else if (i === 2) {
+                const forestIcon = document.createElement('img');
+                forestIcon.src = './images/icon/forestIcon.webp';
+                forestIcon.alt = 'Forêt';
+                forestIcon.className = 'forest-icon';
+                square.appendChild(forestIcon);
+                
+                const swordCircle = document.createElement('div');
+                swordCircle.className = 'sword-circle';
+                square.appendChild(swordCircle);
+                
+                const swordText = document.createElement('input');
+                swordText.type = 'text';
+                swordText.className = 'sword-text';
+                swordText.value = '0';
+                swordText.maxLength = 3;
+                square.appendChild(swordText);
+                
+                const swordIcon = document.createElement('img');
+                swordIcon.src = './images/icon/swordsIcon.webp';
+                swordIcon.alt = 'Épée';
+                swordIcon.className = 'sword-icon';
+                square.appendChild(swordIcon);
+            }
+            // Quatrième carré avec l'icône de pagode, le cercle et une fraction modifiable
+            else if (i === 3) {
+                const pagodaIcon = document.createElement('img');
+                pagodaIcon.src = './images/icon/pagodaIcon.webp';
+                pagodaIcon.alt = 'Pagode';
+                pagodaIcon.className = 'pagoda-icon';
+                square.appendChild(pagodaIcon);
+                
+                const fractionCircle = document.createElement('div');
+                fractionCircle.className = 'fraction-circle';
+                square.appendChild(fractionCircle);
+                
+                const numeratorInput = document.createElement('input');
+                numeratorInput.type = 'text';
+                numeratorInput.className = 'fraction-numerator';
+                numeratorInput.value = '0';
+                square.appendChild(numeratorInput);
+                
+                const slash = document.createElement('input');
+                slash.type = 'text';
+                slash.className = 'fraction-slash';
+                slash.value = '/';
+                square.appendChild(slash);
+                
+                const denominatorInput = document.createElement('input');
+                denominatorInput.type = 'text';
+                denominatorInput.className = 'fraction-denominator';
+                denominatorInput.value = '6';
+                square.appendChild(denominatorInput);
+            }
+            // Cinquième carré avec l'icône de chao et le cercle
+            else if (i === 4) {
+                const chaoIcon = document.createElement('img');
+                chaoIcon.src = './images/icon/chaoIcon.webp';
+                chaoIcon.alt = 'Chao';
+                chaoIcon.className = 'chao-icon';
+                square.appendChild(chaoIcon);
+                
+                const chaoCircle = document.createElement('div');
+                chaoCircle.className = 'chao-circle';
+                square.appendChild(chaoCircle);
+                
+                const chaoText = document.createElement('input');
+                chaoText.type = 'text';
+                chaoText.className = 'chao-text';
+                chaoText.value = '0';
+                square.appendChild(chaoText);
+            }
+            
+            infoBar.appendChild(square);
+        }
+        
+        // Ajouter la barre au body
+        document.body.appendChild(infoBar);
+        
+        console.log('🎯 Barre d\'information simultaneous_play créée');
+        return infoBar;
     }
 
     // Fonction pour masquer toutes les barres (alias pour compatibilité)
@@ -278,6 +480,13 @@ export class UIManager {
 
         // Commencer les tentatives
         tryUpdate();
+        
+        // Mettre à jour le message de bidding si un clan est sélectionné
+        import('../phases/biddingPhase.js').then(module => {
+            if (module.biddingPhase.updateBiddingMessage) {
+                module.biddingPhase.updateBiddingMessage();
+            }
+        });
     }
 
     // Gestion du clic sur le bouton moins

@@ -2,6 +2,7 @@ class Bidding < ApplicationRecord
   # Associations
   belongs_to :game_user
   belongs_to :game
+  belongs_to :clan, optional: true  # Ajouter la relation avec Clan
   
   # Validations
   validates :chao, presence: true, numericality: { greater_than_or_equal_to: 0 }

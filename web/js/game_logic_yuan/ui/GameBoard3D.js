@@ -50,6 +50,9 @@ export class GameBoard3D {
         // Limites de déplacement du workplane
         this.maxPanDistance = 40; // Distance maximale de déplacement depuis l'origine
         
+        // Système de callback pour les clics
+        this.clickCallback = null; // Callback pour les clics détectés
+        
         // Écouteur pour l'événement circleClicked
         this.container.addEventListener('circleClicked', (event) => {
             if (this.tempTile) {
@@ -267,7 +270,7 @@ export class GameBoard3D {
     hexToCartesian(position = {q: 0, r: 0, z: 0}) {
         return {x: position.q+position.r/2, y: position.z || 0, z: -position.r/2*Math.sqrt(3)};
     }
-    #cartesianToHex({ x, y, z }) {
+    cartesianToHex({ x, y, z }) {
         // Convertir les coordonnées monde en coordonnées relatives au workplane
         const relativeX = (x - this.workplane.position.x) / this.workplane.scale.x;
         const relativeZ = (z - this.workplane.position.z) / this.workplane.scale.z;
@@ -291,7 +294,7 @@ export class GameBoard3D {
     // Fonction pour détecter si une ville se trouve à une position donnée
     detectCityAtPosition(point) {
         // Convertir en coordonnées hexagonales
-        const hexCoords = this.#cartesianToHex(point);
+        const hexCoords = this.cartesianToHex(point);
         console.log(`📍 Coordonnées hexagonales: q=${hexCoords.q}, r=${hexCoords.r}`);
         
         // Chercher s'il y a une ville à ces coordonnées
@@ -314,8 +317,17 @@ export class GameBoard3D {
         
         return cityFound;
     }
-    
 
+    // Fonction pour détecter uniquement les clics (sans glissement)
+    detectClickOnly(callback) {
+        // Stocker le callback pour l'utiliser dans onPointerUp
+        this.clickCallback = callback;
+    }
+
+    // Fonction pour désactiver le callback de clic
+    disableClickCallback() {
+        this.clickCallback = null;
+    }
 
     // Méthode pour ajouter une tuile
     addTile(modelUrl, position = { q: 0, r: 0, z: 0}, rotation = 0) {
@@ -1070,12 +1082,24 @@ export class GameBoard3D {
             // Si le déplacement est inférieur à 5 pixels ET la durée est inférieure à 500ms
             if (maxDistance < 5 && duration < 1000) {
                 const result = this.getMouseWorld(e);
+                
+                // Appeler le callback de clic s'il existe
+                if (this.clickCallback) {
+                    if (result && result.point) {
+                        const hexCoords = this.cartesianToHex(result.point);
+                        this.clickCallback(hexCoords, result.point);
+                    }
+                    // Ne pas nettoyer le callback pour permettre des clics multiples
+                    // this.clickCallback = null;
+                } else {
+                    // Logique existante pour les autres types de clics
                 if (result.rotationSprite) {
                     this.handleRotationSpriteClick(result.rotationSprite);
                 } else if (result.circle) {
                     this.handleCircleClick(result.circle);
                 } else if (result.instance) {
                     this.handleObjectClick(result.instance);
+                    }
                 }
             }
         }

@@ -3,18 +3,29 @@
     <!-- Zone d'informations en haut -->
     <div id="info-panel" class="info-panel"></div>
     
-    <!-- Barre d'actions du joueur avec 6 cases -->
+    <!-- Barre d'actions du joueur avec 5 cases -->
     <div id="player-action-bar" class="player-action-bar" style="display: none;">
         <!-- Roue crantée pour le menu options -->
         <div class="action-case action-menu">
             <img src="./svg/settings.svg" alt="Menu" class="action-icon">
         </div>
         
-        <!-- 4 cases d'actions centrales -->
-        <div class="action-case action-slot"></div>
-        <div class="action-case action-slot"></div>
-        <div class="action-case action-slot"></div>
-        <div class="action-case action-slot"></div>
+        <!-- 3 cases d'actions centrales -->
+        <div class="action-case action-slot action-slot-2">
+            <img src="./images/icon/homeIcon.webp" alt="Maison" class="action-slot-icon">
+            <div class="action-slot-circle"></div>
+            <input type="text" class="action-slot-text" value="III" maxlength="3">
+        </div>
+        <div class="action-case action-slot action-slot-3">
+            <img src="./images/icon/shieldIcon.webp" alt="Bouclier" class="action-slot-icon">
+            <div class="action-slot-circle"></div>
+            <input type="text" class="action-slot-text" value="I" maxlength="3">
+        </div>
+        <div class="action-case action-slot action-slot-4">
+            <img src="./images/icon/swordsIcon.webp" alt="Épées" class="action-slot-icon">
+            <div class="action-slot-circle"></div>
+            <input type="text" class="action-slot-text" value="" maxlength="3">
+        </div>
         
         <!-- Validation avec check vert -->
         <div class="action-case action-validate">
@@ -70,5 +81,16 @@
         <div class="action-case action-validate">
             <img src="./svg/check.svg" alt="Valider" class="action-icon">
         </div>
+    </div>
+    
+    <!-- Interface avec seulement le menu (pour les phases d'attente) -->
+    <div id="menu-only-bar" class="player-action-bar" style="display: none;">
+        <!-- Roue crantée pour le menu options -->
+        <div class="action-case action-menu">
+            <img src="./svg/settings.svg" alt="Menu" class="action-icon">
+        </div>
+        
+        <!-- Espacement flexible pour centrer -->
+        <div style="flex: 5;"></div>
     </div>
 </div> 

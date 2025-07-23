@@ -1,6 +1,7 @@
 // Classes pour les modèles backend
 import { TILE_CONFIGS } from './pieces/TileTypes.js';
 import { meepleManager } from './pieces/MeepleManager.js';
+import { ALL_CLANS } from './pieces/clanColors.js';
 
 
 class User {
@@ -25,6 +26,18 @@ class Clan {
         this.start_r = data.start_r || 0;
         this.received_turn = data.received_turn ?? null;
         this.received_chao = data.received_chao ?? null;
+        
+        // Convertir le code hexadécimal en nom de couleur
+        this.color_name = this.getColorName(this.color);
+    }
+
+    // Méthode pour convertir le code hexadécimal en nom de couleur
+    getColorName(hexColor) {
+        if (!hexColor) return '';
+        
+        // Chercher dans la liste des clans pour trouver la correspondance
+        const matchingClan = ALL_CLANS.find(clan => clan.color_hex === hexColor);
+        return matchingClan ? matchingClan.color_name : hexColor;
     }
 
     update(data) {
@@ -36,6 +49,11 @@ class Clan {
         this.start_r = data.start_r || this.start_r;
         this.received_turn = data.received_turn ?? this.received_turn;
         this.received_chao = data.received_chao ?? this.received_chao;
+        
+        // Mettre à jour color_name si la couleur a changé
+        if (data.color && data.color !== this.color) {
+            this.color_name = this.getColorName(data.color);
+        }
     }
 }
 
@@ -176,6 +194,26 @@ class Action {
     }
 }   
 
+class Bidding {
+    constructor(data = {}) {
+        this.id = data.id || null;
+        this.game_id = data.game_id || null;
+        this.game_user_id = data.game_user_id || null;
+        this.turn = data.turn || 0;
+        this.chao = data.chao || 0;
+        this.victory = data.victory || false;
+    }
+
+    update(data) {
+        this.id = data.id || this.id;
+        this.game_id = data.game_id || this.game_id;
+        this.game_user_id = data.game_user_id || this.game_user_id;
+        this.turn = data.turn || this.turn;
+        this.chao = data.chao || this.chao;
+        this.victory = data.victory ?? this.victory;
+    }
+}   
+
 class Territory {
     constructor(data = {}) {
         this.type = data.type || 'plain';
@@ -224,15 +262,15 @@ class Territory {
     }
 
     // Créer la mesh de construction
-    createConstruction(gameBoard, meepleManager) {
-        if (!this.construction_type || !this.color || this.construction_mesh) {
-            return; // Pas de construction à créer ou déjà créée
+    async createConstruction(gameBoard, meepleManager) {
+        if (!this.construction_type || this.construction_mesh) {
+            return; // Pas de construction à créer ou déjà créé
         }
 
         console.log(`🏗️ Création de ${this.construction_type} (${this.color}) sur territoire (${this.position.q}, ${this.position.r})`);
         
-        // Créer l'instance du meeple
-        const mesh = meepleManager.createMeepleInstance(this.construction_type, this.color, {
+        // Créer l'instance du meeple (version asynchrone)
+        const mesh = await meepleManager.createMeepleInstance(this.construction_type, this.color, {
             territory: this,
             type: 'construction'
         });
@@ -258,7 +296,7 @@ class Territory {
     }
 
     // Créer la mesh de rempart
-    createRempart(gameBoard, meepleManager) {
+    async createRempart(gameBoard, meepleManager) {
         if (!this.rempart || this.rempart_mesh) {
             return; // Pas de rempart à créer ou déjà créé
         }
@@ -266,7 +304,7 @@ class Territory {
         console.log(`🛡️ Création de ${this.rempart} sur territoire (${this.position.q}, ${this.position.r})`);
         
         // Utiliser le type 'fortification' du MeepleManager (non colorable)
-        const mesh = meepleManager.createMeepleInstance('fortification', null, {
+        const mesh = await meepleManager.createMeepleInstance('fortification', null, {
             territory: this,
             type: 'rempart',
             rempartType: this.rempart
@@ -303,7 +341,7 @@ class Territory {
     }
 
     // Créer les mesh de guerriers
-    createWarriors(gameBoard, meepleManager, count) {
+    async createWarriors(gameBoard, meepleManager, count) {
         if (!this.color || count <= 0) {
             return; // Pas de guerriers à créer
         }
@@ -317,7 +355,7 @@ class Territory {
         const positions = this.getWarriorPositions(count);
         
         for (let i = 0; i < count; i++) {
-            const mesh = meepleManager.createMeepleInstance('guerrier', this.color, {
+            const mesh = await meepleManager.createMeepleInstance('guerrier', this.color, {
                 territory: this,
                 type: 'warrior',
                 index: i
@@ -381,20 +419,19 @@ class Territory {
         console.log(`🧹 Toutes les mesh supprimées du territoire (${this.position.q}, ${this.position.r})`);
     }
 
-    // Mettre à jour les mesh selon les données actuelles
-    updateMeshes(gameBoard, meepleManager) {
+    async updateMeshes(gameBoard, meepleManager) {
         console.log(`🔄 Mise à jour des mesh pour territoire (${this.position.q}, ${this.position.r})`);
         
         // Créer/mettre à jour la construction
         if (this.construction_type && !this.construction_mesh) {
-            this.createConstruction(gameBoard, meepleManager);
+            await this.createConstruction(gameBoard, meepleManager);
         } else if (!this.construction_type && this.construction_mesh) {
             this.removeConstruction(gameBoard);
         }
         
         // Créer/mettre à jour le rempart
         if (this.rempart && !this.rempart_mesh) {
-            this.createRempart(gameBoard, meepleManager);
+            await this.createRempart(gameBoard, meepleManager);
         } else if (!this.rempart && this.rempart_mesh) {
             this.removeRempart(gameBoard);
         }
@@ -511,11 +548,13 @@ class Game {
         this.game_type = data.game_type || '';
         this.player_count = data.player_count || 0;
         this.clan_names = data.clan_names || '';
+        this.biddings_turn = data.biddings_turn || 0;
         
         // Relations
         this.game_users = data.game_users ? data.game_users.map(gu => new GameUser(gu)) : [];
         this.tiles = data.tiles ? data.tiles.map(tile => new Tile(tile)) : [];
         this.actions = data.actions ? data.actions.map(action => new Action(action)) : [];
+        this.biddings = data.biddings ? data.biddings.map(bidding => new Bidding(bidding)) : [];
         this.clans = data.clans ? data.clans.map(clan => new Clan(clan)) : [];
         this.territories = [];  // Initialiser comme un tableau vide
         this.lakes = new Map(); // Map des lacs par ID
@@ -527,6 +566,7 @@ class Game {
         this.game_type = data.game_type || this.game_type;
         this.player_count = data.player_count || this.player_count;
         this.clan_names = data.clan_names || this.clan_names;
+        this.biddings_turn = data.biddings_turn || this.biddings_turn;
 
         // Mise à jour des game_users
         if (data.game_users) {
@@ -570,6 +610,21 @@ class Game {
                     return existing;
                 } else {
                     return new Action(actionData);
+                }
+            });
+        }
+
+        // Mise à jour des biddings
+        if (data.biddings) {
+            const existingBiddings = new Map(this.biddings.map(bidding => [bidding.id, bidding]));
+            
+            this.biddings = data.biddings.map(biddingData => {
+                const existing = existingBiddings.get(biddingData.id);
+                if (existing) {
+                    existing.update(biddingData);
+                    return existing;
+                } else {
+                    return new Bidding(biddingData);
                 }
             });
         }

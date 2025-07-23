@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_22_131112) do
   create_table "actions", force: :cascade do |t|
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false
@@ -30,6 +30,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
     t.boolean "victory"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "clan_id"
+    t.index ["clan_id"], name: "index_biddings_on_clan_id"
     t.index ["game_id"], name: "index_biddings_on_game_id"
     t.index ["game_user_id"], name: "index_biddings_on_game_user_id"
   end
@@ -65,7 +67,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
     t.integer "game_type", default: 0, null: false
     t.integer "player_count"
     t.string "clan_names"
-    t.integer "biddings_left"
+    t.integer "biddings_turn"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -99,6 +101,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_02_091238) do
 
   add_foreign_key "actions", "game_users"
   add_foreign_key "actions", "games"
+  add_foreign_key "biddings", "clans"
   add_foreign_key "biddings", "game_users"
   add_foreign_key "biddings", "games"
   add_foreign_key "clans", "games"

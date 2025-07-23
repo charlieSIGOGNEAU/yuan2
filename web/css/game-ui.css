@@ -62,8 +62,6 @@
     background: #888888;
     border-radius: 8px;
     border: 2px solid #666666;
-    transition: all 0.3s ease;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -71,9 +69,7 @@
 }
 
 .action-case:hover {
-    background: #999999;
-    border-color: #777777;
-    transform: translateY(-2px);
+    /* Pas d'effet hover */
 }
 
 /* Icônes dans les cases d'actions */
@@ -92,13 +88,68 @@
 }
 
 .action-menu:hover {
-    transform: translateY(-2px);
+    /* Pas d'animation */
 }
 
 /* Style spécifique pour les slots d'actions centrales */
 .action-slot {
     background: #888888;
     border-color: #666666;
+    position: relative; /* Pour permettre le positionnement absolu des éléments enfants */
+}
+
+/* Style pour les boutons 2, 3 et 4 avec fond noir */
+.action-slot-2,
+.action-slot-3,
+.action-slot-4 {
+    background: #000000;
+    border-color: #333333;
+}
+
+/* Icône dans le bouton 2 */
+.action-slot-icon {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    object-position: center;
+}
+
+/* Cercle dans les boutons d'action (même style que home-circle) */
+.action-slot-circle {
+    width: 50%; /* 2 * rayon (25% de la largeur du carré) */
+    height: 50%; /* 2 * rayon (25% de la hauteur du carré) */
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 1;
+    transform: translate(40%, -40%);
+}
+
+/* Déclaration de la police personnalisée */
+@font-face {
+    font-family: 'EBGaramond';
+    src: url('../police/EBGaramond08-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Texte modifiable dans les boutons d'action */
+.action-slot-text {
+    position: absolute;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-family: 'EBGaramond', Arial, sans-serif;
+    font-size: 1.8em;
+    letter-spacing: -0.05em;
+    color: #000000;
+    width: 50%;
+    height: 50%;
+    transform: translate(40%, -43%);
+    pointer-events: auto;
 }
 
 /* Style spécifique pour la validation */
@@ -109,7 +160,7 @@
 }
 
 .action-validate:hover {
-    transform: translateY(-2px);
+    /* Pas d'animation */
 }
 
 /* Style pour les cases rectangulaires (2x largeur) */
@@ -119,8 +170,6 @@
     background: #888888;
     border-radius: 8px;
     border: 2px solid #666666;
-    transition: all 0.3s ease;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -128,9 +177,7 @@
 }
 
 .action-rectangle:hover {
-    background: #999999;
-    border-color: #777777;
-    transform: translateY(-2px);
+    /* Pas d'effet hover */
 }
 
 /* Styles pour la barre de bidding */
@@ -214,11 +261,287 @@
 .bidding-button {
     background: transparent !important;
     border: none !important;
-    transition: transform 0.2s ease;
 }
 
 .bidding-button:hover {
     background: transparent !important;
     border: none !important;
-    transform: translateY(-2px) scale(1.1);
+}
+
+/* Styles pour la barre d'information de la phase simultaneous_play */
+
+/* Barre d'information principale */
+.simultaneous-play-info-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: calc(100vw / 5); /* Ratio 5:1 (largeur:hauteur) - responsive */
+    background: #000000;
+    display: flex;
+    z-index: 10003;
+    pointer-events: none; /* Permet l'interaction avec le gameboard en dessous */
+}
+
+/* Carrés individuels dans la barre */
+.info-square {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* Pour permettre le positionnement absolu des icônes */
+}
+
+/* Icône de riz dans le premier carré */
+.rice-icon {
+    width: 75%;
+    height: 75%;
+    object-fit: contain;
+    object-position: center;
+    position: absolute;
+    z-index: 1;
+}
+
+/* Cercle derrière l'icône de maison */
+.home-circle {
+    width: 45%; /* 2 * rayon (25% de la largeur du carré) */
+    height: 45%; /* 2 * rayon (25% de la hauteur du carré) */
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 1;
+    transform: translate(45%, -45%);
+}
+
+/* Champ de texte dans le cercle */
+.home-text {
+    position: absolute;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #000000;
+    width: 50%;
+    height: 50%;
+    transform: translate(45%, -45%);
+    pointer-events: auto;
+}
+
+/* Icône de maison dans le premier carré */
+.home-icon {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    object-position: center;
+    position: absolute;
+    z-index: 2;
+
+    transform: translate(-30%, 30%);
+}
+
+/* Icône de forêt dans le deuxième carré */
+.forest-icon {
+    width: 75%;
+    height: 75%;
+    object-fit: contain;
+    object-position: center;
+    position: absolute;
+    z-index: 1;
+}
+
+/* Cercle derrière l'icône de bouclier (même style que home-circle) */
+.shield-circle {
+    width: 45%;
+    height: 45%;
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 1;
+    transform: translate(45%, -45%);
+}
+
+/* Champ de texte dans le cercle du bouclier */
+.shield-text {
+    position: absolute;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #000000;
+    width: 50%;
+    height: 50%;
+    transform: translate(45%, -45%);
+    pointer-events: auto;
+}
+
+/* Icône de bouclier dans le deuxième carré */
+.shield-icon {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    object-position: center;
+    position: absolute;
+    z-index: 2;
+    transform: translate(-30%, 30%);
+}
+
+/* Cercle derrière l'icône d'épée (même style que les autres) */
+.sword-circle {
+    width: 45%;
+    height: 45%;
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 1;
+    transform: translate(45%, -45%);
+}
+
+/* Champ de texte dans le cercle de l'épée */
+.sword-text {
+    position: absolute;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #000000;
+    width: 50%;
+    height: 50%;
+    transform: translate(45%, -45%);
+    pointer-events: auto;
+}
+
+/* Icône d'épée dans le troisième carré */
+.sword-icon {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    object-position: center;
+    position: absolute;
+    z-index: 2;
+    transform: translate(-30%, 30%);
+}
+
+/* Icône de pagode dans le quatrième carré */
+.pagoda-icon {
+    width: 75%;
+    height: 75%;
+    object-fit: contain;
+    object-position: center;
+    position: absolute;
+    z-index: 1;
+}
+
+/* Cercle derrière la fraction (même style que les autres) */
+.fraction-circle {
+    width: 50%;
+    height: 50%;
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 1;
+    transform: translate(45%, 45%);
+}
+
+/* Numérateur de la fraction */
+.fraction-numerator {
+    position: absolute;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #000000;
+    width: 50%;
+    height: 50%;
+    transform: translate(25%, 40%);
+    pointer-events: auto;
+}
+
+/* Dénominateur de la fraction */
+.fraction-denominator {
+    position: absolute;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #000000;
+    width: 50%;
+    height: 50%;
+    transform: translate(65%, 60%);
+    pointer-events: auto;
+}
+
+/* Barre oblique de la fraction */
+.fraction-slash {
+    position: absolute;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #000000;
+    width: 50%;
+    height: 50%;
+    transform: translate(45%, 45%);
+    pointer-events: auto;
+}
+
+/* Icône de chao dans le cinquième carré */
+.chao-icon {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+    object-position: center;
+    position: absolute;
+    z-index: 1;
+}
+
+/* Cercle derrière le texte chao (même style que les autres) */
+.chao-circle {
+    width: 45%;
+    height: 45%;
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 1;
+    transform: translate(0%, 0%);
+}
+
+/* Champ de texte dans le cercle chao */
+.chao-text {
+    position: absolute;
+    z-index: 3;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #000000;
+    width: 50%;
+    height: 50%;
+    transform: translate(0%, 0%);
+    pointer-events: auto;
 } 

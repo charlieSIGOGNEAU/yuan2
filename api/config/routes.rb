@@ -26,6 +26,7 @@ Rails.application.routes.draw do
         # Routes de bidding
         resources :bidding, only: [:create]
       end
+      
     end
   end
 
