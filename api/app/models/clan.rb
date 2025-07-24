@@ -7,6 +7,4 @@ class Clan < ApplicationRecord
   validates :name, presence: true
   validates :start_q, presence: true, numericality: { only_integer: true }
   validates :start_r, presence: true, numericality: { only_integer: true }
-  validates :received_turn, numericality: { only_integer: true }, allow_nil: true
-  validates :received_chao, numericality: { only_integer: true }, allow_nil: true
 end 

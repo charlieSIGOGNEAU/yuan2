@@ -25,8 +25,7 @@ class Clan {
         this.name = data.name || '';
         this.start_q = data.start_q || 0;
         this.start_r = data.start_r || 0;
-        this.received_turn = data.received_turn ?? null;
-        this.received_chao = data.received_chao ?? null;
+        this.available_chao = 6;
         
         // Convertir le code hexadécimal en nom de couleur
         this.color_name = this.getColorName(this.color);
@@ -48,8 +47,6 @@ class Clan {
         this.name = data.name || this.name;
         this.start_q = data.start_q || this.start_q;
         this.start_r = data.start_r || this.start_r;
-        this.received_turn = data.received_turn ?? this.received_turn;
-        this.received_chao = data.received_chao ?? this.received_chao;
         
         // Mettre à jour color_name si la couleur a changé
         if (data.color && data.color !== this.color) {
@@ -203,6 +200,7 @@ class Bidding {
         this.turn = data.turn || 0;
         this.chao = data.chao || 0;
         this.victory = data.victory || false;
+        this.clan_id = data.clan_id || null;
     }
 
     update(data) {
@@ -212,6 +210,7 @@ class Bidding {
         this.turn = data.turn || this.turn;
         this.chao = data.chao || this.chao;
         this.victory = data.victory ?? this.victory;
+        this.clan_id = data.clan_id || this.clan_id;
     }
 }   
 
@@ -226,7 +225,7 @@ class Territory {
         this.construction_type = data.construction_type || null; // village, ville, 2villes
         this.rempart = data.protection_type || null; // fortifiee, indestruible
         this.warriors = []; // Tableau des mesh de guerriers (remplace armee)
-        this.color = data.color || null; // Couleur du clan pour ce territoire
+        this.clan_id = data.clan_id || null; // Référence au clan au lieu de color
         this.hasTemple = false; // Variable booléenne pour indiquer si un temple est présent
         
         // Références aux mesh 3D
@@ -250,7 +249,7 @@ class Territory {
         this.user_id = data.user_id || this.user_id;
         this.construction_type = data.construction_type || this.construction_type;
         this.rempart = data.protection_type || this.protection_type;
-        this.color = data.color || this.color;
+        this.clan_id = data.clan_id || this.clan_id;
         // Note: warriors n'est pas mis à jour via data, il est géré par les méthodes
     }
 
@@ -278,10 +277,22 @@ class Territory {
             return; // Pas de construction à créer ou déjà créé
         }
 
-        console.log(`🏗️ Création de ${this.construction_type} (${this.color}) sur territoire (${this.position.q}, ${this.position.r})`);
+        // Récupérer la couleur via la référence au clan
+        let colorHex = null;
+        if (this.clan_id) {
+            const clan = gameState.game.clans.find(c => c.id === this.clan_id);
+            if (clan) {
+                colorHex = clan.color;
+                console.log(`🏗️ Création de ${this.construction_type} (${clan.name} - ${colorHex}) sur territoire (${this.position.q}, ${this.position.r})`);
+            } else {
+                console.warn(`⚠️ Clan non trouvé pour clan_id=${this.clan_id}`);
+            }
+        } else {
+            console.log(`🏗️ Création de ${this.construction_type} (sans couleur) sur territoire (${this.position.q}, ${this.position.r})`);
+        }
         
         // Créer l'instance du meeple (version asynchrone)
-        const mesh = await meepleManager.createMeepleInstance(this.construction_type, this.color, {
+        const mesh = await meepleManager.createMeepleInstance(this.construction_type, colorHex, {
             territory: this,
             type: 'construction'
         });
@@ -355,10 +366,7 @@ class Territory {
     async createTemple(gameBoard, meepleManager) {
         if (this.hasTemple && this.temple_mesh) {
             return; // Temple déjà créé
-        }
-
-        console.log(`🏛️ Création de temple sur territoire (${this.position.q}, ${this.position.r})`);
-        
+        }        
         // Utiliser le type 'temple' du MeepleManager (non colorable)
         const mesh = await meepleManager.createMeepleInstance('temple', null, {
             territory: this,
@@ -382,17 +390,23 @@ class Territory {
             this.temple_mesh = mesh;
             this.hasTemple = true;
             
-            console.log(`✅ Temple créé à`, pos);
         }
     }
 
     // Créer les mesh de guerriers
     async createWarriors(gameBoard, meepleManager, count) {
-        if (!this.color || count <= 0) {
+        if (!this.clan_id || count <= 0) {
             return; // Pas de guerriers à créer
         }
 
-        console.log(`⚔️ Création de ${count} guerriers (${this.color}) sur territoire (${this.position.q}, ${this.position.r})`);
+        // Récupérer la couleur via la référence au clan
+        const clan = gameState.game.clans.find(c => c.id === this.clan_id);
+        if (!clan) {
+            console.warn(`⚠️ Clan non trouvé pour clan_id=${this.clan_id}`);
+            return;
+        }
+
+        console.log(`⚔️ Création de ${count} guerriers (${clan.name} - ${clan.color}) sur territoire (${this.position.q}, ${this.position.r})`);
         
         // Supprimer les anciens guerriers d'abord
         this.removeWarriors(gameBoard);
@@ -401,7 +415,7 @@ class Territory {
         const positions = this.getWarriorPositions(count);
         
         for (let i = 0; i < count; i++) {
-            const mesh = await meepleManager.createMeepleInstance('guerrier', this.color, {
+            const mesh = await meepleManager.createMeepleInstance('guerrier', clan.color, {
                 territory: this,
                 type: 'warrior',
                 index: i
@@ -595,6 +609,7 @@ class Game {
         this.player_count = data.player_count || 0;
         this.clan_names = data.clan_names || '';
         this.biddings_turn = data.biddings_turn || 0;
+        this.simultaneous_play_turn = 0;
         
         // Relations
         this.game_users = data.game_users ? data.game_users.map(gu => new GameUser(gu)) : [];

@@ -157,10 +157,35 @@
     background: transparent;
     border: none;
     padding: 0;
+    position: relative; /* Pour permettre le positionnement du cercle en arrière-plan */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .action-validate:hover {
     /* Pas d'animation */
+}
+
+/* Div interne du bouton de validation */
+.validate-button-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--player-clan-color, #000000); /* Couleur du clan ou noir par défaut */
+}
+
+/* Icône de validation dans la div interne */
+.validate-button-inner .action-icon {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    z-index: 2;
+    position: relative;
 }
 
 /* Style pour les cases rectangulaires (2x largeur) */
@@ -293,137 +318,100 @@
     position: relative; /* Pour permettre le positionnement absolu des icônes */
 }
 
-/* Icône de riz dans le premier carré */
-.rice-icon {
-    width: 75%;
-    height: 75%;
-    object-fit: contain;
-    object-position: center;
-    position: absolute;
-    z-index: 1;
-}
-
-/* Cercle derrière l'icône de maison */
-.home-circle {
-    width: 45%; /* 2 * rayon (25% de la largeur du carré) */
-    height: 45%; /* 2 * rayon (25% de la hauteur du carré) */
+/* Styles communs pour tous les cercles */
+.home-circle,
+.shield-circle,
+.sword-circle,
+.fraction-circle,
+.chao-circle {
     background: #ffffff;
     border: 3px solid #000000;
     border-radius: 50%;
     position: absolute;
     z-index: 1;
-    transform: translate(45%, -45%);
 }
 
-/* Champ de texte dans le cercle */
-.home-text {
-    position: absolute;
-    z-index: 3;
-    background: transparent;
-    border: none;
-    outline: none;
-    text-align: center;
-    font-size: 1.8em;
-    font-weight: bold;
-    color: #000000;
-    width: 50%;
-    height: 50%;
-    transform: translate(45%, -45%);
-    pointer-events: auto;
-}
-
-/* Icône de maison dans le premier carré */
-.home-icon {
-    width: 60%;
-    height: 60%;
-    object-fit: contain;
-    object-position: center;
-    position: absolute;
-    z-index: 2;
-
-    transform: translate(-30%, 30%);
-}
-
-/* Icône de forêt dans le deuxième carré */
-.forest-icon {
-    width: 75%;
-    height: 75%;
-    object-fit: contain;
-    object-position: center;
-    position: absolute;
-    z-index: 1;
-}
-
-/* Cercle derrière l'icône de bouclier (même style que home-circle) */
-.shield-circle {
-    width: 45%;
-    height: 45%;
-    background: #ffffff;
-    border: 3px solid #000000;
-    border-radius: 50%;
-    position: absolute;
-    z-index: 1;
-    transform: translate(45%, -45%);
-}
-
-/* Champ de texte dans le cercle du bouclier */
-.shield-text {
-    position: absolute;
-    z-index: 3;
-    background: transparent;
-    border: none;
-    outline: none;
-    text-align: center;
-    font-size: 1.8em;
-    font-weight: bold;
-    color: #000000;
-    width: 50%;
-    height: 50%;
-    transform: translate(45%, -45%);
-    pointer-events: auto;
-}
-
-/* Icône de bouclier dans le deuxième carré */
-.shield-icon {
-    width: 60%;
-    height: 60%;
-    object-fit: contain;
-    object-position: center;
-    position: absolute;
-    z-index: 2;
-    transform: translate(-30%, 30%);
-}
-
-/* Cercle derrière l'icône d'épée (même style que les autres) */
+/* Tailles et positions spécifiques pour chaque cercle */
+.home-circle,
+.shield-circle,
 .sword-circle {
     width: 45%;
     height: 45%;
-    background: #ffffff;
-    border: 3px solid #000000;
-    border-radius: 50%;
-    position: absolute;
-    z-index: 1;
     transform: translate(45%, -45%);
 }
 
-/* Champ de texte dans le cercle de l'épée */
-.sword-text {
+.fraction-circle {
+    width: 50%;
+    height: 50%;
+    transform: translate(45%, 45%);
+}
+
+.chao-circle {
+    width: 45%;
+    height: 45%;
+    transform: translate(0%, 0%);
+}
+
+/* Styles communs pour tous les champs de texte */
+.home-text,
+.shield-text,
+.sword-text,
+.fraction-numerator,
+.fraction-denominator,
+.fraction-slash,
+.chao-text {
     position: absolute;
     z-index: 3;
     background: transparent;
     border: none;
     outline: none;
     text-align: center;
-    font-size: 1.8em;
     font-weight: bold;
     color: #000000;
-    width: 50%;
-    height: 50%;
-    transform: translate(45%, -45%);
     pointer-events: auto;
 }
 
-/* Icône d'épée dans le troisième carré */
+/* Tailles et positions spécifiques pour chaque champ de texte */
+.home-text,
+.shield-text,
+.sword-text {
+    font-size: 1.8em;
+    width: 50%;
+    height: 50%;
+    transform: translate(45%, -45%);
+}
+
+.fraction-numerator {
+    font-size: 1.5em;
+    width: 50%;
+    height: 50%;
+    transform: translate(25%, 40%);
+}
+
+.fraction-denominator {
+    font-size: 1.5em;
+    width: 50%;
+    height: 50%;
+    transform: translate(65%, 60%);
+}
+
+.fraction-slash {
+    font-size: 1.8em;
+    width: 50%;
+    height: 50%;
+    transform: translate(45%, 45%);
+}
+
+.chao-text {
+    font-size: 1.8em;
+    width: 50%;
+    height: 50%;
+    transform: translate(0%, 0%);
+}
+
+/* Styles communs pour toutes les icônes */
+.home-icon,
+.shield-icon,
 .sword-icon {
     width: 60%;
     height: 60%;
@@ -434,7 +422,10 @@
     transform: translate(-30%, 30%);
 }
 
-/* Icône de pagode dans le quatrième carré */
+/* Styles communs pour les icônes de ressources */
+.rice-icon,
+.forest-icon,
+.mine-icon,
 .pagoda-icon {
     width: 75%;
     height: 75%;
@@ -444,104 +435,12 @@
     z-index: 1;
 }
 
-/* Cercle derrière la fraction (même style que les autres) */
-.fraction-circle {
-    width: 50%;
-    height: 50%;
-    background: #ffffff;
-    border: 3px solid #000000;
-    border-radius: 50%;
-    position: absolute;
-    z-index: 1;
-    transform: translate(45%, 45%);
-}
-
-/* Numérateur de la fraction */
-.fraction-numerator {
-    position: absolute;
-    z-index: 3;
-    background: transparent;
-    border: none;
-    outline: none;
-    text-align: center;
-    font-size: 1.5em;
-    font-weight: bold;
-    color: #000000;
-    width: 50%;
-    height: 50%;
-    transform: translate(25%, 40%);
-    pointer-events: auto;
-}
-
-/* Dénominateur de la fraction */
-.fraction-denominator {
-    position: absolute;
-    z-index: 3;
-    background: transparent;
-    border: none;
-    outline: none;
-    text-align: center;
-    font-size: 1.5em;
-    font-weight: bold;
-    color: #000000;
-    width: 50%;
-    height: 50%;
-    transform: translate(65%, 60%);
-    pointer-events: auto;
-}
-
-/* Barre oblique de la fraction */
-.fraction-slash {
-    position: absolute;
-    z-index: 3;
-    background: transparent;
-    border: none;
-    outline: none;
-    text-align: center;
-    font-size: 1.8em;
-    font-weight: bold;
-    color: #000000;
-    width: 50%;
-    height: 50%;
-    transform: translate(45%, 45%);
-    pointer-events: auto;
-}
-
-/* Icône de chao dans le cinquième carré */
-.chao-icon {
+/* Style spécifique pour l'icône chao dans la barre d'information */
+.simultaneous-play-info-bar .chao-icon {
     width: 85%;
     height: 85%;
     object-fit: contain;
     object-position: center;
     position: absolute;
     z-index: 1;
-}
-
-/* Cercle derrière le texte chao (même style que les autres) */
-.chao-circle {
-    width: 45%;
-    height: 45%;
-    background: #ffffff;
-    border: 3px solid #000000;
-    border-radius: 50%;
-    position: absolute;
-    z-index: 1;
-    transform: translate(0%, 0%);
-}
-
-/* Champ de texte dans le cercle chao */
-.chao-text {
-    position: absolute;
-    z-index: 3;
-    background: transparent;
-    border: none;
-    outline: none;
-    text-align: center;
-    font-size: 1.8em;
-    font-weight: bold;
-    color: #000000;
-    width: 50%;
-    height: 50%;
-    transform: translate(0%, 0%);
-    pointer-events: auto;
 } 

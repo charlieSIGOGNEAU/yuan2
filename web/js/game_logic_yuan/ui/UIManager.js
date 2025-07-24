@@ -1,5 +1,6 @@
 // Gestionnaire de l'interface utilisateur
 import { gameApi } from '../gameApi.js';
+import { gameState } from '../gameState.js';
 
 export class UIManager {
     constructor() {
@@ -225,12 +226,15 @@ export class UIManager {
         this.currentActionBar = null;
     }
 
-    // Fonction pour afficher la barre d'actions complète (6 cases)
+    // Fonction pour afficher la barre d'actions complète (5 cases)
     showPlayerActionBar() {
         this.hideAllActionBars();
         if (this.playerActionBar) {
             this.playerActionBar.style.display = 'flex';
             this.currentActionBar = this.playerActionBar;
+            
+            // Appliquer la couleur du clan au bouton de validation
+            this.applyClanColorToValidateButton();
         } else {
             console.warn('⚠️ Barre d\'actions complète non initialisée');
         }
@@ -242,6 +246,9 @@ export class UIManager {
         if (this.validationBar) {
             this.validationBar.style.display = 'flex';
             this.currentActionBar = this.validationBar;
+            
+            // Appliquer la couleur du clan au bouton de validation
+            this.applyClanColorToValidateButton();
         } else {
             console.warn('⚠️ Barre de validation non initialisée');
         }
@@ -253,6 +260,9 @@ export class UIManager {
         if (this.biddingBar) {
             this.biddingBar.style.display = 'flex';
             this.currentActionBar = this.biddingBar;
+            
+            // Appliquer la couleur du clan au bouton de validation
+            this.applyClanColorToValidateButton();
         } else {
             console.warn('⚠️ Barre de bidding non initialisée');
         }
@@ -279,6 +289,12 @@ export class UIManager {
         if (!infoBar) {
             infoBar = this.createSimultaneousPlayInfoBar();
         }
+        
+        // Mettre à jour le texte du 5ème carré (chao) avec available_chao du clan du joueur
+        this.updateChaoText();
+        
+        // Mettre à jour les ressources (3 premières cases)
+        this.updateResources();
         
         // Afficher la barre
         if (infoBar) {
@@ -347,13 +363,13 @@ export class UIManager {
                 shieldIcon.className = 'shield-icon';
                 square.appendChild(shieldIcon);
             }
-            // Troisième carré avec l'icône de forêt, le cercle et l'icône d'épée
+            // Troisième carré avec l'icône de mine, le cercle et l'icône d'épée
             else if (i === 2) {
-                const forestIcon = document.createElement('img');
-                forestIcon.src = './images/icon/forestIcon.webp';
-                forestIcon.alt = 'Forêt';
-                forestIcon.className = 'forest-icon';
-                square.appendChild(forestIcon);
+                const mineIcon = document.createElement('img');
+                mineIcon.src = './images/icon/mineIcon.webp';
+                mineIcon.alt = 'Mine';
+                mineIcon.className = 'mine-icon';
+                square.appendChild(mineIcon);
                 
                 const swordCircle = document.createElement('div');
                 swordCircle.className = 'sword-circle';
@@ -539,6 +555,137 @@ export class UIManager {
                 console.error('❌ Container de fraction introuvable');
             }
         }
+    }
+
+    // Fonction pour mettre à jour le texte du chao avec available_chao du clan du joueur
+    updateChaoText() {
+        // Récupérer le gameUser du joueur actuel
+        const myGameUser = gameState.getMyGameUser();
+        if (!myGameUser) {
+            console.warn('⚠️ GameUser du joueur actuel non trouvé');
+            return;
+        }
+
+        // Récupérer le clan du joueur
+        const playerClan = gameState.game.clans.find(clan => clan.id === myGameUser.clan_id);
+        if (!playerClan) {
+            console.warn('⚠️ Clan du joueur non trouvé');
+            return;
+        }
+
+        // Mettre à jour le texte du chao dans le 5ème carré
+        const chaoText = document.querySelector('#simultaneous-play-info-bar .chao-text');
+        if (chaoText) {
+            chaoText.value = playerClan.available_chao.toString();
+            console.log(`💰 Texte chao mis à jour: ${playerClan.available_chao} pour le clan ${playerClan.name}`);
+        } else {
+            console.warn('⚠️ Élément chao-text non trouvé dans la barre d\'information');
+        }
+    }
+
+    // Fonction pour mettre à jour les ressources (3 premières cases)
+    updateResources() {
+        // Récupérer le gameUser du joueur actuel
+        const myGameUser = gameState.getMyGameUser();
+        if (!myGameUser) {
+            console.warn('⚠️ GameUser du joueur actuel non trouvé');
+            return;
+        }
+
+        // Récupérer le clan du joueur
+        const playerClan = gameState.game.clans.find(clan => clan.id === myGameUser.clan_id);
+        if (!playerClan) {
+            console.warn('⚠️ Clan du joueur non trouvé');
+            return;
+        }
+
+        // Compter les territoires du clan selon les critères
+        const territories = gameState.game.territories.filter(territory => 
+            territory.clan_id === playerClan.id
+        );
+
+        // Case 1: Riz (type 'rice' avec construction_type 'ville' ou '2villes')
+        const riceTerritories = territories.filter(territory => 
+            territory.type === 'rice' && 
+            (territory.construction_type === 'ville' || territory.construction_type === '2villes')
+        );
+        let riceCount = 0;
+        riceTerritories.forEach(territory => {
+            riceCount += territory.construction_type === '2villes' ? 2 : 1;
+        });
+
+        // Case 2: Forêt (type 'forest' avec construction_type 'ville' ou '2villes')
+        const forestTerritories = territories.filter(territory => 
+            territory.type === 'forest' && 
+            (territory.construction_type === 'ville' || territory.construction_type === '2villes')
+        );
+        let forestCount = 0;
+        forestTerritories.forEach(territory => {
+            forestCount += territory.construction_type === '2villes' ? 2 : 1;
+        });
+
+        // Case 3: Mine (type 'mine' avec construction_type 'ville' ou '2villes')
+        const mineTerritories = territories.filter(territory => 
+            territory.type === 'mine' && 
+            (territory.construction_type === 'ville' || territory.construction_type === '2villes')
+        );
+        let mineCount = 0;
+        mineTerritories.forEach(territory => {
+            mineCount += territory.construction_type === '2villes' ? 2 : 1;
+        });
+
+        // Mettre à jour les textes dans les 3 premières cases
+        const homeText = document.querySelector('#simultaneous-play-info-bar .home-text');
+        const shieldText = document.querySelector('#simultaneous-play-info-bar .shield-text');
+        const swordText = document.querySelector('#simultaneous-play-info-bar .sword-text');
+
+        if (homeText) {
+            homeText.value = riceCount.toString();
+            console.log(`🌾 Riz mis à jour: ${riceCount} territoires`);
+        }
+        if (shieldText) {
+            shieldText.value = forestCount.toString();
+            console.log(`🌲 Forêt mis à jour: ${forestCount} territoires`);
+        }
+        if (swordText) {
+            swordText.value = mineCount.toString();
+            console.log(`⛏️ Mine mis à jour: ${mineCount} territoires`);
+        }
+
+        console.log(`📊 Ressources mises à jour pour le clan ${playerClan.name}: Riz=${riceCount}, Forêt=${forestCount}, Mine=${mineCount}`);
+    }
+
+    // Fonction pour récupérer la couleur du clan du joueur actuel
+    getPlayerClanColor() {
+        // Récupérer le gameUser du joueur actuel
+        const myGameUser = gameState.getMyGameUser();
+        if (!myGameUser) {
+            console.warn('⚠️ GameUser du joueur actuel non trouvé pour la couleur');
+            return null;
+        }
+
+        // Récupérer le clan du joueur
+        const playerClan = gameState.game.clans.find(clan => clan.id === myGameUser.clan_id);
+        if (!playerClan) {
+            console.warn('⚠️ Clan du joueur non trouvé pour la couleur');
+            return null;
+        }
+
+        console.log(`🎨 Couleur du clan ${playerClan.name} récupérée: ${playerClan.color}`);
+        return playerClan.color;
+    }
+
+    // Fonction pour appliquer la couleur du clan au bouton de validation
+    applyClanColorToValidateButton() {
+        const clanColor = this.getPlayerClanColor();
+        if (!clanColor) {
+            console.warn('⚠️ Impossible d\'appliquer la couleur du clan au bouton de validation');
+            return;
+        }
+
+        // Appliquer la couleur via CSS custom property
+        document.documentElement.style.setProperty('--player-clan-color', clanColor);
+        console.log(`🎨 Couleur du clan appliquée au bouton de validation: ${clanColor}`);
     }
 }
 

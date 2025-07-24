@@ -26,8 +26,19 @@ export const biddingPhase = {
             console.log('⏳ Joueur a déjà sélectionné un clan, affichage du message d\'attente');
             await this.handlePlayerWithClan(gameBoard);
         } else {
-            console.log('🎯 Joueur n\'a pas encore sélectionné de clan, affichage de l\'interface de sélection');
-            await this.handlePlayerWithoutClan(gameBoard);
+            // Vérifier s'il n'existe pas déjà un bidding pour ce joueur avec le même turn
+            const existingBidding = gameState.game.biddings.find(bidding => 
+                bidding.game_user_id === myGameUserId && 
+                bidding.turn === gameState.game.biddings_turn
+            );
+            
+            if (existingBidding) {
+                console.log('⏳ Bidding déjà existant pour ce joueur et ce turn, affichage du message d\'attente');
+                await this.handlePlayerWithClan(gameBoard);
+            } else {
+                console.log('🎯 Joueur n\'a pas encore sélectionné de clan, affichage de l\'interface de sélection');
+                await this.handlePlayerWithoutClan(gameBoard);
+            }
         }
     },
 
@@ -153,7 +164,7 @@ export const biddingPhase = {
             
             if (territory && territory.construction_type !== 'ville') {
                 // Mettre à jour le territoire
-                territory.color = clan.color || '#808080';
+                territory.clan_id = clan.id;
                 territory.construction_type = 'ville';
                 
                 // Créer la ville si gameBoard disponible (version asynchrone)

@@ -6,12 +6,12 @@ class Api::V1::BiddingController < ApplicationController
   # POST /api/v1/games/:game_id/bidding
   def create
     puts "💰 Tentative de création d'une enchère pour le jeu #{@game.id} par le joueur #{@game_user.id}"
-    puts "📝 Données reçues: chao=#{params[:chao]}, turn=#{params[:turn]}"
+    puts "📝 Données reçues: chao=#{bidding_params[:chao]}, turn=#{bidding_params[:turn]}, clan_id=#{bidding_params[:clan_id]}"
     puts "🎮 biddings_turn actuel: #{@game.biddings_turn}"
     
     # Vérifier que le game_user_id correspond bien au joueur authentifié
-    if params[:game_user_id].to_i != @game_user.id
-      puts "❌ Game user ID invalide: reçu #{params[:game_user_id]}, attendu #{@game_user.id}"
+    if bidding_params[:game_user_id].to_i != @game_user.id
+      puts "❌ Game user ID invalide: reçu #{bidding_params[:game_user_id]}, attendu #{@game_user.id}"
       render json: {
         success: false,
         message: "Accès non autorisé - game_user_id invalide"
@@ -20,7 +20,7 @@ class Api::V1::BiddingController < ApplicationController
     end
 
     # Utiliser biddings_turn comme turn si turn n'est pas spécifié
-    current_turn = params[:turn] || @game.biddings_turn
+    current_turn = bidding_params[:turn] || @game.biddings_turn
     puts "🎯 Turn utilisé: #{current_turn}"
 
     # Vérifier si une enchère existe déjà pour ce game_user et ce turn
@@ -32,8 +32,8 @@ class Api::V1::BiddingController < ApplicationController
     
     if existing_bidding
       puts "🔄 Mise à jour de l'enchère existante pour ce joueur à ce tour"
-      existing_bidding.chao = params[:chao].to_i
-      existing_bidding.clan_id = params[:clan_id]  # Mettre à jour le clan_id
+      existing_bidding.chao = bidding_params[:chao].to_i
+      existing_bidding.clan_id = bidding_params[:clan_id]  # Mettre à jour le clan_id
       
       if existing_bidding.save
         puts "✅ Enchère mise à jour avec succès: #{existing_bidding.chao} chao pour le joueur #{@game_user.user_name}"
@@ -56,10 +56,10 @@ class Api::V1::BiddingController < ApplicationController
     bidding = Bidding.new(
       game_id: @game.id,
       game_user_id: @game_user.id,
-      chao: params[:chao].to_i,
+      chao: bidding_params[:chao].to_i,
       turn: current_turn,
       victory: false,
-      clan_id: params[:clan_id]  # Ajouter le clan_id
+      clan_id: bidding_params[:clan_id]  # Ajouter le clan_id
     )
 
     if bidding.save
@@ -79,6 +79,11 @@ class Api::V1::BiddingController < ApplicationController
   end
 
   private
+
+  # Méthode pour autoriser les paramètres
+  def bidding_params
+    params.permit(:chao, :turn, :game_user_id, :clan_id)
+  end
 
   def find_game
     @game = Game.find(params[:game_id])
@@ -157,12 +162,14 @@ class Api::V1::BiddingController < ApplicationController
           # Attribuer le clan_id au game_user gagnant
           if winning_bidding
             winning_game_user = winning_bidding.game_user
-            clan_id = params[:clan_id] || winning_bidding.clan_id
+            clan_id = winning_bidding.clan_id  # Utiliser le clan_id de l'enchère gagnante
             
             if clan_id
               winning_game_user.update!(clan_id: clan_id)
               winner_name = winning_game_user.user_name
               puts "🎉 Clan #{clan_id} attribué au gagnant #{winner_name} avec #{winning_bidding.chao} chao"
+            else
+              puts "⚠️ Aucun clan_id trouvé dans l'enchère gagnante"
             end
             
             # Marquer l'enchère comme victorieuse
@@ -171,7 +178,7 @@ class Api::V1::BiddingController < ApplicationController
           end
           
           # Vérifier si tous les tours d'enchères sont terminés
-          if new_biddings_turn >= @game.player_count
+          if new_biddings_turn > @game.player_count
             puts "🏁 Tous les tours d'enchères terminés, passage en simultaneous_play"
             @game.update!(game_status: :simultaneous_play)
             puts "🎮 Statut de la game changé: bidding_phase → simultaneous_play"
