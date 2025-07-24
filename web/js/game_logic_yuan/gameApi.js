@@ -11,6 +11,7 @@ import { simultaneousPlayPhase } from './phases/simultaneous-play-phase.js';
 // Fonctions pour l'API
 export const gameApi = {
     gameBoard: null,
+    executedPhases: new Set(), // Pour éviter les exécutions multiples
 
     async handleGameMessage(data) {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
@@ -27,7 +28,10 @@ export const gameApi = {
         
         if (data.message && data.message.type === 'game_details') {
             // Mettre à jour le gameState avec les nouvelles données
-            gameState.update(data.message);
+            gameState.update({
+                ...data.message,
+                gameBoard: this.gameBoard // Passer le gameBoard s'il existe
+            });
             console.log('🎮 GameState mis à jour:', gameState);
             
             // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
@@ -62,8 +66,14 @@ export const gameApi = {
             // Exécuter la phase de placement initial APRÈS création du gameBoard
             // Seul le joueur avec l'ID le plus bas peut exécuter cette phase
             if (gameState.game.game_status === 'initial_placement' && this.gameBoard && gameState.isLowestIdPlayer()) {
-                console.log('🎯 Exécution de la phase de placement initial (joueur ID le plus bas)');
-                initialPlacement.execute(this.gameBoard);
+                const phaseKey = `initial_placement_${gameState.game.id}`;
+                if (!this.executedPhases.has(phaseKey)) {
+                    console.log('🎯 Exécution de la phase de placement initial (joueur ID le plus bas)');
+                    this.executedPhases.add(phaseKey);
+                    initialPlacement.execute(this.gameBoard);
+                } else {
+                    console.log('⏭️ Phase initial_placement déjà exécutée, skip');
+                }
             }
 
             // Exécuter la phase de bidding

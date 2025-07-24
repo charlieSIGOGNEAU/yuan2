@@ -73,9 +73,22 @@ export const initialPlacement = {
             console.error('❌ Erreur lors du placement des villes:', error);
         }
 
-        // 6. message info
-        uiManager.updateInfoPanel(i18n.t('game.phases.initial_placement.instructions'));    
-        uiManager.showValidationBar();
+        // 6. message info (avec vérification que l'UI est initialisée)
+        if (uiManager.gameUI) {
+            uiManager.updateInfoPanel(i18n.t('game.phases.initial_placement.instructions'));    
+            uiManager.showValidationBar();
+        } else {
+            console.log('⏳ UI non encore initialisée, attente...');
+            // Attendre que l'UI soit prête
+            setTimeout(() => {
+                if (uiManager.gameUI) {
+                    uiManager.updateInfoPanel(i18n.t('game.phases.initial_placement.instructions'));    
+                    uiManager.showValidationBar();
+                } else {
+                    console.warn('⚠️ UI toujours non initialisée après délai');
+                }
+            }, 1000);
+        }
         
         // 7. Activer le drag & drop des villes pour permettre le repositionnement
         gameBoard.enableCityDrag();

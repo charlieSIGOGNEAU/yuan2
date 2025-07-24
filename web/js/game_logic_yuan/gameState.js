@@ -4,6 +4,7 @@ import { meepleManager } from './pieces/MeepleManager.js';
 import { ALL_CLANS } from './pieces/clanColors.js';
 
 
+
 class User {
     constructor(data = {}) {
         this.id = data.id || null;
@@ -226,10 +227,20 @@ class Territory {
         this.rempart = data.protection_type || null; // fortifiee, indestruible
         this.warriors = []; // Tableau des mesh de guerriers (remplace armee)
         this.color = data.color || null; // Couleur du clan pour ce territoire
+        this.hasTemple = false; // Variable booléenne pour indiquer si un temple est présent
         
         // Références aux mesh 3D
         this.construction_mesh = null; // Mesh de la construction (village, ville, 2villes)
         this.rempart_mesh = null; // Mesh du rempart (fortifiee, indestruible)
+        this.temple_mesh = null; // Mesh du temple
+        
+        // Créer un temple directement si le territoire est de type 'plain'
+        setTimeout(() => {
+            if (this.type === 'plain') {
+                this.createTemple(gameBoard, gameBoard.meepleManager);
+            }
+        }, 1000); // Délai pour s'assurer que gameBoard est disponible
+        
     }
 
     update(data) {
@@ -337,6 +348,41 @@ class Territory {
             this.rempart_mesh = mesh;
             
             console.log(`✅ Rempart ${this.rempart} créé à`, pos);
+        }
+    }
+
+    // Créer la mesh de temple
+    async createTemple(gameBoard, meepleManager) {
+        if (this.hasTemple && this.temple_mesh) {
+            return; // Temple déjà créé
+        }
+
+        console.log(`🏛️ Création de temple sur territoire (${this.position.q}, ${this.position.r})`);
+        
+        // Utiliser le type 'temple' du MeepleManager (non colorable)
+        const mesh = await meepleManager.createMeepleInstance('temple', null, {
+            territory: this,
+            type: 'temple'
+        });
+
+        if (mesh) {
+            // Positionner à la position exacte du territoire
+            const pos = this.getCartesianPosition(gameBoard);
+            mesh.position.set(pos.x, pos.y, pos.z);
+            
+            // Désactiver les collisions
+            mesh.traverse((child) => {
+                if (child.isMesh) {
+                    child.raycast = function() {};
+                }
+            });
+
+            // Ajouter au workplane
+            gameBoard.workplane.add(mesh);
+            this.temple_mesh = mesh;
+            this.hasTemple = true;
+            
+            console.log(`✅ Temple créé à`, pos);
         }
     }
 
@@ -659,6 +705,11 @@ class GameState {
         }
         if (data.my_game_user_id !== undefined) {
             this.myGameUserId = data.my_game_user_id;
+        }
+        
+        // Si un gameBoard est fourni, le stocker globalement
+        if (data.gameBoard) {
+            window.gameBoard = data.gameBoard;
         }
     }
 
