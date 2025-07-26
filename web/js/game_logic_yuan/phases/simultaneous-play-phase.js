@@ -5,12 +5,16 @@ import { biddingPhase } from './biddingPhase.js';
 export const simultaneousPlayPhase = {
     simultaneousPlayPhase(gameBoard) {
         console.log('🎯 Exécution de la phase de simultaneous_play');
+
+        // Récupérer le clan du joueur actuel
+        gameState.game.setMyClanFromVictoryBidding(gameState.myGameUserId);
         
         // Afficher la barre d'information spécifique à cette phase
         uiManager.showSimultaneousPlayInfoBar();
         
         // Afficher la barre d'action à 6 cases
         uiManager.showPlayerActionBar();
+        
         
         // Vérifier s'il n'y a pas d'actions
         if (!gameState.game.actions || gameState.game.actions.length === 0) {
@@ -74,7 +78,10 @@ export const simultaneousPlayPhase = {
         
         console.log('✅ Traitement des biddings victorieux terminé');
         
-        // Mettre à jour l'affichage du chao dans la barre d'information
-        uiManager.updateChaoText();
+        // Incrémenter le tour de jeu simultané
+        gameState.game.simultaneous_play_turn = 1;
+        
+        // Mettre à jour toutes les cases de la barre d'information
+        uiManager.updateSimultaneousPlayInfoBar();
     }
 }

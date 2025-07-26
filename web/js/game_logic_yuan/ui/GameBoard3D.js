@@ -79,11 +79,11 @@ export class GameBoard3D {
         this.container.appendChild(this.renderer.domElement);
         
         // Ajout d'éclairage pour les modèles 3D
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); //Éclaire uniformément toute la scène (pas d'ombres) 0 = noir total, 2 = très lumineux, Affecte la luminosité générale, réduit les contrastes
         this.scene.add(ambientLight);
         
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(5, 10, 5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 3); // intensité de la lumière, augmente le contrast, Crée les ombres et les zones claires/sombres
+        directionalLight.position.set(5, 10, 5); //direction de la source de lumiere
         directionalLight.castShadow = true;
         this.scene.add(directionalLight);
         

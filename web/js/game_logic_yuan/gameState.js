@@ -609,7 +609,7 @@ class Game {
         this.player_count = data.player_count || 0;
         this.clan_names = data.clan_names || '';
         this.biddings_turn = data.biddings_turn || 0;
-        this.simultaneous_play_turn = 0;
+        this.simultaneous_play_turn = data.simultaneous_play_turn || 0;
         
         // Relations
         this.game_users = data.game_users ? data.game_users.map(gu => new GameUser(gu)) : [];
@@ -619,6 +619,37 @@ class Game {
         this.clans = data.clans ? data.clans.map(clan => new Clan(clan)) : [];
         this.territories = [];  // Initialiser comme un tableau vide
         this.lakes = new Map(); // Map des lacs par ID
+        
+        // Clan du joueur actuel
+        this.myClan = null;
+        
+        // Variable temporaire pour le chao du joueur
+        this.myChaoTemp = 0;
+    }
+
+    // Fonction pour récupérer le clan du joueur actuel
+    setMyClanFromVictoryBidding(myGameUserId) {
+        // Chercher le bidding victorieux du joueur actuel
+        const victoryBidding = this.biddings.find(bidding => 
+            bidding.game_user_id === myGameUserId && bidding.victory === true
+        );
+        
+        if (!victoryBidding) {
+            console.warn(`⚠️ Aucun bidding victorieux trouvé pour game_user_id=${myGameUserId}`);
+            return;
+        }
+        
+        // Récupérer le clan correspondant
+        const clan = this.clans.find(clan => clan.id === victoryBidding.clan_id);
+        
+        if (!clan) {
+            console.warn(`⚠️ Clan non trouvé pour clan_id=${victoryBidding.clan_id}`);
+            return;
+        }
+        
+        // Stocker le clan du joueur actuel
+        this.myClan = clan;
+        console.log(`🎯 Clan du joueur actuel défini: ${clan.name} (${clan.color}) - available_chao: ${clan.available_chao}`);
     }
 
     update(data) {
@@ -628,6 +659,7 @@ class Game {
         this.player_count = data.player_count || this.player_count;
         this.clan_names = data.clan_names || this.clan_names;
         this.biddings_turn = data.biddings_turn || this.biddings_turn;
+        this.simultaneous_play_turn = data.simultaneous_play_turn || this.simultaneous_play_turn;
 
         // Mise à jour des game_users
         if (data.game_users) {

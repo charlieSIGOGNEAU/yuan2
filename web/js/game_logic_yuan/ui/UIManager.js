@@ -86,6 +86,229 @@ export class UIManager {
         if (moreButton) {
             moreButton.addEventListener('click', this.handleBiddingMoreClick.bind(this));
         }
+
+        // Gestion des champs de texte des boutons d'action (2, 3, 4)
+        this.setupActionSlotTextListeners();
+    }
+
+    // Configuration des listeners pour les champs de texte des boutons d'action
+    setupActionSlotTextListeners() {
+        const actionSlots = document.querySelectorAll('.action-slot');
+        actionSlots.forEach((slot, index) => {
+            const textInput = slot.querySelector('.action-slot-text');
+            if (textInput) {
+                // Initialiser le champ à vide
+                textInput.value = '';
+                
+                // Désactiver la sélection sur le champ de texte
+                textInput.style.userSelect = 'none';
+                textInput.style.webkitUserSelect = 'none';
+                textInput.style.mozUserSelect = 'none';
+                textInput.style.msUserSelect = 'none';
+                
+                // Ajouter le listener de clic sur le bouton entier
+                slot.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    this.handleActionSlotTextClick(textInput, index + 2); // index + 2 car on commence par le bouton 2
+                });
+            }
+        });
+    }
+
+    // Fonction pour calculer le niveau d'action et son coût
+    getActionLevelAndCost(value) {
+        switch (value) {
+            case '':
+                return { level: 0, cost: 0 };
+            case 'I':
+                return { level: 1, cost: 0 };
+            case 'II':
+                return { level: 2, cost: 4 };
+            case 'III':
+                return { level: 3, cost: 7 };
+            default:
+                return { level: 0, cost: 0 };
+        }
+    }
+
+    // Gestion du clic sur un champ de texte d'action
+    handleActionSlotTextClick(textInput, buttonNumber) {
+        const currentValue = textInput.value;
+        let newValue = '';
+        
+        // Cycle : vide → I → II → III → vide
+        if (currentValue === '') {
+            newValue = 'I';
+        } else if (currentValue === 'I') {
+            newValue = 'II';
+        } else if (currentValue === 'II') {
+            newValue = 'III';
+        } else if (currentValue === 'III') {
+            newValue = '';
+        } else {
+            // Si la valeur n'est pas reconnue, repartir de vide
+            newValue = 'I';
+        }
+        
+        textInput.value = newValue;
+        
+        // Calculer le niveau et le coût de base de la nouvelle action
+        const { level, cost: baseCost } = this.getActionLevelAndCost(newValue);
+        
+        // Calculer le coût ajusté selon le bouton cliqué
+        let adjustedCost = baseCost;
+        
+        if (buttonNumber >= 2 && buttonNumber <= 4) {
+            // Récupérer la valeur de la case correspondante dans la barre d'information
+            let caseValue = 0;
+            
+            if (buttonNumber === 2) {
+                // Bouton 2 : utiliser la 1ère case (riz)
+                const riceTextElement = document.querySelector('#simultaneous-play-info-bar .home-text');
+                caseValue = riceTextElement ? parseInt(riceTextElement.value) || 0 : 0;
+            } else if (buttonNumber === 3) {
+                // Bouton 3 : utiliser la 2ème case (forêt)
+                const forestTextElement = document.querySelector('#simultaneous-play-info-bar .shield-text');
+                caseValue = forestTextElement ? parseInt(forestTextElement.value) || 0 : 0;
+            } else if (buttonNumber === 4) {
+                // Bouton 4 : utiliser la 3ème case (mine)
+                const mineTextElement = document.querySelector('#simultaneous-play-info-bar .sword-text');
+                caseValue = mineTextElement ? parseInt(mineTextElement.value) || 0 : 0;
+            }
+            
+            // Calculer le coût ajusté : coût_base - valeur_case avec minimum 0
+            adjustedCost = Math.max(0, baseCost - caseValue);
+        }
+        
+        // Calculer la "modification des chao"
+        let chaoModification = 0;
+        
+        // Utiliser la variable myChaoTemp du gameState au lieu de la valeur affichée
+        const displayedChao = gameState.game.myChaoTemp || 0;
+        
+        // Récupérer la valeur available_chao du clan du joueur
+        const playerClan = gameState.game.myClan;
+        const availableChao = playerClan ? playerClan.available_chao : 0;
+        
+        // Calculer la modification : myChaoTemp - available_chao - coût_ajusté
+        chaoModification = displayedChao - availableChao - adjustedCost;
+        
+        // Mettre à jour myChaoTemp avec la modification calculée
+        gameState.game.myChaoTemp = gameState.game.myChaoTemp - chaoModification;
+        
+        console.log(`🎯 Bouton ${buttonNumber}: Action niveau ${level} (coût base: ${baseCost}, coût ajusté: ${adjustedCost} chao) - "${newValue}"`);
+        console.log(`💰 Modification des chao: ${displayedChao} (affiché) - ${availableChao} (disponible) - ${adjustedCost} (coût ajusté) = ${chaoModification}`);
+        console.log(`💾 myChaoTemp mis à jour: ${gameState.game.myChaoTemp}`);
+        
+        // Créer l'animation du cercle temporaire avec la modification des chao
+        this.createChaoModificationAnimation(chaoModification);
+        
+        // TODO: Ici on pourra ajouter d'autres actions spécifiques selon le bouton
+        // Par exemple: this.handleButton${buttonNumber}Action(newValue);
+    }
+
+    // Fonction pour créer l'animation de modification des chao
+    createChaoModificationAnimation(chaoModification) {
+        // Ne pas créer de cercle si la modification est 0
+        if (chaoModification === 0) {
+            console.log('🎬 Pas d\'animation créée car modification = 0');
+            return;
+        }
+
+        // Récupérer le cercle de la 5ème case de la barre d'information
+        const originalCircle = document.querySelector('#simultaneous-play-info-bar .chao-circle');
+        if (!originalCircle) {
+            console.warn('⚠️ Cercle chao non trouvé pour l\'animation');
+            return;
+        }
+
+        // Créer un cercle temporaire avec la même apparence
+        const tempCircle = document.createElement('div');
+        tempCircle.className = 'chao-circle temp-chao-modification';
+        tempCircle.style.position = 'absolute';
+        tempCircle.style.zIndex = '1000';
+        
+        // Copier les styles du cercle original
+        const originalStyles = window.getComputedStyle(originalCircle);
+        tempCircle.style.width = originalStyles.width;
+        tempCircle.style.height = originalStyles.height;
+        tempCircle.style.borderRadius = originalStyles.borderRadius;
+        tempCircle.style.border = originalStyles.border;
+        tempCircle.style.display = 'flex';
+        tempCircle.style.alignItems = 'center';
+        tempCircle.style.justifyContent = 'center';
+        tempCircle.style.fontSize = originalStyles.fontSize;
+        tempCircle.style.fontWeight = originalStyles.fontWeight;
+        
+        // Changer la couleur de fond selon le signe
+        if (chaoModification > 0) {
+            tempCircle.style.backgroundColor = '#00ff00'; // Vert si positif
+        } else {
+            tempCircle.style.backgroundColor = '#ff0000'; // Rouge si négatif
+        }
+        
+        // Créer le texte avec la modification des chao (noir)
+        const tempText = document.createElement('span');
+        tempText.textContent = chaoModification.toString();
+        tempText.style.color = '#000000'; // Noir
+        tempCircle.appendChild(tempText);
+        
+        // Positionner le cercle temporaire au même endroit que l'original mais décalé vers le bas
+        const originalRect = originalCircle.getBoundingClientRect();
+        const parentRect = originalCircle.parentElement.getBoundingClientRect();
+        
+        tempCircle.style.left = (originalRect.left - parentRect.left) + 'px';
+        tempCircle.style.top = (originalRect.top - parentRect.top + originalRect.height * 3) + 'px'; // Décalage de 300% vers le bas
+        
+        // Ajouter le cercle temporaire au parent du cercle original
+        originalCircle.parentElement.appendChild(tempCircle);
+        
+        // Lancer l'animation de remontée
+        this.animateChaoModificationRemoval(tempCircle, originalRect, parentRect);
+        
+        // Lancer l'animation de mise à jour du cercle chao après 500ms
+        setTimeout(() => {
+            this.animateChaoCircleUpdate();
+        }, 500);
+        
+        console.log(`🎬 Animation créée: cercle temporaire avec valeur ${chaoModification} positionné en dessous du cercle chao`);
+    }
+
+    // Fonction pour animer la remontée du cercle temporaire
+    animateChaoModificationRemoval(tempCircle, originalRect, parentRect) {
+        const startTop = originalRect.top - parentRect.top + originalRect.height * 3; // Position de départ (-300%)
+        const endTop = originalRect.top - parentRect.top; // Position finale (originale)
+        const duration = 800; // 1 seconde exacte
+        const fadeStartTime = 500; // Commencer le fondu à 800ms (80% de l'animation)
+        const startTime = performance.now();
+        
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Fonction d'easing linéaire pour la position
+            const currentTop = startTop + (endTop - startTop) * progress;
+            tempCircle.style.top = currentTop + 'px';
+            
+            // Gestion du fondu vers la fin
+            if (elapsed >= fadeStartTime) {
+                const fadeProgress = (elapsed - fadeStartTime) / (duration - fadeStartTime);
+                const opacity = 1 - fadeProgress;
+                tempCircle.style.opacity = opacity;
+            }
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                // Animation terminée, supprimer le cercle temporaire
+                if (tempCircle.parentElement) {
+                    tempCircle.parentElement.removeChild(tempCircle);
+                }
+                console.log('🎬 Animation de remontée terminée, cercle temporaire supprimé');
+            }
+        };
+        
+        requestAnimationFrame(animate);
     }
 
     // Supprimer les event listeners existants pour éviter les doublons
@@ -235,6 +458,12 @@ export class UIManager {
             
             // Appliquer la couleur du clan au bouton de validation
             this.applyClanColorToValidateButton();
+            
+            // Mettre à jour la fraction des temples (4ème case)
+            this.updateTempleFraction();
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         } else {
             console.warn('⚠️ Barre d\'actions complète non initialisée');
         }
@@ -249,6 +478,9 @@ export class UIManager {
             
             // Appliquer la couleur du clan au bouton de validation
             this.applyClanColorToValidateButton();
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         } else {
             console.warn('⚠️ Barre de validation non initialisée');
         }
@@ -263,6 +495,9 @@ export class UIManager {
             
             // Appliquer la couleur du clan au bouton de validation
             this.applyClanColorToValidateButton();
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         } else {
             console.warn('⚠️ Barre de bidding non initialisée');
         }
@@ -274,6 +509,9 @@ export class UIManager {
         if (this.menuOnlyBar) {
             this.menuOnlyBar.style.display = 'flex';
             this.currentActionBar = this.menuOnlyBar;
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         } else {
             console.warn('⚠️ Barre menu-only non initialisée');
         }
@@ -295,6 +533,20 @@ export class UIManager {
         
         // Mettre à jour les ressources (3 premières cases)
         this.updateResources();
+        
+        // Mettre à jour la fraction des temples (4ème case)
+        this.updateTempleFraction();
+        
+        // Actualiser myChaoTemp avec la valeur affichée dans la 5ème case
+        const chaoTextElement = document.querySelector('#simultaneous-play-info-bar .chao-text');
+        if (chaoTextElement) {
+            const displayedChao = parseInt(chaoTextElement.value) || 0;
+            gameState.game.myChaoTemp = displayedChao;
+            console.log(`💰 myChaoTemp actualisé: ${displayedChao}`);
+        }
+        
+        // Désactiver la sélection de texte
+        this.disableTextSelection();
         
         // Afficher la barre
         if (infoBar) {
@@ -559,17 +811,10 @@ export class UIManager {
 
     // Fonction pour mettre à jour le texte du chao avec available_chao du clan du joueur
     updateChaoText() {
-        // Récupérer le gameUser du joueur actuel
-        const myGameUser = gameState.getMyGameUser();
-        if (!myGameUser) {
-            console.warn('⚠️ GameUser du joueur actuel non trouvé');
-            return;
-        }
-
-        // Récupérer le clan du joueur
-        const playerClan = gameState.game.clans.find(clan => clan.id === myGameUser.clan_id);
+        // Utiliser directement le clan du joueur actuel
+        const playerClan = gameState.game.myClan;
         if (!playerClan) {
-            console.warn('⚠️ Clan du joueur non trouvé');
+            console.warn('⚠️ Clan du joueur actuel non trouvé');
             return;
         }
 
@@ -583,19 +828,19 @@ export class UIManager {
         }
     }
 
+    // Fonction pour mettre à jour toutes les cases de la barre d'information simultaneous_play
+    updateSimultaneousPlayInfoBar() {
+        this.updateResources();      // Cases 1, 2, 3
+        this.updateTempleFraction(); // Case 4
+        this.updateChaoText();       // Case 5
+    }
+
     // Fonction pour mettre à jour les ressources (3 premières cases)
     updateResources() {
-        // Récupérer le gameUser du joueur actuel
-        const myGameUser = gameState.getMyGameUser();
-        if (!myGameUser) {
-            console.warn('⚠️ GameUser du joueur actuel non trouvé');
-            return;
-        }
-
-        // Récupérer le clan du joueur
-        const playerClan = gameState.game.clans.find(clan => clan.id === myGameUser.clan_id);
+        // Utiliser directement le clan du joueur actuel
+        const playerClan = gameState.game.myClan;
         if (!playerClan) {
-            console.warn('⚠️ Clan du joueur non trouvé');
+            console.warn('⚠️ Clan du joueur actuel non trouvé');
             return;
         }
 
@@ -652,22 +897,82 @@ export class UIManager {
             console.log(`⛏️ Mine mis à jour: ${mineCount} territoires`);
         }
 
+        // Mettre à jour la fraction des temples (4ème case)
+        this.updateTempleFraction();
+
         console.log(`📊 Ressources mises à jour pour le clan ${playerClan.name}: Riz=${riceCount}, Forêt=${forestCount}, Mine=${mineCount}`);
+    }
+
+    // Fonction pour calculer le dénominateur selon le tour
+    calculateDenominator(turn) {
+        const denominators = {
+            1: '9',
+            2: '9',
+            3: '9',
+            4: '9⁻',
+            5: '8',
+            6: '7⁻',
+            7: '6',
+            8: '6⁻',
+            9: '5',
+            10: '5⁻',
+            11: '4',
+            12: '4⁻',
+            13: '3'
+        };
+        
+        return denominators[turn] || '3'; // Par défaut 3 si le tour dépasse 13
+    }
+
+    // Fonction pour mettre à jour la fraction des temples (4ème case)
+    updateTempleFraction() {
+        // Utiliser directement le clan du joueur actuel
+        const playerClan = gameState.game.myClan;
+        if (!playerClan) {
+            console.warn('⚠️ Clan du joueur actuel non trouvé pour les temples');
+            return;
+        }
+
+        // Compter les territoires avec hasTemple = true et le même clan_id
+        const templeTerritories = gameState.game.territories.filter(territory => 
+            territory.clan_id === playerClan.id && territory.hasTemple === true
+        );
+        const templeCount = templeTerritories.length;
+
+        // Calculer le dénominateur selon le tour
+        const currentTurn = gameState.game.simultaneous_play_turn || 1;
+        const denominator = this.calculateDenominator(currentTurn);
+
+        // Mettre à jour le numérateur et le dénominateur de la fraction dans la barre d'information
+        const numeratorInput = document.querySelector('#simultaneous-play-info-bar .fraction-numerator');
+        const denominatorInput = document.querySelector('#simultaneous-play-info-bar .fraction-denominator');
+        
+        if (numeratorInput) {
+            numeratorInput.value = templeCount.toString();
+        } else {
+            console.warn('⚠️ Élément fraction-numerator non trouvé dans la barre d\'information');
+        }
+        
+        if (denominatorInput) {
+            denominatorInput.value = denominator;
+        } else {
+            console.warn('⚠️ Élément fraction-denominator non trouvé dans la barre d\'information');
+        }
+
+        // Si aucun temple trouvé, réessayer après un délai (pour les cas de rechargement de page)
+        if (templeCount === 0) {
+            setTimeout(() => {
+                this.updateTempleFraction();
+            }, 2000);
+        }
     }
 
     // Fonction pour récupérer la couleur du clan du joueur actuel
     getPlayerClanColor() {
-        // Récupérer le gameUser du joueur actuel
-        const myGameUser = gameState.getMyGameUser();
-        if (!myGameUser) {
-            console.warn('⚠️ GameUser du joueur actuel non trouvé pour la couleur');
-            return null;
-        }
-
-        // Récupérer le clan du joueur
-        const playerClan = gameState.game.clans.find(clan => clan.id === myGameUser.clan_id);
+        // Utiliser directement le clan du joueur actuel
+        const playerClan = gameState.game.myClan;
         if (!playerClan) {
-            console.warn('⚠️ Clan du joueur non trouvé pour la couleur');
+            console.warn('⚠️ Clan du joueur actuel non trouvé pour la couleur');
             return null;
         }
 
@@ -686,6 +991,111 @@ export class UIManager {
         // Appliquer la couleur via CSS custom property
         document.documentElement.style.setProperty('--player-clan-color', clanColor);
         console.log(`🎨 Couleur du clan appliquée au bouton de validation: ${clanColor}`);
+    }
+
+    // Fonction pour désactiver la sélection sur tous les éléments des barres
+    disableTextSelection() {
+        // Désactiver la sélection sur les barres d'action
+        const actionBars = document.querySelectorAll('.player-action-bar, .simultaneous-play-info-bar');
+        actionBars.forEach(bar => {
+            // Désactiver la sélection sur la barre elle-même
+            bar.style.userSelect = 'none';
+            bar.style.webkitUserSelect = 'none';
+            bar.style.mozUserSelect = 'none';
+            bar.style.msUserSelect = 'none';
+            bar.style.pointerEvents = 'auto';
+            
+            // Désactiver la sélection sur tous les enfants
+            const children = bar.querySelectorAll('*');
+            children.forEach(child => {
+                // Désactiver la sélection de texte
+                child.style.userSelect = 'none';
+                child.style.webkitUserSelect = 'none';
+                child.style.mozUserSelect = 'none';
+                child.style.msUserSelect = 'none';
+                
+                // Configurer les inputs pour qu'ils soient invisibles mais fonctionnels
+                if (child.tagName === 'INPUT') {
+                    child.style.caretColor = 'transparent';
+                    child.style.border = 'none';
+                    child.style.outline = 'none';
+                    child.style.background = 'transparent';
+                    child.readOnly = true;
+                    child.style.pointerEvents = 'none'; // Le clic sera géré par le parent
+                }
+                
+                // Désactiver le drag sur les images
+                if (child.tagName === 'IMG') {
+                    child.draggable = false;
+                    child.style.pointerEvents = 'none';
+                }
+            });
+        });
+    }
+
+    // Fonction pour animer la mise à jour du cercle chao
+    animateChaoCircleUpdate() {
+        const chaoCircle = document.querySelector('#simultaneous-play-info-bar .chao-circle');
+        const chaoText = document.querySelector('#simultaneous-play-info-bar .chao-text');
+        
+        if (!chaoCircle || !chaoText) {
+            console.warn('⚠️ Éléments chao non trouvés pour l\'animation de mise à jour');
+            return;
+        }
+
+        // Sauvegarder les tailles originales
+        const originalCircleWidth = chaoCircle.offsetWidth;
+        const originalTextWidth = chaoText.offsetWidth;
+        const originalCircleHeight = chaoCircle.offsetHeight;
+        const originalTextHeight = chaoText.offsetHeight;
+
+        // Animation de réduction à 0 (50ms)
+        const shrinkDuration = 50;
+        const shrinkStartTime = performance.now();
+        
+        const shrinkAnimation = (currentTime) => {
+            const elapsed = currentTime - shrinkStartTime;
+            const progress = Math.min(elapsed / shrinkDuration, 1);
+            
+            // Réduire progressivement la largeur
+            const currentWidth = originalCircleWidth * (1 - progress);
+            chaoCircle.style.width = currentWidth + 'px';
+            chaoText.style.width = currentWidth + 'px';
+            
+            if (progress < 1) {
+                requestAnimationFrame(shrinkAnimation);
+            } else {
+                // Réduction terminée, changer le texte et commencer l'expansion
+                chaoText.value = gameState.game.myChaoTemp.toString();
+                
+                // Animation d'expansion (50ms)
+                const expandStartTime = performance.now();
+                const expandDuration = 50;
+                
+                const expandAnimation = (currentTime) => {
+                    const elapsed = currentTime - expandStartTime;
+                    const progress = Math.min(elapsed / expandDuration, 1);
+                    
+                    // Remettre progressivement la largeur
+                    const currentWidth = originalCircleWidth * progress;
+                    chaoCircle.style.width = currentWidth + 'px';
+                    chaoText.style.width = currentWidth + 'px';
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(expandAnimation);
+                    } else {
+                        // Animation terminée, remettre les styles par défaut
+                        chaoCircle.style.width = '';
+                        chaoText.style.width = '';
+                        console.log('🎬 Animation de mise à jour du cercle chao terminée');
+                    }
+                };
+                
+                requestAnimationFrame(expandAnimation);
+            }
+        };
+        
+        requestAnimationFrame(shrinkAnimation);
     }
 }
 
