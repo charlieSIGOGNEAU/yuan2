@@ -152,59 +152,48 @@ export class UIManager {
         
         textInput.value = newValue;
         
-        // Calculer le niveau et le coût de base de la nouvelle action
-        const { level, cost: baseCost } = this.getActionLevelAndCost(newValue);
+        // Boucle sur les 3 cases d'action (2, 3, 4)
+        const actionCases = [
+            { number: 2, name: 'Riz', infoSelector: '.home-text' },
+            { number: 3, name: 'Forêt', infoSelector: '.shield-text' },
+            { number: 4, name: 'Mine', infoSelector: '.sword-text' }
+        ];
         
-        // Calculer le coût ajusté selon le bouton cliqué
-        let adjustedCost = baseCost;
+        let totalAdjustedCost = 0;
         
-        if (buttonNumber >= 2 && buttonNumber <= 4) {
-            // Récupérer la valeur de la case correspondante dans la barre d'information
-            let caseValue = 0;
+        actionCases.forEach(caseInfo => {
+            const actionSlot = document.querySelector(`.action-slot:nth-child(${caseInfo.number}) .action-slot-text`);
+            const currentLevel = actionSlot ? actionSlot.value : '';
             
-            if (buttonNumber === 2) {
-                // Bouton 2 : utiliser la 1ère case (riz)
-                const riceTextElement = document.querySelector('#simultaneous-play-info-bar .home-text');
-                caseValue = riceTextElement ? parseInt(riceTextElement.value) || 0 : 0;
-            } else if (buttonNumber === 3) {
-                // Bouton 3 : utiliser la 2ème case (forêt)
-                const forestTextElement = document.querySelector('#simultaneous-play-info-bar .shield-text');
-                caseValue = forestTextElement ? parseInt(forestTextElement.value) || 0 : 0;
-            } else if (buttonNumber === 4) {
-                // Bouton 4 : utiliser la 3ème case (mine)
-                const mineTextElement = document.querySelector('#simultaneous-play-info-bar .sword-text');
-                caseValue = mineTextElement ? parseInt(mineTextElement.value) || 0 : 0;
-            }
+            // Récupérer la valeur de la case d'information correspondante
+            const infoElement = document.querySelector(`#simultaneous-play-info-bar ${caseInfo.infoSelector}`);
+            const infoValue = infoElement ? parseInt(infoElement.value) || 0 : 0;
+            
+            // Calculer le coût de base selon le niveau de l'action
+            const { cost: baseCost } = this.getActionLevelAndCost(currentLevel);
             
             // Calculer le coût ajusté : coût_base - valeur_case avec minimum 0
-            adjustedCost = Math.max(0, baseCost - caseValue);
-        }
+            const adjustedCost = Math.max(0, baseCost - infoValue);
+            
+            totalAdjustedCost += adjustedCost;
+        });
+        console.log(`💰 totalAdjustedCost: ${totalAdjustedCost}`);
+
+
+        if (gameState.game.myChaoTemp === undefined) {
+            gameState.game.myChaoTemp = gameState.game.myClan.available_chao;
+          }
+
+        let chaoModification = gameState.game.myClan.available_chao - totalAdjustedCost - gameState.game.myChaoTemp;
+        console.log(`💰 chaoModification: ${chaoModification}`);
+
+        gameState.game.myChaoTemp = gameState.game.myClan.available_chao - totalAdjustedCost ;
+        console.log(`💰 gameState.game.myChaoTemp: ${gameState.game.myChaoTemp}`);
+        console.log(" -------------------------------- ")
+        // console.log(`💰 Coût total ajusté: ${totalAdjustedCost}`);
         
-        // Calculer la "modification des chao"
-        let chaoModification = 0;
-        
-        // Utiliser la variable myChaoTemp du gameState au lieu de la valeur affichée
-        const displayedChao = gameState.game.myChaoTemp || 0;
-        
-        // Récupérer la valeur available_chao du clan du joueur
-        const playerClan = gameState.game.myClan;
-        const availableChao = playerClan ? playerClan.available_chao : 0;
-        
-        // Calculer la modification : myChaoTemp - available_chao - coût_ajusté
-        chaoModification = displayedChao - availableChao - adjustedCost;
-        
-        // Mettre à jour myChaoTemp avec la modification calculée
-        gameState.game.myChaoTemp = gameState.game.myChaoTemp - chaoModification;
-        
-        console.log(`🎯 Bouton ${buttonNumber}: Action niveau ${level} (coût base: ${baseCost}, coût ajusté: ${adjustedCost} chao) - "${newValue}"`);
-        console.log(`💰 Modification des chao: ${displayedChao} (affiché) - ${availableChao} (disponible) - ${adjustedCost} (coût ajusté) = ${chaoModification}`);
-        console.log(`💾 myChaoTemp mis à jour: ${gameState.game.myChaoTemp}`);
-        
-        // Créer l'animation du cercle temporaire avec la modification des chao
         this.createChaoModificationAnimation(chaoModification);
         
-        // TODO: Ici on pourra ajouter d'autres actions spécifiques selon le bouton
-        // Par exemple: this.handleButton${buttonNumber}Action(newValue);
     }
 
     // Fonction pour créer l'animation de modification des chao
