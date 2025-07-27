@@ -202,63 +202,7 @@ export class GameBoard3D {
         return this.createWaterInstance();
     }
 
-    createCircle(position = {q: 0, r: 0}) {
-        const textureLoader = new THREE.TextureLoader();
-        const geometry = new THREE.PlaneGeometry(1.8, 1.8);
-        
-        // Créer d'abord le matériau sans texture
-        const material = new THREE.MeshBasicMaterial({
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide,
-            color: 0xffffff // Couleur temporaire en attendant la texture
-        });
-        
-        const circle = new THREE.Mesh(geometry, material);
-        
-        // Charger la texture avec callbacks
-        const texture = textureLoader.load(
-            './images/cercle.webp',
-            // onLoad
-            (loadedTexture) => {
-                loadedTexture.colorSpace = THREE.SRGBColorSpace;
-                material.map = loadedTexture;
-                material.needsUpdate = true;
-                console.log('✅ Texture cercle chargée');
-            },
-            // onProgress (optionnel)
-            undefined,
-            // onError
-            (error) => {
-                console.warn('⚠️ Erreur chargement texture cercle:', error);
-            }
-        );
-        const pos = this.hexToCartesian(position);
-        circle.position.set(pos.x, pos.y, pos.z);
-        circle.rotation.x = -Math.PI / 2; // Pour le mettre à plat sur le plan
-        
-        // Stockage de la position d'origine
-        circle.userData = {
-            position: position
-        };
-        
-        // Initialisation de l'échelle à 0
-        circle.scale.set(0, 0, 0);
-        
-        // Ajout de l'animation
-        const animation = {
-            object: circle,
-            startTime: performance.now(),
-            duration: 500, // milliseconde
-            from: { scale: 0 },
-            to: { scale: 1 }
-        };
-        this.animations.push(animation);
-        
-        this.workplane.add(circle);
-        this.circles.push(circle);
-        return circle;
-    }
+    
 
     setupEvents() {
         // Gestionnaire d'événements pointer (fonctionne pour souris et tactile)
@@ -411,6 +355,12 @@ export class GameBoard3D {
     }
 
     addTileTemp(modelUrl, position = { q: 0, r: 0}, rotation = 0) {
+        // Nettoyer toute tuile temporaire existante avant d'en créer une nouvelle
+        if (this.tempTile) {
+            console.log('🧹 Nettoyage de la tuile temporaire existante avant création d\'une nouvelle');
+            this.removeTempTile();
+        }
+        
         console.log(`🔄 Chargement de la tuile temporaire: ${modelUrl} à la position:`, position);
         this.tempTilePosition = position;
         this.tempTileRotation = rotation;

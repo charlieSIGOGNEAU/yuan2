@@ -54,7 +54,7 @@ export class MeepleManager {
         this.circleTypes = {
             selection: {
                 path: './images/cercle.webp',
-                scale: { x: 2.0, y: 2.0, z: 1 }, // Taille pour Sprite (z ignoré)
+                scale: 1.0, // Scale de base
                 colorable: true,
                 defaultColor: 0xffffff
             }
@@ -134,7 +134,7 @@ export class MeepleManager {
         return loadPromise;
     }
 
-    // Précharger un cercle (optimisé avec Sprite)
+    // Précharger un cercle (Mesh parallèle au plan XZ)
     async preloadCircle(type) {
         if (!this.circleTypes[type]) {
             throw new Error(`Type de cercle inconnu: ${type}`);
@@ -164,21 +164,24 @@ export class MeepleManager {
                     // Corriger l'espace colorimétrique
                     texture.colorSpace = THREE.SRGBColorSpace;
                     
-                    // Créer le matériau pour Sprite (plus performant)
-                    const material = new THREE.SpriteMaterial({
+                    // Créer la géométrie et le matériau pour Mesh parallèle au plan XZ
+                    const geometry = new THREE.PlaneGeometry(1, 1);
+                    const material = new THREE.MeshBasicMaterial({
                         map: texture,
                         transparent: true,
                         opacity: 0.8,
+                        side: THREE.DoubleSide,
                         color: circleInfo.defaultColor
                     });
                     
-                    // Créer le sprite (plus performant qu'une mesh)
-                    const circleSprite = new THREE.Sprite(material);
+                    // Créer le mesh (parallèle au plan XZ)
+                    const circleMesh = new THREE.Mesh(geometry, material);
+                    circleMesh.rotation.x = -Math.PI / 2; // Parallèle au plan XZ
                     
                     // Stocker le modèle dans le cache
-                    this.loadedModels.set(`circle_${type}`, circleSprite);
+                    this.loadedModels.set(`circle_${type}`, circleMesh);
                     this.loadPromises.delete(`circle_${type}`); // Nettoyer la promise
-                    resolve(circleSprite);
+                    resolve(circleMesh);
                 },
                 (progress) => {
                     console.log(`📊 Progression chargement cercle ${type}:`, Math.round(progress.loaded / progress.total * 100) + '%');
@@ -284,8 +287,8 @@ export class MeepleManager {
         return instance;
     }
 
-    // Créer une instance d'un cercle
-    async createCircleInstance(type, colorHex = null, userData = {}) {
+    // Créer une instance d'un cercle avec position et animation
+    async createCircleInstance(type, position = { q: 0, r: 0 }, scale = 1.0, height = 0, colorHex = null, userData = {}) {
         // Vérifier si le modèle est déjà chargé
         let baseModel = this.loadedModels.get(`circle_${type}`);
         
@@ -332,9 +335,32 @@ export class MeepleManager {
             }
         }
 
-        // Appliquer la taille par défaut (pour Sprite, scale uniforme)
-        const scale = circleInfo.scale;
-        instance.scale.set(scale.x, scale.x, scale.x); // Sprite: scale uniforme
+        // Ne pas positionner automatiquement - sera fait par l'appelant
+        // instance.position.set(position.x || 0, height, position.z || 0);
+        
+        // Commencer avec scale 0 pour l'animation
+        instance.scale.set(0, 0, 0);
+        
+        // Animation progressive vers le scale final
+        const startTime = performance.now();
+        const duration = 500; // 500ms
+        
+        const animateScale = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Fonction d'easing pour une animation plus naturelle
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const currentScale = easeOut * scale;
+            
+            instance.scale.set(currentScale, currentScale, currentScale);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateScale);
+            }
+        };
+        
+        requestAnimationFrame(animateScale);
         
         // Stocker les métadonnées
         instance.userData = {
@@ -342,10 +368,13 @@ export class MeepleManager {
             circleType: type,
             colorHex: colorHex,
             colorable: circleInfo.colorable,
+            position: position,
+            scale: scale,
+            height: height,
             ...userData
         };
 
-        console.log(`🔵 Instance de cercle ${type} créée${colorHex ? ` avec couleur ${colorHex}` : ''}`);
+        console.log(`🔵 Instance de cercle ${type} créée à (${position.q}, ${position.r}) avec scale ${scale}`);
         return instance;
     }
 

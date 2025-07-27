@@ -34,7 +34,7 @@ export const simultaneousPlayPhase = {
         console.log('🎯 Configuration de la détection de clic sur les territoires');
         
         // Définir le callback pour les clics
-        const handleTerritoryClick = (hexCoords, worldPoint) => {
+        const handleTerritoryClick = async (hexCoords, worldPoint) => {
             console.log(`🎯 Clic détecté à (${hexCoords.q}, ${hexCoords.r})`);
             
             // Trouver le territoire à cette position
@@ -63,7 +63,7 @@ export const simultaneousPlayPhase = {
                 
                 // Créer le nouveau cercle
                 console.log('🔵 Création d\'un nouveau cercle');
-                this.createTerritoryCircle(gameBoard, territory);
+                await this.createTerritoryCircle(gameBoard, territory);
                 
             } else {
                 console.log(`❌ Territoire invalide: type=${territory.type}`);
@@ -81,12 +81,17 @@ export const simultaneousPlayPhase = {
     },
 
     // Créer un cercle sur un territoire
-    createTerritoryCircle(gameBoard, territory) {
+    async createTerritoryCircle(gameBoard, territory) {
         if (!gameBoard) return;
         
         console.log(`🔵 Création d'un cercle pour le territoire ${territory.type} à (${territory.position.q}, ${territory.position.r})`);
         
-        const circle = this.createCircle(gameBoard, territory.position);
+        const circle = await this.createCircle(gameBoard, territory.position, 1.0, 0.1);
+        
+        if (!circle) {
+            console.error('❌ Impossible de créer le cercle pour le territoire');
+            return;
+        }
         
         // Stocker le cercle avec son territoire associé
         this.currentCircle = {
@@ -97,42 +102,25 @@ export const simultaneousPlayPhase = {
         console.log(`✅ Cercle créé pour le territoire ${territory.type}`);
     },
 
-    // Créer un cercle sur une position donnée (version simple)
-    createCircle(gameBoard, position) {
-        const textureLoader = new THREE.TextureLoader();
-        const geometry = new THREE.PlaneGeometry(1, 1);
-        
-        // Matériau avec transparence
-        const material = new THREE.MeshBasicMaterial({
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide,
-            color: 0xffffff
-        });
-        
-        const circle = new THREE.Mesh(geometry, material);
-        
-        // Charger la texture cercle
-        textureLoader.load(
-            './images/cercle.webp',
-            (texture) => {
-                texture.colorSpace = THREE.SRGBColorSpace;
-                material.map = texture;
-                material.needsUpdate = true;
-            },
-            undefined,
-            (error) => console.warn('⚠️ Erreur chargement texture cercle:', error)
-        );
-        
+    // Créer un cercle sur une position donnée (utilisant le MeepleManager)
+    async createCircle(gameBoard, position, scale = 1.0, height = 0) {
         // Convertir position hexagonale en cartésienne
         const pos = gameBoard.hexToCartesian(position);
-        circle.position.set(pos.x, 0.1, pos.z);
-        circle.rotation.x = -Math.PI / 2; // Plat sur le sol
+        
+        // Utiliser le MeepleManager pour créer l'instance de cercle
+        const circle = await gameBoard.meepleManager.createCircleInstance('selection', pos, scale, height, 0xffffff, {
+            position: position
+        });
+        
+        if (!circle) {
+            console.error('❌ Impossible de créer l\'instance de cercle');
+            return null;
+        }
         
         // Ajouter au workplane
         gameBoard.workplane.add(circle);
         
-        console.log(`🔵 Cercle créé à (${position.q}, ${position.r})`);
+        console.log(`🔵 Cercle créé via MeepleManager à (${position.q}, ${position.r}) avec scale ${scale}`);
         return circle;
     },
 

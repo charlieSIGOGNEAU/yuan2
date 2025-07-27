@@ -1,7 +1,6 @@
 import { gameState } from '../gameState.js';
 import { uiManager } from '../ui/UIManager.js';
 import { i18n } from '../../core/i18n.js';
-import * as THREE from 'three';
 
 export const biddingPhase = {
     // Stockage des cercles créés avec leurs clans associés
@@ -207,13 +206,17 @@ export const biddingPhase = {
         
         // Créer un cercle pour chaque clan non utilisé
         for (const clan of unusedClans) {
-            const circle = this.createClanCircle(gameBoard, { q: clan.start_q, r: clan.start_r });
-            // Stocker le cercle avec son clan associé
-            this.createdCircles.push({
-                circle: circle,
-                clan: clan
-            });
-            console.log(`🔵 Cercle créé pour le clan ${clan.name} (${clan.color}) à (${clan.start_q}, ${clan.start_r})`);
+            const circle = await this.createClanCircle(gameBoard, { q: clan.start_q, r: clan.start_r });
+            if (circle) {
+                // Stocker le cercle avec son clan associé
+                this.createdCircles.push({
+                    circle: circle,
+                    clan: clan
+                });
+                console.log(`🔵 Cercle d'instance créé pour le clan ${clan.name} (${clan.color}) à (${clan.start_q}, ${clan.start_r})`);
+            } else {
+                console.error(`❌ Échec de création du cercle pour le clan ${clan.name}`);
+            }
         }
     },
 
@@ -221,56 +224,48 @@ export const biddingPhase = {
     removeAllCircles(gameBoard) {
         if (!gameBoard) return;
         
-        console.log(`🗑️ Suppression de ${this.createdCircles.length} cercles`);
+        console.log(`🗑️ Suppression de ${this.createdCircles.length} cercles d'instances`);
         
         this.createdCircles.forEach(({ circle, clan }) => {
-            gameBoard.workplane.remove(circle);
-            // Libérer les ressources
-            if (circle.geometry) circle.geometry.dispose();
-            if (circle.material) circle.material.dispose();
-            console.log(`🗑️ Cercle supprimé pour le clan ${clan.name}`);
+            if (circle) {
+                gameBoard.workplane.remove(circle);
+                // Pour les instances, on ne dispose pas des ressources car elles sont partagées
+                console.log(`🗑️ Cercle d'instance supprimé pour le clan ${clan.name}`);
+            }
         });
         
         this.createdCircles = [];
     },
 
-    // Créer un cercle sur une position donnée
-    createClanCircle(gameBoard, position) {
-        const textureLoader = new THREE.TextureLoader();
-        const geometry = new THREE.PlaneGeometry(1, 1); // 1x1 comme demandé
-        
-        // Matériau avec transparence
-        const material = new THREE.MeshBasicMaterial({
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide,
-            color: 0xffffff
-        });
-        
-        const circle = new THREE.Mesh(geometry, material);
-        
-        // Charger la texture cercle
-        textureLoader.load(
-            './images/cercle.webp',
-            (texture) => {
-                texture.colorSpace = THREE.SRGBColorSpace;
-                material.map = texture;
-                material.needsUpdate = true;
-            },
-            undefined,
-            (error) => console.warn('⚠️ Erreur chargement texture cercle:', error)
-        );
-        
-        // Convertir position hexagonale en cartésienne
-        const pos = gameBoard.hexToCartesian(position);
-        circle.position.set(pos.x, 0.1, pos.z); // Hauteur 0.1 comme modifié
-        circle.rotation.x = -Math.PI / 2; // Plat sur le sol
-        
-        // Ajouter au workplane
-        gameBoard.workplane.add(circle);
-        
-        console.log(`🔵 Cercle créé à (${position.q}, ${position.r})`);
-        return circle; // Retourner le cercle créé
+    // Créer un cercle sur une position donnée (version instance)
+    async createClanCircle(gameBoard, position) {
+        try {
+            // Utiliser le système d'instances pour créer le cercle
+            const circleInstance = await gameBoard.meepleManager.createCircleInstance(
+                'selection', 
+                position, 
+                1.0, 
+                0.1
+            );
+            
+            if (circleInstance) {
+                // Convertir les coordonnées hexagonales en cartésiennes pour le positionnement
+                const cartesianPos = gameBoard.hexToCartesian(position);
+                circleInstance.position.set(cartesianPos.x, 0.1, cartesianPos.z);
+                
+                // Ajouter au workplane
+                gameBoard.workplane.add(circleInstance);
+                
+                console.log(`🔵 Cercle d'instance créé à (${position.q}, ${position.r})`);
+                return circleInstance;
+            } else {
+                console.error('❌ Impossible de créer l\'instance de cercle');
+                return null;
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors de la création du cercle d\'instance:', error);
+            return null;
+        }
     },
 
     // Fonction pour nettoyer les ressources de la phase
