@@ -57,12 +57,12 @@ export const installationPhase = {
                     'selection', 
                     { q: 0, r: 0 }, 
                     2.0, 
-                    0
+                    1
                 );
                 if (circleInstance) {
                     // Convertir les coordonnées hexagonales en cartésiennes pour le positionnement
                     const cartesianPos = gameApi.gameBoard.hexToCartesian({ q: 0, r: 0 });
-                    circleInstance.position.set(cartesianPos.x, 0.1, cartesianPos.z);
+                    circleInstance.position.set(cartesianPos.x, 0, cartesianPos.z);
                     
                     gameApi.gameBoard.workplane.add(circleInstance);
                     gameApi.gameBoard.circles.push(circleInstance);

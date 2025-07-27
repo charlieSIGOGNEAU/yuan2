@@ -18,6 +18,9 @@
         "waiting_for_winner": "En attente du choix de position de départ du joueur {{winnerName}} qui a gagné l'enchère avec {{chao}} chao",
         "waiting_generic": "En attente du choix de position de départ...",
         "validate_clan_selection": "Valide pour choisir le clan {{color}}"
+      },
+      "simultaneous_play": {
+        "welcome_message": "Salutations {{playerName}},<br><br>Vous incarnez le clan <span class='clan-circle' style='background-color: {{colorHex}};'></span> (indiqué par le cercle autour du bouton \"Valider\").<br><br>Choisissez un territoire, puis les niveaux de vos différentes actions avec les boutons du bas, et validez.<br><br>Des aides de jeu sont disponibles en haut.<br><br>Bonne partie !"
       }
     },
     "ui": {

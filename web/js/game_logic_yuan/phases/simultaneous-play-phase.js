@@ -1,6 +1,7 @@
 import { uiManager } from '../ui/UIManager.js';
 import { gameState } from '../gameState.js';
 import { biddingPhase } from './biddingPhase.js';
+import { i18n } from '../../core/i18n.js';
 import * as THREE from 'three';
 
 export const simultaneousPlayPhase = {
@@ -22,7 +23,7 @@ export const simultaneousPlayPhase = {
         // Activer la détection de clic sur les territoires
         this.setupTerritoryClickDetection(gameBoard);
         
-        // Vérifier s'il n'y a pas d'actions
+        // si premier tour
         if (gameState.game.simultaneous_play_turn = 1) {
             this.processVictoryBiddings(gameBoard);
         }
@@ -287,5 +288,94 @@ export const simultaneousPlayPhase = {
         
         // Mettre à jour toutes les cases de la barre d'information
         uiManager.updateSimultaneousPlayInfoBar();
+        
+        // Afficher le message d'accueil avec la couleur du clan du joueur
+        const playerClan = gameState.game.myClan;
+        console.log('🔍 Debug - playerClan:', playerClan);
+        
+        if (playerClan) {
+            console.log('🔍 Debug - playerClan.color_name:', playerClan.color_name);
+            
+            // Récupérer le nom du joueur
+            const myGameUser = gameState.getMyGameUser();
+            const playerName = myGameUser ? myGameUser.user_name : 'Joueur';
+            
+            const welcomeMessage = i18n.t('game.phases.simultaneous_play.welcome_message', {
+                playerName: playerName,
+                color: i18n.t(`colors.${playerClan.color_name}`),
+                colorHex: playerClan.color
+            });
+            console.log('🔍 Debug - welcomeMessage:', welcomeMessage);
+            this.showSimultaneousPlayHelpMessage(welcomeMessage);
+        } else {
+            console.warn('⚠️ playerClan non trouvé, impossible d\'afficher le message d\'accueil');
+        }
+    },
+
+    // Fonction pour afficher les messages d'aide de la phase simultaneous_play
+    showSimultaneousPlayHelpMessage(message) {
+        console.log('🔍 Debug - showSimultaneousPlayHelpMessage appelée avec:', message);
+        
+        // Créer ou récupérer la div d'aide
+        let helpDiv = document.getElementById('simultaneous-play-help');
+        console.log('🔍 Debug - helpDiv existante:', helpDiv);
+        
+        if (!helpDiv) {
+            console.log('🔍 Debug - Création de la nouvelle div d\'aide');
+            helpDiv = document.createElement('div');
+            helpDiv.id = 'simultaneous-play-help';
+            helpDiv.className = 'simultaneous-play-help';
+            helpDiv.style.cssText = `
+                position: fixed;
+                top: 120px;
+                left: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                text-align: center;
+                max-width: 600px;
+                z-index: 20;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+                border: 2px solid white;
+            `;
+            document.body.appendChild(helpDiv);
+            console.log('🔍 Debug - Div d\'aide ajoutée au body');
+        }
+        
+        // Mettre à jour le message avec support HTML
+        helpDiv.innerHTML = message;
+        helpDiv.style.display = 'block';
+        
+        // Ajouter le CSS pour les cercles de clan
+        if (!document.getElementById('clan-circle-style')) {
+            const style = document.createElement('style');
+            style.id = 'clan-circle-style';
+            style.textContent = `
+                .clan-circle {
+                    display: inline-block;
+                    width: 1em;
+                    height: 1em;
+                    border-radius: 50%;
+                    margin: 0 0.2em;
+                    vertical-align: middle;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        console.log('💡 Message d\'aide simultaneous_play affiché:', message);
+        console.log('🔍 Debug - helpDiv.style.display:', helpDiv.style.display);
+        console.log('🔍 Debug - helpDiv.offsetHeight:', helpDiv.offsetHeight);
+    },
+
+    // Fonction pour masquer les messages d'aide
+    hideSimultaneousPlayHelpMessage() {
+        const helpDiv = document.getElementById('simultaneous-play-help');
+        if (helpDiv) {
+            helpDiv.style.display = 'none';
+        }
     }
 }

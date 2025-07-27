@@ -32,7 +32,7 @@ export const Game = {
             width: 100vw;
             height: 100vh;
             background-color: #000;
-            z-index: 9999;
+            z-index: 10;
             margin: 0;
             padding: 0;
         `;
