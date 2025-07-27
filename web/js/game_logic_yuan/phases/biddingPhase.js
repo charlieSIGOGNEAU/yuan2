@@ -5,9 +5,18 @@ import { i18n } from '../../core/i18n.js';
 export const biddingPhase = {
     // Stockage des cercles créés avec leurs clans associés
     createdCircles: [], // [{ circle: THREE.Mesh, clan: Clan }]
+    // Éviter les appels multiples
+    isRunning: false,
     
     // Fonction principale pour gérer la phase de bidding
     async biddingPhase(gameBoard) {
+        // Éviter les appels multiples
+        if (this.isRunning) {
+            console.log('⚠️ Phase bidding déjà en cours, ignoré');
+            return;
+        }
+        
+        this.isRunning = true;
         console.log('🎯 Démarrage de la phase bidding_phase');
 
         // Mettre à jour les territories et placer les villes
@@ -39,6 +48,9 @@ export const biddingPhase = {
                 await this.handlePlayerWithoutClan(gameBoard);
             }
         }
+        
+        // Réinitialiser le flag à la fin
+        this.isRunning = false;
     },
 
     // Fonction pour le joueur qui a déjà un clan (attente)
@@ -111,6 +123,9 @@ export const biddingPhase = {
             if (clickedCircle) {
                 console.log(`✅ Clic sur le cercle du clan ${clickedCircle.clan.name} (${clickedCircle.clan.color})`);
                 
+                // Mettre à jour l'apparence des cercles
+                this.updateCircleSelection(clickedCircle);
+                
                 // Stocker le clan sélectionné
                 this.selectedClan = clickedCircle.clan;
                 
@@ -120,6 +135,7 @@ export const biddingPhase = {
             } else {
                 // Si on clique en dehors, on peut désélectionner
                 this.selectedClan = null;
+                this.resetAllCircles();
                 uiManager.updateInfoPanel(i18n.t('game.phases.bidding.instructions'));
             }
         };
@@ -183,26 +199,17 @@ export const biddingPhase = {
         
         // Récupérer tous les game_users du jeu
         const gameUsers = gameState.game?.game_users || [];
-        console.log(`👥 GameUsers trouvés: ${gameUsers.length}`);
         
         // Récupérer tous les clans du jeu
         const allClans = gameState.game?.clans || [];
-        console.log(`🏛️ Tous les clans: ${allClans.length}`);
         
         // Récupérer les clan_id qui sont renseignés dans les game_users
         const usedClanIds = gameUsers
             .map(user => user.clan_id)
             .filter(clanId => clanId !== null && clanId !== undefined);
         
-        console.log(`🔍 Clan IDs utilisés: ${usedClanIds}`);
-        
         // Filtrer les clans non utilisés (ceux qui ne sont pas dans usedClanIds)
         const unusedClans = allClans.filter(clan => !usedClanIds.includes(clan.id));
-        
-        console.log(`🔍 Clans non utilisés: ${unusedClans.length}`);
-        unusedClans.forEach(clan => {
-            console.log(`  - Clan ${clan.name} (${clan.color}) - ID: ${clan.id}`);
-        });
         
         // Créer un cercle pour chaque clan non utilisé
         for (const clan of unusedClans) {
@@ -213,7 +220,6 @@ export const biddingPhase = {
                     circle: circle,
                     clan: clan
                 });
-                console.log(`🔵 Cercle d'instance créé pour le clan ${clan.name} (${clan.color}) à (${clan.start_q}, ${clan.start_r})`);
             } else {
                 console.error(`❌ Échec de création du cercle pour le clan ${clan.name}`);
             }
@@ -224,13 +230,14 @@ export const biddingPhase = {
     removeAllCircles(gameBoard) {
         if (!gameBoard) return;
         
-        console.log(`🗑️ Suppression de ${this.createdCircles.length} cercles d'instances`);
-        
         this.createdCircles.forEach(({ circle, clan }) => {
             if (circle) {
                 gameBoard.workplane.remove(circle);
-                // Pour les instances, on ne dispose pas des ressources car elles sont partagées
-                console.log(`🗑️ Cercle d'instance supprimé pour le clan ${clan.name}`);
+                // Supprimer aussi du tableau circles de GameBoard3D
+                const index = gameBoard.circles.indexOf(circle);
+                if (index > -1) {
+                    gameBoard.circles.splice(index, 1);
+                }
             }
         });
         
@@ -253,10 +260,18 @@ export const biddingPhase = {
                 const cartesianPos = gameBoard.hexToCartesian(position);
                 circleInstance.position.set(cartesianPos.x, 0.1, cartesianPos.z);
                 
-                // Ajouter au workplane
-                gameBoard.workplane.add(circleInstance);
+                // Cloner le matériau pour éviter les conflits d'opacité entre instances
+                if (circleInstance.material) {
+                    circleInstance.material = circleInstance.material.clone();
+                    circleInstance.material.opacity = 0.8;
+                    circleInstance.material.needsUpdate = true;
+                }
+                circleInstance.scale.set(0.8, 0.8, 0.8);
                 
-                console.log(`🔵 Cercle d'instance créé à (${position.q}, ${position.r})`);
+                // Ajouter au workplane et au tableau des cercles de GameBoard3D
+                gameBoard.workplane.add(circleInstance);
+                gameBoard.circles.push(circleInstance);
+                
                 return circleInstance;
             } else {
                 console.error('❌ Impossible de créer l\'instance de cercle');
@@ -266,6 +281,36 @@ export const biddingPhase = {
             console.error('❌ Erreur lors de la création du cercle d\'instance:', error);
             return null;
         }
+    },
+
+    // Mettre à jour la sélection visuelle des cercles
+    updateCircleSelection(selectedCircle) {
+        // Étape 1 : Mettre tous les cercles à scale 0.8 et opacité 0.8
+        this.createdCircles.forEach(({ circle, clan }) => {
+            if (circle && circle.material) {
+                circle.material.opacity = 0.8;
+                circle.scale.set(0.8, 0.8, 0.8);
+                circle.material.needsUpdate = true;
+            }
+        });
+        
+        // Étape 2 : Mettre le cercle sélectionné à scale 1.5 et opacité 1
+        if (selectedCircle && selectedCircle.circle && selectedCircle.circle.material) {
+            selectedCircle.circle.material.opacity = 1.0;
+            selectedCircle.circle.scale.set(1.5, 1.5, 1.5);
+            selectedCircle.circle.material.needsUpdate = true;
+        }
+    },
+
+    // Remettre tous les cercles à leur état par défaut
+    resetAllCircles() {
+        this.createdCircles.forEach(({ circle, clan }) => {
+            if (circle && circle.material) {
+                circle.material.opacity = 0.8;
+                circle.scale.set(0.8, 0.8, 0.8);
+                circle.material.needsUpdate = true;
+            }
+        });
     },
 
     // Fonction pour nettoyer les ressources de la phase

@@ -106,11 +106,27 @@ export class UIManager {
                 textInput.style.mozUserSelect = 'none';
                 textInput.style.msUserSelect = 'none';
                 
-                // Ajouter le listener de clic sur le bouton entier
-                slot.addEventListener('click', (event) => {
+                // Flag pour éviter le double déclenchement
+                let isProcessing = false;
+                
+                // Fonction de gestion du clic/tactile
+                const handleInteraction = (event) => {
+                    if (isProcessing) return; // Éviter le double déclenchement
+                    
                     event.preventDefault();
+                    isProcessing = true;
+                    
                     this.handleActionSlotTextClick(textInput, index + 2); // index + 2 car on commence par le bouton 2
-                });
+                    
+                    // Réinitialiser le flag après un court délai
+                    setTimeout(() => {
+                        isProcessing = false;
+                    }, 100);
+                };
+                
+                // Ajouter les listeners pour souris et tactile
+                slot.addEventListener('mousedown', handleInteraction);
+                slot.addEventListener('touchstart', handleInteraction);
             }
         });
     }
@@ -307,7 +323,8 @@ export class UIManager {
             ...document.querySelectorAll('.action-menu'),
             ...document.querySelectorAll('.action-validate'),
             ...document.querySelectorAll('.bidding-less'),
-            ...document.querySelectorAll('.bidding-more')
+            ...document.querySelectorAll('.bidding-more'),
+            ...document.querySelectorAll('.action-slot') // Ajouter les action-slot pour nettoyer les mousedown
         ];
 
         elementsToClean.forEach(element => {

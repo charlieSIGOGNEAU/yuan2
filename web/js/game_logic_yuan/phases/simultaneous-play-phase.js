@@ -104,11 +104,8 @@ export const simultaneousPlayPhase = {
 
     // Créer un cercle sur une position donnée (utilisant le MeepleManager)
     async createCircle(gameBoard, position, scale = 1.0, height = 0) {
-        // Convertir position hexagonale en cartésienne
-        const pos = gameBoard.hexToCartesian(position);
-        
         // Utiliser le MeepleManager pour créer l'instance de cercle
-        const circle = await gameBoard.meepleManager.createCircleInstance('selection', pos, scale, height, 0xffffff, {
+        const circle = await gameBoard.meepleManager.createCircleInstance('selection', position, scale, height, 0xffffff, {
             position: position
         });
         
@@ -117,8 +114,13 @@ export const simultaneousPlayPhase = {
             return null;
         }
         
-        // Ajouter au workplane
+        // Convertir les coordonnées hexagonales en cartésiennes pour le positionnement
+        const cartesianPos = gameBoard.hexToCartesian(position);
+        circle.position.set(cartesianPos.x, height, cartesianPos.z);
+        
+        // Ajouter au workplane et au tableau des cercles de GameBoard3D
         gameBoard.workplane.add(circle);
+        gameBoard.circles.push(circle);
         
         console.log(`🔵 Cercle créé via MeepleManager à (${position.q}, ${position.r}) avec scale ${scale}`);
         return circle;
@@ -130,9 +132,11 @@ export const simultaneousPlayPhase = {
         
         gameBoard.workplane.remove(this.currentCircle.circle);
         
-        // Libérer les ressources
-        if (this.currentCircle.circle.geometry) this.currentCircle.circle.geometry.dispose();
-        if (this.currentCircle.circle.material) this.currentCircle.circle.material.dispose();
+        // Supprimer aussi du tableau circles de GameBoard3D si présent
+        const index = gameBoard.circles.indexOf(this.currentCircle.circle);
+        if (index > -1) {
+            gameBoard.circles.splice(index, 1);
+        }
         
         console.log(`🗑️ Cercle supprimé pour le territoire ${this.currentCircle.territory.type}`);
         
