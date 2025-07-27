@@ -23,10 +23,10 @@ export const simultaneousPlayPhase = {
         this.setupTerritoryClickDetection(gameBoard);
         
         // Vérifier s'il n'y a pas d'actions
-        if (!gameState.game.actions || gameState.game.actions.length === 0) {
-            console.log('🎯 Aucune action trouvée, traitement des biddings victorieux');
+        if (gameState.game.simultaneous_play_turn = 1) {
             this.processVictoryBiddings(gameBoard);
         }
+
     },
 
     // Configuration de la détection de clic sur les territoires
@@ -97,7 +97,7 @@ export const simultaneousPlayPhase = {
         console.log(`✅ Cercle créé pour le territoire ${territory.type}`);
     },
 
-    // Créer un cercle sur une position donnée (réutilisé de biddingPhase)
+    // Créer un cercle sur une position donnée (version simple)
     createCircle(gameBoard, position) {
         const textureLoader = new THREE.TextureLoader();
         const geometry = new THREE.PlaneGeometry(1, 1);
@@ -154,6 +154,71 @@ export const simultaneousPlayPhase = {
     // Obtenir le territoire du cercle actuel
     getCurrentTerritory() {
         return this.currentCircle ? this.currentCircle.territory : null;
+    },
+
+    // Fonction pour gérer la validation de l'action
+    handleActionValidation() {
+        console.log('🎯 Validation de l\'action dans simultaneous_play_phase');
+        
+        // Vérifier qu'un cercle est sélectionné
+        if (!this.currentCircle) {
+            console.warn('⚠️ Aucun territoire sélectionné');
+            uiManager.updateInfoPanel('Veuillez sélectionner un territoire');
+            return;
+        }
+        
+        const territory = this.currentCircle.territory;
+        console.log(`📍 Territoire sélectionné: ${territory.type} à (${territory.position.q}, ${territory.position.r})`);
+        
+        // Récupérer les niveaux depuis la barre d'action
+        const actionBar = document.getElementById('player-action-bar');
+        if (!actionBar) {
+            console.error('❌ Barre d\'action non trouvée');
+            return;
+        }
+        
+        // Fonction pour convertir le texte en niveau
+        const textToLevel = (text) => {
+            switch (text.trim()) {
+                case '': return 0;
+                case 'I': return 1;
+                case 'II': return 2;
+                case 'III': return 3;
+                default: return 0;
+            }
+        };
+        
+        // Récupérer les niveaux des cases 2, 3 et 4
+        const case2Element = actionBar.querySelector('.action-slot:nth-child(2) .action-slot-text');
+        const case3Element = actionBar.querySelector('.action-slot:nth-child(3) .action-slot-text');
+        const case4Element = actionBar.querySelector('.action-slot:nth-child(4) .action-slot-text');
+        
+        const case2Text = case2Element ? case2Element.value : '';
+        const case3Text = case3Element ? case3Element.value : '';
+        const case4Text = case4Element ? case4Element.value : '';
+        
+        const developpementLevel = textToLevel(case2Text);
+        const fortificationLevel = textToLevel(case3Text);
+        const militarisationLevel = textToLevel(case4Text);
+        
+        console.log(`📊 Textes récupérés: case2="${case2Text}", case3="${case3Text}", case4="${case4Text}"`);
+        console.log(`📊 Niveaux récupérés: développement=${developpementLevel}, fortification=${fortificationLevel}, militarisation=${militarisationLevel}`);
+        
+        // Préparer les données de l'action
+        const actionData = {
+            position_q: territory.position.q,
+            position_r: territory.position.r,
+            developpement_level: developpementLevel,
+            fortification_level: fortificationLevel,
+            militarisation_level: militarisationLevel
+        };
+        
+        console.log('📤 Envoi de l\'action à l\'API:', actionData);
+        
+        // Importer et appeler gameApi
+        import('../gameApi.js').then(module => {
+            module.gameApi.sendActionToApi(actionData);
+        });
     },
 
     // Nettoyer les ressources de la phase
@@ -226,7 +291,7 @@ export const simultaneousPlayPhase = {
         console.log('✅ Traitement des biddings victorieux terminé');
         
         // Incrémenter le tour de jeu simultané
-        gameState.game.simultaneous_play_turn = 1;
+        // gameState.game.simultaneous_play_turn = 1;
         
         // Mettre à jour toutes les cases de la barre d'information
         uiManager.updateSimultaneousPlayInfoBar();

@@ -38,7 +38,6 @@ class Api::V1::BiddingController < ApplicationController
       if existing_bidding.save
         puts "✅ Enchère mise à jour avec succès: #{existing_bidding.chao} chao pour le joueur #{@game_user.user_name}"
         
-        check_turn_completion_and_broadcast(existing_bidding)
       else
         error_msg = "Erreur lors de la mise à jour de l'enchère: #{existing_bidding.errors.full_messages.join(', ')}"
         puts "❌ #{error_msg}"
@@ -180,7 +179,7 @@ class Api::V1::BiddingController < ApplicationController
           # Vérifier si tous les tours d'enchères sont terminés
           if new_biddings_turn > @game.player_count
             puts "🏁 Tous les tours d'enchères terminés, passage en simultaneous_play"
-            @game.update!(game_status: :simultaneous_play)
+            @game.update!(game_status: :simultaneous_play, simultaneous_play_turn: 1)
             puts "🎮 Statut de la game changé: bidding_phase → simultaneous_play"
           end
         else

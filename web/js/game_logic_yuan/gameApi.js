@@ -222,5 +222,59 @@ export const gameApi = {
             uiManager.updateInfoPanel('Erreur de connexion');
         }
     },
+
+    // Envoyer une action à l'API
+    async sendActionToApi(actionData) {
+        try {
+            const gameId = gameState.game.id;
+            const myGameUserId = gameState.myGameUserId;
+            const turn = gameState.game.simultaneous_play_turn;
+            
+            console.log(`📤 Envoi action à l'API:`, actionData);
+            console.log(`📤 Données complètes: game_user_id=${myGameUserId}, game_id=${gameId}, turn=${turn}`);
+
+            const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/actions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Auth.authToken}`
+                },
+                body: JSON.stringify({
+                    game_user_id: myGameUserId,
+                    game_id: gameId,
+                    turn: turn,
+                    position_q: actionData.position_q,
+                    position_r: actionData.position_r,
+                    developpement_level: actionData.developpement_level,
+                    fortification_level: actionData.fortification_level,
+                    militarisation_level: actionData.militarisation_level
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Action envoyée avec succès:', data);
+                
+                // Nettoyer la phase
+                import('./phases/simultaneous-play-phase.js').then(module => {
+                    module.simultaneousPlayPhase.cleanupPhase();
+                });
+                
+                // Masquer toutes les barres d'action
+                uiManager.hideAllActionBars();
+                
+                // Afficher un message de confirmation
+                uiManager.updateInfoPanel('Action envoyée, en attente des autres joueurs...');
+                
+            } else {
+                console.error('❌ Erreur lors de l\'envoi de l\'action:', data);
+                uiManager.updateInfoPanel('Erreur lors de l\'envoi de l\'action');
+            }
+        } catch (error) {
+            console.error('❌ Erreur réseau lors de l\'envoi de l\'action:', error);
+            uiManager.updateInfoPanel('Erreur de connexion');
+        }
+    },
 };
  

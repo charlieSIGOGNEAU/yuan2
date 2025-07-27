@@ -101,7 +101,10 @@ export class GameBoard3D {
         await this.meepleManager.preloadMeepleModel('fortification');
         await this.meepleManager.preloadMeepleModel('temple');
         await this.meepleManager.preloadMeepleModel('2villes');
-        console.log('✅ Modèles préchargés');
+        
+        // Précharger les cercles
+        await this.meepleManager.preloadCircle('selection');
+        console.log('✅ Modèles et cercles préchargés');
         
         // Continuer avec l'initialisation normale
         this.init();

@@ -10,14 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_24_174217) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_27_170338) do
   create_table "actions", force: :cascade do |t|
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false
-    t.string "action"
     t.integer "turn"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "position_q"
+    t.integer "position_r"
+    t.integer "developpement_level"
+    t.integer "fortification_level"
+    t.integer "militarisation_level"
     t.index ["game_id"], name: "index_actions_on_game_id"
     t.index ["game_user_id"], name: "index_actions_on_game_user_id"
   end
@@ -68,6 +72,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_24_174217) do
     t.integer "biddings_turn"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "simultaneous_play_turn", default: 0
   end
 
   create_table "tests", force: :cascade do |t|

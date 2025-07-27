@@ -335,6 +335,8 @@ export class UIManager {
             this.handleBiddingValidation();
         } else if (gameState.game.game_status === 'starting_spot_selection') {
             this.handleStartingSpotSelectionValidation();
+        } else if (gameState.game.game_status === 'simultaneous_play') {
+            this.handleSimultaneousPlayValidation();
         } else {
             console.log('⚠️ Statut de jeu non géré pour la validation:', gameState.game.game_status);
         }
@@ -401,6 +403,19 @@ export class UIManager {
         
         // Appeler la fonction de validation via gameApi
         gameApi.sendClanSelectionToApi();
+    }
+
+    // Validation spécifique pour la phase de jeu simultané
+    handleSimultaneousPlayValidation() {
+        console.log('🎯 Validation de l\'action en jeu simultané');
+        
+        // Importer simultaneousPlayPhase pour accéder à la fonction de validation
+        import('../phases/simultaneous-play-phase.js').then(module => {
+            const simultaneousPlayPhase = module.simultaneousPlayPhase;
+            
+            // Appeler la fonction de validation de l'action
+            simultaneousPlayPhase.handleActionValidation();
+        });
     }
 
     // Fonction pour mettre à jour le panneau d'informations

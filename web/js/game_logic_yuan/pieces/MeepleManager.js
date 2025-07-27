@@ -49,6 +49,16 @@ export class MeepleManager {
                 scale: { x: 1, y: 1, z: 1 }
             }
         };
+
+        // Types de cercles et leurs caractéristiques
+        this.circleTypes = {
+            selection: {
+                path: './images/cercle.webp',
+                scale: { x: 2.0, y: 2.0, z: 1 }, // Taille pour Sprite (z ignoré)
+                colorable: true,
+                defaultColor: 0xffffff
+            }
+        };
     }
 
     // Précharger un modèle de meeple
@@ -121,6 +131,68 @@ export class MeepleManager {
 
         // Stocker la promise pour éviter les chargements multiples
         this.loadPromises.set(type, loadPromise);
+        return loadPromise;
+    }
+
+    // Précharger un cercle (optimisé avec Sprite)
+    async preloadCircle(type) {
+        if (!this.circleTypes[type]) {
+            throw new Error(`Type de cercle inconnu: ${type}`);
+        }
+
+        // Si déjà chargé, retourner le modèle
+        if (this.loadedModels.has(`circle_${type}`)) {
+            return this.loadedModels.get(`circle_${type}`);
+        }
+
+        // Si en cours de chargement, retourner la promise existante
+        if (this.loadPromises.has(`circle_${type}`)) {
+            return this.loadPromises.get(`circle_${type}`);
+        }
+
+        // Créer une nouvelle promise de chargement
+        const loadPromise = new Promise((resolve, reject) => {
+            const circleInfo = this.circleTypes[type];
+            console.log(`🔵 Préchargement du cercle: ${type} depuis ${circleInfo.path}`);
+
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(
+                circleInfo.path,
+                (texture) => {
+                    console.log(`✅ Cercle ${type} préchargé avec succès`);
+                    
+                    // Corriger l'espace colorimétrique
+                    texture.colorSpace = THREE.SRGBColorSpace;
+                    
+                    // Créer le matériau pour Sprite (plus performant)
+                    const material = new THREE.SpriteMaterial({
+                        map: texture,
+                        transparent: true,
+                        opacity: 0.8,
+                        color: circleInfo.defaultColor
+                    });
+                    
+                    // Créer le sprite (plus performant qu'une mesh)
+                    const circleSprite = new THREE.Sprite(material);
+                    
+                    // Stocker le modèle dans le cache
+                    this.loadedModels.set(`circle_${type}`, circleSprite);
+                    this.loadPromises.delete(`circle_${type}`); // Nettoyer la promise
+                    resolve(circleSprite);
+                },
+                (progress) => {
+                    console.log(`📊 Progression chargement cercle ${type}:`, Math.round(progress.loaded / progress.total * 100) + '%');
+                },
+                (error) => {
+                    console.error(`❌ Erreur lors du chargement du cercle ${type}:`, error);
+                    this.loadPromises.delete(`circle_${type}`); // Nettoyer la promise même en cas d'erreur
+                    reject(error);
+                }
+            );
+        });
+
+        // Stocker la promise pour éviter les chargements multiples
+        this.loadPromises.set(`circle_${type}`, loadPromise);
         return loadPromise;
     }
 
@@ -209,6 +281,71 @@ export class MeepleManager {
         };
 
         console.log(`🎭 Instance de ${type} créée${colorHex ? ` avec couleur ${colorHex}` : ''}`);
+        return instance;
+    }
+
+    // Créer une instance d'un cercle
+    async createCircleInstance(type, colorHex = null, userData = {}) {
+        // Vérifier si le modèle est déjà chargé
+        let baseModel = this.loadedModels.get(`circle_${type}`);
+        
+        // Si pas encore chargé, attendre qu'il soit en cours de chargement
+        if (!baseModel && this.loadPromises.has(`circle_${type}`)) {
+            console.log(`⏳ Attente du chargement du cercle ${type}...`);
+            try {
+                baseModel = await this.loadPromises.get(`circle_${type}`);
+                console.log(`✅ Cercle ${type} chargé avec succès`);
+            } catch (error) {
+                console.error(`❌ Erreur lors du chargement du cercle ${type}:`, error);
+                return null;
+            }
+        }
+        
+        // Si toujours pas de modèle, essayer de le précharger
+        if (!baseModel) {
+            console.log(`🔄 Préchargement du cercle ${type}...`);
+            try {
+                baseModel = await this.preloadCircle(type);
+            } catch (error) {
+                console.error(`❌ Impossible de précharger le cercle ${type}:`, error);
+                return null;
+            }
+        }
+
+        const circleInfo = this.circleTypes[type];
+        if (!circleInfo) {
+            console.error(`❌ Type de cercle ${type} non reconnu`);
+            return null;
+        }
+        
+        // Cloner le modèle pour créer une instance
+        const instance = baseModel.clone();
+        
+        // Appliquer la couleur si le cercle est colorable et une couleur est fournie
+        if (circleInfo.colorable && colorHex) {
+            if (instance.material) {
+                // Cloner le matériau pour éviter d'affecter les autres instances
+                const clonedMaterial = instance.material.clone();
+                clonedMaterial.color = new THREE.Color(colorHex);
+                clonedMaterial.needsUpdate = true;
+                instance.material = clonedMaterial;
+            }
+        }
+
+        // Appliquer la taille par défaut (pour Sprite, scale uniforme)
+        const scale = circleInfo.scale;
+        instance.scale.set(scale.x, scale.x, scale.x); // Sprite: scale uniforme
+        
+        // Stocker les métadonnées
+        instance.userData = {
+            type: 'circle',
+            circleType: type,
+            colorHex: colorHex,
+            colorable: circleInfo.colorable,
+            ...userData
+        };
+
+        console.log(`🔵 Instance de cercle ${type} créée${colorHex ? ` avec couleur ${colorHex}` : ''}`);
         return instance;
     }
 
