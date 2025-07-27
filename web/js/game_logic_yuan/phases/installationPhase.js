@@ -87,13 +87,13 @@ export const installationPhase = {
                     const circleInstance = await gameApi.gameBoard.meepleManager.createCircleInstance(
                         'selection', 
                         position, 
-                        1.0, 
-                        0.1
+                        1.5, 
+                        0
                     );
                     if (circleInstance) {
                         // Convertir les coordonnées hexagonales en cartésiennes pour le positionnement
                         const cartesianPos = gameApi.gameBoard.hexToCartesian(position);
-                        circleInstance.position.set(cartesianPos.x, 0.1, cartesianPos.z);
+                        circleInstance.position.set(cartesianPos.x, 0, cartesianPos.z);
                         
                         gameApi.gameBoard.workplane.add(circleInstance);
                         gameApi.gameBoard.circles.push(circleInstance);
