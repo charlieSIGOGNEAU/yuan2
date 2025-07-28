@@ -19,7 +19,39 @@ export class UIManager {
 
     // Charger l'interface UI du jeu
     async loadGameUI() {
+        // Vérifier si l'interface est déjà chargée
+        if (this.gameUI) {
+            console.log('⏭️ Interface UI déjà chargée, skip');
+            return;
+        }
+        
+        // Vérifier si un chargement est déjà en cours
+        if (this._loadingPromise) {
+            console.log('⏳ Interface UI en cours de chargement, attente...');
+            return this._loadingPromise;
+        }
+        
+        console.log('🎨 Début du chargement de l\'interface UI...');
+        this._loadingPromise = this._loadGameUIInternal();
+        
         try {
+            await this._loadingPromise;
+            console.log('✅ Interface UI chargée avec succès');
+        } finally {
+            this._loadingPromise = null;
+        }
+    }
+    
+    // Méthode interne pour le chargement
+    async _loadGameUIInternal() {
+        try {
+            // Supprimer la div app si elle existe
+            const appDiv = document.getElementById('app');
+            if (appDiv) {
+                appDiv.remove();
+                console.log('🗑️ Div app supprimée');
+            }
+            
             // Charger le HTML de l'interface avec un paramètre pour éviter le cache
             const response = await fetch(`./partials/game-ui.html?v=${Date.now()}`);
             const htmlContent = await response.text();
@@ -27,7 +59,11 @@ export class UIManager {
             // Injecter l'interface dans le body
             const uiContainer = document.createElement('div');
             uiContainer.innerHTML = htmlContent;
-            document.body.appendChild(uiContainer.firstElementChild);
+            
+            // Injecter tous les éléments enfants (barre d'info + overlay)
+            while (uiContainer.firstChild) {
+                document.body.appendChild(uiContainer.firstChild);
+            }
             
             // Charger le CSS de l'interface avec un paramètre pour éviter le cache
             const link = document.createElement('link');
@@ -41,15 +77,38 @@ export class UIManager {
             this.playerActionBar = document.getElementById('player-action-bar');
             this.validationBar = document.getElementById('validation-bar');
             this.biddingBar = document.getElementById('rectangle-action-bar');
-            this.menuOnlyBar = document.getElementById('menu-only-bar'); // Nouvelle barre
+            this.menuOnlyBar = document.getElementById('menu-only-bar');
+            this.gameBoardContainer = document.getElementById('game-board-container');
             
             // Configuration des event listeners
             this.setupUIEventListeners();
             
-            console.log('🎨 Interface UI chargée avec succès');
+            // Charger le GameBoard3D si pas déjà chargé
+            await this.loadGameBoard3D();
             
         } catch (error) {
             console.error('❌ Erreur lors du chargement de l\'interface UI:', error);
+            throw error;
+        }
+    }
+
+    // Charger le GameBoard3D
+    async loadGameBoard3D() {
+        try {
+            // Vérifier si le GameBoard3D n'est pas déjà chargé
+            if (!window.gameBoard) {
+                console.log('🎮 Chargement du GameBoard3D...');
+                
+                // Importer et créer le GameBoard3D
+                const { GameBoard3D } = await import('../ui/GameBoard3D.js');
+                window.gameBoard = new GameBoard3D('game-board-container');
+                
+                console.log('✅ GameBoard3D chargé avec succès');
+            } else {
+                console.log('⏭️ GameBoard3D déjà chargé, skip');
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors du chargement du GameBoard3D:', error);
         }
     }
 
@@ -438,7 +497,7 @@ export class UIManager {
     // Fonction pour mettre à jour le panneau d'informations
     updateInfoPanel(text) {
         if (this.infoPanel) {
-            this.infoPanel.textContent = text || '';
+            this.infoPanel.innerHTML = text || '';
         } else {
             console.warn('⚠️ Panneau d\'informations non initialisé');
         }

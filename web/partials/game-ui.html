@@ -1,8 +1,7 @@
 <!-- Interface UI du jeu -->
 <div id="game-ui-overlay" class="game-ui-overlay">
     
-    
-    <!-- Barre d'information de la phase simultaneous_play -->
+    <!-- Barre d'information de la phase simultaneous_play (au-dessus du GameBoard3D) -->
     <div id="simultaneous-play-info-bar" class="simultaneous-play-info-bar" style="display: none;">
         <!-- Premier carré : Riz -->
         <div class="info-square">
@@ -44,9 +43,12 @@
             <input type="text" class="chao-text" value="0" readonly>
         </div>
     </div>
-
-    <!-- Zone d'informations en haut -->
-    <div id="info-panel" class="info-panel"></div>
+    
+    <!-- Container pour le GameBoard3D -->
+    <div id="game-board-container" class="game-board-container">
+        <!-- Zone d'informations en haut -->
+        <div id="info-panel" class="info-panel"></div>
+    </div>
     
     <!-- Barre d'actions du joueur avec 5 cases -->
     <div id="player-action-bar" class="player-action-bar" style="display: none;">

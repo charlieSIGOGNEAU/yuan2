@@ -28,6 +28,9 @@ export const simultaneousPlayPhase = {
             this.processVictoryBiddings(gameBoard);
         }
 
+        //a supprimer
+        uiManager.updateInfoPanel(i18n.t('game.phases.bidding.waiting_for_others'));
+
     },
 
     // Configuration de la détection de clic sur les territoires
@@ -314,68 +317,8 @@ export const simultaneousPlayPhase = {
 
     // Fonction pour afficher les messages d'aide de la phase simultaneous_play
     showSimultaneousPlayHelpMessage(message) {
-        console.log('🔍 Debug - showSimultaneousPlayHelpMessage appelée avec:', message);
-        
-        // Créer ou récupérer la div d'aide
-        let helpDiv = document.getElementById('simultaneous-play-help');
-        console.log('🔍 Debug - helpDiv existante:', helpDiv);
-        
-        if (!helpDiv) {
-            console.log('🔍 Debug - Création de la nouvelle div d\'aide');
-            helpDiv = document.createElement('div');
-            helpDiv.id = 'simultaneous-play-help';
-            helpDiv.className = 'simultaneous-play-help';
-            helpDiv.style.cssText = `
-                position: fixed;
-                top: 120px;
-                left: 20px;
-                right: 20px;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                font-size: 14px;
-                text-align: center;
-                max-width: 600px;
-                z-index: 20;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-                border: 2px solid white;
-            `;
-            document.body.appendChild(helpDiv);
-            console.log('🔍 Debug - Div d\'aide ajoutée au body');
-        }
-        
-        // Mettre à jour le message avec support HTML
-        helpDiv.innerHTML = message;
-        helpDiv.style.display = 'block';
-        
-        // Ajouter le CSS pour les cercles de clan
-        if (!document.getElementById('clan-circle-style')) {
-            const style = document.createElement('style');
-            style.id = 'clan-circle-style';
-            style.textContent = `
-                .clan-circle {
-                    display: inline-block;
-                    width: 1em;
-                    height: 1em;
-                    border-radius: 50%;
-                    margin: 0 0.2em;
-                    vertical-align: middle;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        console.log('💡 Message d\'aide simultaneous_play affiché:', message);
-        console.log('🔍 Debug - helpDiv.style.display:', helpDiv.style.display);
-        console.log('🔍 Debug - helpDiv.offsetHeight:', helpDiv.offsetHeight);
+        uiManager.updateInfoPanel(message);
     },
 
-    // Fonction pour masquer les messages d'aide
-    hideSimultaneousPlayHelpMessage() {
-        const helpDiv = document.getElementById('simultaneous-play-help');
-        if (helpDiv) {
-            helpDiv.style.display = 'none';
-        }
-    }
+
 }

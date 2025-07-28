@@ -75,7 +75,10 @@ export class GameBoard3D {
         this.camera.rotation.set(THREE.MathUtils.degToRad(-60), 0, 0);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.outputColorSpace = THREE.SRGBColorSpace; 
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // Utiliser la taille du container au lieu de window
+        const containerRect = this.container.getBoundingClientRect();
+        this.renderer.setSize(containerRect.width, containerRect.height);
         this.container.appendChild(this.renderer.domElement);
         
         // Ajout d'éclairage pour les modèles 3D
@@ -211,7 +214,15 @@ export class GameBoard3D {
         this.container.addEventListener('pointerup', this.onPointerUp.bind(this));
         this.container.addEventListener('pointercancel', this.onPointerUp.bind(this));
         window.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
+        
+        // Écouter les changements de taille du container et de la fenêtre
         window.addEventListener('resize', this.onResize.bind(this));
+        
+        // Observer les changements de taille du container
+        this.resizeObserver = new ResizeObserver(() => {
+            this.onResize();
+        });
+        this.resizeObserver.observe(this.container);
     }
     //q correspond à un déplacement vers la droite. r correspond à un déplacement en diagonale en haut a droites.
     hexToCartesian(position = {q: 0, r: 0, z: 0}) {
@@ -1158,9 +1169,11 @@ export class GameBoard3D {
     }
 
     onResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+        // Utiliser la taille du container au lieu de window
+        const containerRect = this.container.getBoundingClientRect();
+        this.camera.aspect = containerRect.width / containerRect.height;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(containerRect.width, containerRect.height);
     }
 
     animate() {

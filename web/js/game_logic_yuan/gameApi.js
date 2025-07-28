@@ -12,6 +12,7 @@ import { simultaneousPlayPhase } from './phases/simultaneous-play-phase.js';
 export const gameApi = {
     gameBoard: null,
     executedPhases: new Set(), // Pour éviter les exécutions multiples
+    uiLoadingPromise: null, // Pour éviter les chargements multiples de l'UI
 
     async handleGameMessage(data) {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
@@ -34,26 +35,40 @@ export const gameApi = {
             });
             console.log('🎮 GameState mis à jour:', gameState);
             
-            // Lancer le GameBoard3D si on est en phase de jeu et qu'il n'existe pas encore
-            if (gameState.game.game_status !== 'waiting_for_players' && !this.gameBoard) {
-                this.gameBoard = Game.showGameBoard();
-            
-                // Charger l'interface UI après la création du gameboard
-                if (!uiManager.gameUI) {
-                    await uiManager.loadGameUI();
+            // Charger l'interface UI en premier si pas déjà chargée
+            if (!uiManager.gameUI && !this.uiLoadingPromise) {
+                console.log('🎨 Début du chargement de l\'interface UI...');
+                this.uiLoadingPromise = uiManager.loadGameUI();
+                
+                try {
+                    await this.uiLoadingPromise;
                     
                     // S'assurer que les traductions sont initialisées avec la langue de l'utilisateur
                     if (Auth.currentUser && Auth.currentUser.language && !i18n.loadedLanguages.has(Auth.currentUser.language)) {
                         await i18n.initialize(Auth.currentUser.language);
                     }
                     
+                    // Récupérer le GameBoard3D depuis l'interface
+                    this.gameBoard = window.gameBoard;
+                    
                     // ici on peut rajouter des information entre les guimets qui s'aficheron par decu le game board3d
                     uiManager.updateInfoPanel('');
-            }
+                    
+                    console.log('✅ Interface UI chargée avec succès');
+                } catch (error) {
+                    console.error('❌ Erreur lors du chargement de l\'interface UI:', error);
+                } finally {
+                    this.uiLoadingPromise = null;
+                }
+            } else if (this.uiLoadingPromise) {
+                console.log('⏳ Interface UI en cours de chargement, attente...');
+                await this.uiLoadingPromise;
+            } else {
+                console.log('⏭️ Interface UI déjà chargée');
             }
             
             // Mise à jour des tiles 3D
-            if (gameState.game.game_status !== 'waiting_for_players' && this.gameBoard) {
+            if (gameState.game.game_status !== 'waiting_for_players' && window.gameBoard) {
                 installationPhase.updateTile3d();
             }
 
@@ -65,27 +80,27 @@ export const gameApi = {
             
             // Exécuter la phase de placement initial APRÈS création du gameBoard
             // Seul le joueur avec l'ID le plus bas peut exécuter cette phase
-            if (gameState.game.game_status === 'initial_placement' && this.gameBoard && gameState.isLowestIdPlayer()) {
+            if (gameState.game.game_status === 'initial_placement' && window.gameBoard && gameState.isLowestIdPlayer()) {
                 const phaseKey = `initial_placement_${gameState.game.id}`;
                 if (!this.executedPhases.has(phaseKey)) {
                     console.log('🎯 Exécution de la phase de placement initial (joueur ID le plus bas)');
                     this.executedPhases.add(phaseKey);
-                    initialPlacement.execute(this.gameBoard);
+                    initialPlacement.execute(window.gameBoard);
                 } else {
                     console.log('⏭️ Phase initial_placement déjà exécutée, skip');
                 }
             }
 
             // Exécuter la phase de bidding
-            if (gameState.game.game_status === 'bidding_phase' && this.gameBoard) {
+            if (gameState.game.game_status === 'bidding_phase' && window.gameBoard) {
                 console.log('🎯 Exécution de la phase de bidding');
-                biddingPhase.biddingPhase(this.gameBoard);
+                biddingPhase.biddingPhase(window.gameBoard);
             }
 
             // exécuter la phasse de simultaneous_play
-            if (gameState.game.game_status === 'simultaneous_play' && this.gameBoard) {
+            if (gameState.game.game_status === 'simultaneous_play' && window.gameBoard) {
                 console.log('🎯 Exécution de la phase de simultaneous_play');
-                simultaneousPlayPhase.simultaneousPlayPhase(this.gameBoard);
+                simultaneousPlayPhase.simultaneousPlayPhase(window.gameBoard);
             }
 
         } 

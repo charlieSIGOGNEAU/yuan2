@@ -11,6 +11,8 @@ export const initialPlacement = {
     // Fonction principale pour gérer le placement initial
     async execute(gameBoard) {
         console.log('🎯 Démarrage de la phase initial_placement');
+
+        
         
         // 1. Calculer les distances et trouver les médoïdes
         startingPositions.calculateAllDistances();

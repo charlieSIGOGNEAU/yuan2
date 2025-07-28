@@ -6,33 +6,57 @@
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100vh; /* Prend toute la hauteur */
     background: transparent;
     pointer-events: none; /* Permet l'interaction avec le gameboard en dessous */
     z-index: 9999;
     font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Empêche le débordement */
+}
+
+
+
+/* Container pour le GameBoard3D */
+.game-board-container {
+    flex: 1;
+    position: relative;
+    background: #000;
+    pointer-events: auto;
+    min-height: 0; /* Permet au flex de rétrécir */
+    width: 100%; /* Prend toute la largeur disponible */
 }
 
 /* Panneau d'informations en haut */
 .info-panel {
     position: absolute;
-    top: 10px;
-    left: 10px; /* Marge gauche */
-    right: 10px; /* Marge droite */
-    width: auto; /* S'adapte à la largeur disponible */
-    background: rgba(255, 255, 255, 0.95);
-    color: #333;
-    padding: 8px 8px;
+    top: calc(5vw); /* 10% de la largeur de la fenêtre */
+    left: 5%;
+    right: 5%;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 15px 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    pointer-events: auto; /* Bloque l'interaction avec le gameboard en dessous */
     font-size: 14px;
-    font-weight: 500;
     text-align: center;
+    z-index: 10001;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    border: 2px solid white;
+    pointer-events: auto; /* Bloque l'interaction avec le gameboard en dessous */
     white-space: normal; /* Permet le retour à la ligne naturel */
     word-wrap: break-word; /* Casse les mots trop longs */
     display: none; /* Caché par défaut */
-    z-index: 10001;
+}
+
+/* Style pour les cercles de clan dans le info-panel */
+.info-panel .clan-circle {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border-radius: 50%;
+    margin: 0 0.2em;
+    vertical-align: middle;
 }
 
 /* Affiche le panneau d'informations seulement s'il contient du texte */
@@ -53,6 +77,14 @@
     gap: 10px;
     pointer-events: auto;
     z-index: 10002;
+}
+
+/* Quand la barre d'action est cachée, elle ne prend pas d'espace */
+.player-action-bar[style*="display: none"] {
+    height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
 }
 
 /* Cases d'actions individuelles */
@@ -297,15 +329,12 @@
 
 /* Barre d'information principale */
 .simultaneous-play-info-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: calc(100vw / 5); /* Ratio 5:1 (largeur:hauteur) - responsive */
-    background: transparent;
+    height: calc(100vw / 5); /* Ratio 1:5 (hauteur = largeur/5) */
+    background:black ;
     display: flex;
-    z-index: 10003;
+    z-index: 10004; /* Au-dessus de l'overlay UI */
     pointer-events: none; /* Permet l'interaction avec le gameboard en dessous */
+    flex-shrink: 0;
 }
 
 /* Carrés individuels dans la barre */

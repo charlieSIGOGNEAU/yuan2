@@ -20,27 +20,5 @@ export const Game = {
         }
     },
 
-    // Afficher le plateau de jeu en pleine page
-    showGameBoard() {
-        // Créer un container pour le jeu qui prend toute la page
-        const gameContainer = document.createElement('div');
-        gameContainer.id = 'game-container';
-        gameContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #000;
-            z-index: 10;
-            margin: 0;
-            padding: 0;
-        `;
 
-        // Ajouter le container au body
-        document.body.appendChild(gameContainer);
-
-        // Créer et retourner le GameBoard3D
-        return new GameBoard3D('game-container');
-    }
 }; 
