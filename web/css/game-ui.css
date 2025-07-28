@@ -16,6 +16,13 @@
     overflow: hidden; /* Empêche le débordement */
 }
 
+/* Mode horizontal (orientation landscape) */
+@media (orientation: landscape) {
+    .game-ui-overlay {
+        flex-direction: row; /* Horizontal au lieu de vertical */
+    }
+}
+
 
 
 /* Container pour le GameBoard3D */
@@ -29,23 +36,6 @@
 }
 
 /* Panneau d'informations en haut */
-.info-panel {
-    position: absolute;
-    top: calc(5vw); /* 10% de la largeur de la fenêtre */
-    left: 5%;
-    right: 5%;
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    text-align: center;
-    z-index: 10001;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    border: 2px solid white;
-    pointer-events: auto; /* Bloque l'interaction avec le gameboard en dessous */
-    white-space: normal; /* Permet le retour à la ligne naturel */
-    word-wrap: break-word; /* Casse les mots trop longs */
     display: none; /* Caché par défaut */
 }
 
@@ -64,6 +54,52 @@
     display: block;
 }
 
+/* Mode portrait - panneau d'informations */
+@media (orientation: portrait) {
+    .info-panel {
+        position: absolute;
+        top: calc(5vw); /* 10% de la largeur de la fenêtre */
+        left: 5%;
+        right: 5%;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        text-align: center;
+        z-index: 10001;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        border: 2px solid white;
+        pointer-events: auto; /* Bloque l'interaction avec le gameboard en dessous */
+        white-space: normal; /* Permet le retour à la ligne naturel */
+        word-wrap: break-word; /* Casse les mots trop longs */
+        display: none; /* Caché par défaut */
+    }
+}
+
+/* Mode landscape - panneau d'informations */
+@media (orientation: landscape) {
+    .info-panel {
+        position: absolute;
+        top: calc(5vw);
+        left: 5%;
+        
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        text-align: center;
+        z-index: 10001;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        border: 2px solid white;
+        pointer-events: auto;
+        white-space: normal;
+        word-wrap: break-word;
+        display: none;
+    }
+}
+
 /* Barre d'actions du joueur avec 6 cases */
 .player-action-bar {
     position: absolute;
@@ -77,6 +113,23 @@
     gap: 10px;
     pointer-events: auto;
     z-index: 10002;
+}
+
+/* Mode horizontal - barres d'action */
+@media (orientation: landscape) {
+    .player-action-bar,
+    #validation-bar,
+    #rectangle-action-bar,
+    #menu-only-bar {
+        position: absolute;
+        width: calc(100vh / 5); /* Ratio 1:5 (largeur = hauteur/5) */
+        height: 90vh; /* Prend toute la hauteur */
+        display: flex;
+        flex-direction: column; /* Vertical au lieu d'horizontal */
+        justify-content: space-between;
+        align-items: center;
+        margin-left: auto;
+    }
 }
 
 /* Quand la barre d'action est cachée, elle ne prend pas d'espace */
@@ -98,6 +151,16 @@
     align-items: center;
     justify-content: center;
     color: #ffffff;
+}
+
+/* Mode horizontal - cases d'action */
+@media (orientation: landscape) {
+    .action-case {
+        aspect-ratio: 1; /* Garde les cases carrées même en mode horizontal */
+        width: 60px; /* Largeur fixe */
+        height: 60px; /* Hauteur fixe */
+        flex: none; /* Ne pas étirer */
+    }
 }
 
 .action-case:hover {
@@ -337,6 +400,15 @@
     flex-shrink: 0;
 }
 
+/* Mode horizontal - barre d'information */
+@media (orientation: landscape) {
+    .simultaneous-play-info-bar {
+        height: 100vh; /* Prend toute la hauteur */
+        width: calc(100vh / 5); /* Ratio 1:5 (largeur = hauteur/5) */
+        flex-direction: column; /* Vertical au lieu d'horizontal */
+    }
+}
+
 /* Carrés individuels dans la barre */
 .info-square {
     flex: 1;
@@ -345,6 +417,14 @@
     align-items: center;
     justify-content: center;
     position: relative; /* Pour permettre le positionnement absolu des icônes */
+}
+
+/* Mode horizontal - carrés individuels */
+@media (orientation: landscape) {
+    .info-square {
+        width: 100%; /* Prend toute la largeur */
+        height: calc(100vh / 5); /* Hauteur = 1/5 de la hauteur totale */
+    }
 }
 
 /* Styles communs pour tous les cercles */
