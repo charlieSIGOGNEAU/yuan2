@@ -543,10 +543,11 @@ export class UIManager {
         // Masquer toutes les autres barres
         this.hideAllActionBars();
         
-        // Créer la barre d'information si elle n'existe pas
-        let infoBar = document.getElementById('simultaneous-play-info-bar');
+        // Récupérer la barre d'information
+        const infoBar = document.getElementById('simultaneous-play-info-bar');
         if (!infoBar) {
-            infoBar = this.createSimultaneousPlayInfoBar();
+            console.warn('⚠️ Barre d\'information simultaneous_play non trouvée');
+            return;
         }
         
         // Mettre à jour le texte du 5ème carré (chao) avec available_chao du clan du joueur
@@ -570,155 +571,11 @@ export class UIManager {
         this.disableTextSelection();
         
         // Afficher la barre
-        if (infoBar) {
-            infoBar.style.display = 'flex';
-            console.log('🎯 Barre d\'information simultaneous_play affichée');
-        }
+        infoBar.style.display = 'flex';
+        console.log('🎯 Barre d\'information simultaneous_play affichée');
     }
 
-    // Fonction pour créer la barre d'information de la phase simultaneous_play
-    createSimultaneousPlayInfoBar() {
-        // Créer le conteneur principal
-        const infoBar = document.createElement('div');
-        infoBar.id = 'simultaneous-play-info-bar';
-        infoBar.className = 'simultaneous-play-info-bar';
-        
-        // Créer les 5 carrés
-        for (let i = 0; i < 5; i++) {
-            const square = document.createElement('div');
-            square.className = 'info-square';
-            
-            // Premier carré avec l'icône de riz, le cercle et l'icône de maison
-            if (i === 0) {
-                const riceIcon = document.createElement('img');
-                riceIcon.src = './images/icon/riceIcon.webp';
-                riceIcon.alt = 'Riz';
-                riceIcon.className = 'rice-icon';
-                square.appendChild(riceIcon);
-                
-                const homeCircle = document.createElement('div');
-                homeCircle.className = 'home-circle';
-                square.appendChild(homeCircle);
-                
-                const homeText = document.createElement('input');
-                homeText.type = 'text';
-                homeText.className = 'home-text';
-                homeText.value = '2';
-                square.appendChild(homeText);
-                
-                const homeIcon = document.createElement('img');
-                homeIcon.src = './images/icon/homeIcon.webp';
-                homeIcon.alt = 'Maison';
-                homeIcon.className = 'home-icon';
-                square.appendChild(homeIcon);
-            }
-            // Deuxième carré avec l'icône de forêt, le cercle et l'icône de bouclier
-            else if (i === 1) {
-                const forestIcon = document.createElement('img');
-                forestIcon.src = './images/icon/forestIcon.webp';
-                forestIcon.alt = 'Forêt';
-                forestIcon.className = 'forest-icon';
-                square.appendChild(forestIcon);
-                
-                const shieldCircle = document.createElement('div');
-                shieldCircle.className = 'shield-circle';
-                square.appendChild(shieldCircle);
-                
-                const shieldText = document.createElement('input');
-                shieldText.type = 'text';
-                shieldText.className = 'shield-text';
-                shieldText.value = '0';
-                square.appendChild(shieldText);
-                
-                const shieldIcon = document.createElement('img');
-                shieldIcon.src = './images/icon/shieldIcon.webp';
-                shieldIcon.alt = 'Bouclier';
-                shieldIcon.className = 'shield-icon';
-                square.appendChild(shieldIcon);
-            }
-            // Troisième carré avec l'icône de mine, le cercle et l'icône d'épée
-            else if (i === 2) {
-                const mineIcon = document.createElement('img');
-                mineIcon.src = './images/icon/mineIcon.webp';
-                mineIcon.alt = 'Mine';
-                mineIcon.className = 'mine-icon';
-                square.appendChild(mineIcon);
-                
-                const swordCircle = document.createElement('div');
-                swordCircle.className = 'sword-circle';
-                square.appendChild(swordCircle);
-                
-                const swordText = document.createElement('input');
-                swordText.type = 'text';
-                swordText.className = 'sword-text';
-                swordText.value = '0';
-                swordText.maxLength = 3;
-                square.appendChild(swordText);
-                
-                const swordIcon = document.createElement('img');
-                swordIcon.src = './images/icon/swordsIcon.webp';
-                swordIcon.alt = 'Épée';
-                swordIcon.className = 'sword-icon';
-                square.appendChild(swordIcon);
-            }
-            // Quatrième carré avec l'icône de pagode, le cercle et une fraction modifiable
-            else if (i === 3) {
-                const pagodaIcon = document.createElement('img');
-                pagodaIcon.src = './images/icon/pagodaIcon.webp';
-                pagodaIcon.alt = 'Pagode';
-                pagodaIcon.className = 'pagoda-icon';
-                square.appendChild(pagodaIcon);
-                
-                const fractionCircle = document.createElement('div');
-                fractionCircle.className = 'fraction-circle';
-                square.appendChild(fractionCircle);
-                
-                const numeratorInput = document.createElement('input');
-                numeratorInput.type = 'text';
-                numeratorInput.className = 'fraction-numerator';
-                numeratorInput.value = '0';
-                square.appendChild(numeratorInput);
-                
-                const slash = document.createElement('input');
-                slash.type = 'text';
-                slash.className = 'fraction-slash';
-                slash.value = '/';
-                square.appendChild(slash);
-                
-                const denominatorInput = document.createElement('input');
-                denominatorInput.type = 'text';
-                denominatorInput.className = 'fraction-denominator';
-                denominatorInput.value = '6';
-                square.appendChild(denominatorInput);
-            }
-            // Cinquième carré avec l'icône de chao et le cercle
-            else if (i === 4) {
-                const chaoIcon = document.createElement('img');
-                chaoIcon.src = './images/icon/chaoIcon.webp';
-                chaoIcon.alt = 'Chao';
-                chaoIcon.className = 'chao-icon';
-                square.appendChild(chaoIcon);
-                
-                const chaoCircle = document.createElement('div');
-                chaoCircle.className = 'chao-circle';
-                square.appendChild(chaoCircle);
-                
-                const chaoText = document.createElement('input');
-                chaoText.type = 'text';
-                chaoText.className = 'chao-text';
-                chaoText.value = '0';
-                square.appendChild(chaoText);
-            }
-            
-            infoBar.appendChild(square);
-        }
-        
-        // Ajouter la barre au body
-        document.body.appendChild(infoBar);
-        
-        console.log('🎯 Barre d\'information simultaneous_play créée');
-        return infoBar;
-    }
+
 
     // Fonction pour masquer toutes les barres (alias pour compatibilité)
     hidePlayerActionBar() {
@@ -1026,30 +883,11 @@ export class UIManager {
             bar.style.msUserSelect = 'none';
             bar.style.pointerEvents = 'auto';
             
-            // Désactiver la sélection sur tous les enfants
-            const children = bar.querySelectorAll('*');
-            children.forEach(child => {
-                // Désactiver la sélection de texte
-                child.style.userSelect = 'none';
-                child.style.webkitUserSelect = 'none';
-                child.style.mozUserSelect = 'none';
-                child.style.msUserSelect = 'none';
-                
-                // Configurer les inputs pour qu'ils soient invisibles mais fonctionnels
-                if (child.tagName === 'INPUT') {
-                    child.style.caretColor = 'transparent';
-                    child.style.border = 'none';
-                    child.style.outline = 'none';
-                    child.style.background = 'transparent';
-                    child.readOnly = true;
-                    child.style.pointerEvents = 'none'; // Le clic sera géré par le parent
-                }
-                
-                // Désactiver le drag sur les images
-                if (child.tagName === 'IMG') {
-                    child.draggable = false;
-                    child.style.pointerEvents = 'none';
-                }
+            // Désactiver le drag sur les images
+            const images = bar.querySelectorAll('img');
+            images.forEach(img => {
+                img.draggable = false;
+                img.style.pointerEvents = 'none';
             });
         });
     }

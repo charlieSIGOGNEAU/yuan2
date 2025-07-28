@@ -302,7 +302,7 @@
     left: 0;
     width: 100vw;
     height: calc(100vw / 5); /* Ratio 5:1 (largeur:hauteur) - responsive */
-    background: #000000;
+    background: transparent;
     display: flex;
     z-index: 10003;
     pointer-events: none; /* Permet l'interaction avec le gameboard en dessous */
@@ -368,7 +368,13 @@
     text-align: center;
     font-weight: bold;
     color: #000000;
-    pointer-events: auto;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    caret-color: transparent;
+    cursor: default;
 }
 
 /* Tailles et positions spécifiques pour chaque champ de texte */
@@ -443,4 +449,24 @@
     object-position: center;
     position: absolute;
     z-index: 1;
+}
+
+/* Désactiver la sélection et le drag sur toutes les images des barres */
+.player-action-bar img,
+.simultaneous-play-info-bar img {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    pointer-events: none;
+    draggable: false;
+}
+
+/* Désactiver la sélection sur toutes les barres */
+.player-action-bar,
+.simultaneous-play-info-bar {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 } 
