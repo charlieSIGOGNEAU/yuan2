@@ -180,15 +180,25 @@ class Action {
     constructor(data = {}) {
         this.id = data.id || null;
         this.game_user_id = data.game_user_id || null;
-        this.action = data.action || '';
+        this.game_id = data.game_id || null;
         this.turn = data.turn || 0;
+        this.position_q = data.position_q || null;
+        this.position_r = data.position_r || null;
+        this.developpement_level = data.developpement_level || 0;
+        this.fortification_level = data.fortification_level || 0;
+        this.militarisation_level = data.militarisation_level || 0;
     }
 
     update(data) {
         this.id = data.id || this.id;
         this.game_user_id = data.game_user_id || this.game_user_id;
-        this.action = data.action || this.action;
+        this.game_id = data.game_id || this.game_id;
         this.turn = data.turn || this.turn;
+        this.position_q = data.position_q !== undefined ? data.position_q : this.position_q;
+        this.position_r = data.position_r !== undefined ? data.position_r : this.position_r;
+        this.developpement_level = data.developpement_level !== undefined ? data.developpement_level : this.developpement_level;
+        this.fortification_level = data.fortification_level !== undefined ? data.fortification_level : this.fortification_level;
+        this.militarisation_level = data.militarisation_level !== undefined ? data.militarisation_level : this.militarisation_level;
     }
 }   
 
@@ -227,6 +237,9 @@ class Territory {
         this.warriors = []; // Tableau des mesh de guerriers (remplace armee)
         this.clan_id = data.clan_id || null; // Référence au clan au lieu de color
         this.hasTemple = false; // Variable booléenne pour indiquer si un temple est présent
+        
+        // Cache pour les territoires adjacents
+        this.adjacentTerritories = null;
         
         // Références aux mesh 3D
         this.construction_mesh = null; // Mesh de la construction (village, ville, 2villes)
@@ -501,6 +514,10 @@ class Territory {
     }
 
     getAdjacentTerritories() {
+        if (this.adjacentTerritories !== null) {
+            return this.adjacentTerritories;
+        }
+
         const adjacentPositions = [
             { q: +1, r: +0 },  // Droite
             { q: +0, r: +1 },  // Haut droite
@@ -510,13 +527,20 @@ class Territory {
             { q: +1, r: -1 }   // Bas droite
         ];
 
-        return adjacentPositions.map(pos => {
+        const adjacentTerritories = adjacentPositions.map(pos => {
             const q = this.position.q + pos.q;
             const r = this.position.r + pos.r;
             return gameState.game.territories.find(t => 
                 t.position.q === q && t.position.r === r
             );
         }).filter(t => t !== undefined);
+
+        // Stocker le cache seulement si simultaneous_play_turn > 0
+        if (gameState.game.simultaneous_play_turn > 0) {
+            this.adjacentTerritories = adjacentTerritories;
+        }
+
+        return adjacentTerritories;
     }
 
     areTerritoryAdjacent(territory2) {
@@ -610,6 +634,7 @@ class Game {
         this.clan_names = data.clan_names || '';
         this.biddings_turn = data.biddings_turn || 0;
         this.simultaneous_play_turn = data.simultaneous_play_turn || 0;
+        this.processedTurns = 0;
         
         // Relations
         this.game_users = data.game_users ? data.game_users.map(gu => new GameUser(gu)) : [];

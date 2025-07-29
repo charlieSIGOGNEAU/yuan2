@@ -6,7 +6,7 @@ import { biddingPhase } from './phases/biddingPhase.js';
 import { Auth } from '../app/auth.js';
 import { uiManager } from './ui/UIManager.js';
 import { i18n } from '../core/i18n.js';
-import { simultaneousPlayPhase } from './phases/simultaneous-play-phase.js';
+import { simultaneousPlayPhase } from './phases/simultaneous-play-phase/simultaneous-play-phase.js';
 
 // Fonctions pour l'API
 export const gameApi = {
