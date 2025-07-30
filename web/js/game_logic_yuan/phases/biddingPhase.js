@@ -61,8 +61,8 @@ export const biddingPhase = {
             // Mettre l'enchère à 0
             uiManager.currentBid = 0;
             
-            // Afficher les instructions
-            uiManager.updateInfoPanel(i18n.t('game.phases.bidding.instructions'));
+            // // Afficher les instructions
+            // uiManager.updateInfoPanel(i18n.t('game.phases.bidding.instructions'));
             
             // Afficher la barre de bidding
             uiManager.showBiddingBar();
