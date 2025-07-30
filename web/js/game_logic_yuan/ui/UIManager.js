@@ -15,6 +15,90 @@ export class UIManager {
         // Variables pour le bidding
         this.currentBid = 0; // Valeur actuelle du numérateur
         this.maxBid = 6; // Valeur maximale du dénominateur
+        
+        // Détection smartphone et gestion des dimensions
+        this.isSmartphone = this.detectSmartphone();
+        this.setupResponsiveDimensions();
+    }
+
+    // Détecter si on est sur un smartphone
+    detectSmartphone() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isMobile = /mobile|android|iphone|ipad|blackberry|windows phone/i.test(userAgent);
+        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const isSmallScreen = window.innerWidth < 768;
+        const hasHighDPR = window.devicePixelRatio > 1;
+        
+        const isSmartphone = isMobile && isTouch && (isSmallScreen || hasHighDPR);
+        
+        console.log(`📱 Détection smartphone:`, {
+            userAgent: userAgent.includes('mobile'),
+            touch: isTouch,
+            smallScreen: isSmallScreen,
+            highDPR: hasHighDPR,
+            isSmartphone: isSmartphone
+        });
+        
+        return isSmartphone;
+    }
+
+    // Configurer les dimensions responsives pour les barres d'action
+    setupResponsiveDimensions() {
+        // Fonction pour mettre à jour les dimensions
+        const updateDimensions = () => {
+            const isPortrait = window.innerHeight > window.innerWidth;
+            
+            let barHeight, barWidth;
+            
+            if (this.isSmartphone) {
+                // Smartphone
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
+                
+                if (isPortrait) {
+                    // Mode portrait : height = 1/5 de la largeur, width = largeur de l'écran
+                    barHeight = screenWidth / 5;
+                    barWidth = screenWidth;
+                } else {
+                    // Mode paysage : height = hauteur de l'écran, width = 1/5 de la hauteur
+                    barHeight = screenHeight;
+                    barWidth = screenHeight / 5;
+                }
+            } else {
+                // Desktop
+                if (isPortrait) {
+                    // Mode portrait : height = 100, width = 500
+                    barHeight = 100;
+                    barWidth = 500;
+                } else {
+                    // Mode paysage : height = 500, width = 100
+                    barHeight = 500;
+                    barWidth = 100;
+                }
+            }
+            
+            // Appliquer les dimensions à toutes les barres d'action
+            const actionBars = document.querySelectorAll('.player-action-bar, .validation-bar, #rectangle-action-bar, #menu-only-bar');
+            actionBars.forEach(bar => {
+                if (bar) {
+                    bar.style.width = `${barWidth}px`;
+                    bar.style.height = `${barHeight}px`;
+                    console.log(`${this.isSmartphone ? '📱' : '💻'} Barre mise à jour: ${barWidth}x${barHeight}px (${isPortrait ? 'portrait' : 'paysage'})`);
+                }
+            });
+        };
+
+        // Appliquer les dimensions initiales
+        updateDimensions();
+        
+        // Écouter les changements d'orientation et de taille
+        window.addEventListener('resize', updateDimensions);
+        window.addEventListener('orientationchange', () => {
+            // Attendre que l'orientation soit complètement changée
+            setTimeout(updateDimensions, 100);
+        });
+        
+        console.log(`${this.isSmartphone ? '📱' : '💻'} Gestionnaire de dimensions responsives configuré`);
     }
 
     // Charger l'interface UI du jeu
@@ -82,6 +166,9 @@ export class UIManager {
             
             // Configuration des event listeners
             this.setupUIEventListeners();
+            
+            // Réappliquer les dimensions responsives après le chargement
+            this.setupResponsiveDimensions();
             
             // Charger le GameBoard3D si pas déjà chargé
             await this.loadGameBoard3D();

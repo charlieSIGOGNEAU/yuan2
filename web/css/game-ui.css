@@ -35,9 +35,7 @@
     width: 100%; /* Prend toute la largeur disponible */
 }
 
-/* Panneau d'informations en haut */
-    display: none; /* Caché par défaut */
-}
+
 
 /* Style pour les cercles de clan dans le info-panel */
 .info-panel .clan-circle {
@@ -115,6 +113,20 @@
     z-index: 10002;
 }
 
+/* Mode portrait - centrage horizontal et en bas */
+@media (orientation: portrait) {
+    .player-action-bar,
+    #validation-bar,
+    #rectangle-action-bar,
+    #menu-only-bar {
+        /* Centrage horizontal et en bas */
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 10px;
+        right: auto; /* Réinitialiser right */
+    }
+}
+
 /* Mode horizontal - barres d'action */
 @media (orientation: landscape) {
     .player-action-bar,
@@ -128,7 +140,11 @@
         flex-direction: column; /* Vertical au lieu d'horizontal */
         justify-content: space-between;
         align-items: center;
-        margin-left: auto;
+        /* Centrage vertical et à droite */
+        top: 50%;
+        transform: translateY(-50%);
+        right: 10px;
+        left: auto; /* Réinitialiser left */
     }
 }
 
