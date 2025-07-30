@@ -41,28 +41,6 @@ export const simultaneousPlayPhase = {
     },
 
 
-    // simultaneousPlayPhase(gameBoard) {
-    //     console.log('🎯 Exécution de la phase de simultaneous_play');
-
-    //     // Récupérer le clan du joueur actuel
-    //     gameState.game.setMyClanFromVictoryBidding(gameState.myGameUserId);
-        
-    //     // Afficher la barre d'information spécifique à cette phase
-    //     uiManager.showSimultaneousPlayInfoBar();
-        
-    //     // Afficher la barre d'action à 6 cases
-    //     uiManager.showPlayerActionBar();
-        
-    //     // Activer la détection de clic sur les territoires
-    //     this.setupTerritoryClickDetection(gameBoard);
-        
-    //     // si premier tour
-    //     if (gameState.game.simultaneous_play_turn = 1) {
-    //         this.processVictoryBiddings(gameBoard);
-    //     } else {
-
-    //     }
-    // },
 
     // Configuration de la détection de clic sur les territoires
     setupTerritoryClickDetection(gameBoard) {

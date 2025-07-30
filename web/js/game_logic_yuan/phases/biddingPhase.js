@@ -29,46 +29,22 @@ export const biddingPhase = {
         console.log(`👤 Joueur actuel: ${myGameUserId}`);
         console.log(`🏛️ Clan sélectionné: ${myGameUser?.clan_id || 'aucun'}`);
         
-        // Vérifier si le joueur a déjà sélectionné un clan
-        if (myGameUser && myGameUser.clan_id !== null && myGameUser.clan_id !== undefined) {
-            console.log('⏳ Joueur a déjà sélectionné un clan, affichage du message d\'attente');
-            await this.handlePlayerWithClan(gameBoard);
-        } else {
-            // Vérifier s'il n'existe pas déjà un bidding pour ce joueur avec le même turn
-            const existingBidding = gameState.game.biddings.find(bidding => 
-                bidding.game_user_id === myGameUserId && 
-                bidding.turn === gameState.game.biddings_turn
-            );
-            
-            if (existingBidding) {
-                console.log('⏳ Bidding déjà existant pour ce joueur et ce turn, affichage du message d\'attente');
-                await this.handlePlayerWithClan(gameBoard);
-            } else {
-                console.log('🎯 Joueur n\'a pas encore sélectionné de clan, affichage de l\'interface de sélection');
-                await this.handlePlayerWithoutClan(gameBoard);
-            }
-        }
+        // Vérifier s'il existe déjà un bidding pour ce joueur avec le même turn
+        const existingBidding = gameState.game.biddings.find(bidding => 
+            bidding.game_user_id === myGameUserId && 
+            bidding.turn === gameState.game.biddings_turn
+        );
+        
+        console.log(existingBidding ? '⏳ Bidding déjà existant pour ce joueur et ce turn' : '🎯 Joueur n\'a pas encore fait d\'enchère');
+        await this.handlePlayerBidding(gameBoard, existingBidding);
         
         // Réinitialiser le flag à la fin
         this.isRunning = false;
     },
 
-    // Fonction pour le joueur qui a déjà un clan (attente)
-    async handlePlayerWithClan(gameBoard) {
-        console.log('⏳ Gestion du joueur avec clan (attente)');
-        
-        // Afficher le message d'attente
-        uiManager.updateInfoPanel(i18n.t('game.phases.bidding.waiting_for_others'));
-        
-        // Afficher la barre avec seulement le menu
-        uiManager.showMenuOnlyBar();
-        
-        this.removeAllCircles(gameBoard);
-    },
-
-    // Fonction pour le joueur qui n'a pas encore de clan (sélection + enchère)
-    async handlePlayerWithoutClan(gameBoard) {
-        console.log('🎯 Gestion du joueur sans clan (sélection + enchère)');
+    // Fonction unifiée pour gérer la phase de bidding
+    async handlePlayerBidding(gameBoard, existingBidding) {
+        console.log('🎯 Gestion de la phase de bidding');
         
         this.removeAllCircles(gameBoard);
 
@@ -101,8 +77,11 @@ export const biddingPhase = {
             return;
         }
 
-        // Afficher les instructions
-        uiManager.updateInfoPanel(i18n.t('game.phases.bidding.instructions'));
+        // Afficher le message approprié selon l'existence d'une enchère
+        const message = existingBidding 
+            ? i18n.t('game.phases.bidding.bid_confirmed')
+            : i18n.t('game.phases.bidding.instructions');
+        uiManager.updateInfoPanel(message);
         
         // Afficher la barre de bidding
         uiManager.showBiddingBar();

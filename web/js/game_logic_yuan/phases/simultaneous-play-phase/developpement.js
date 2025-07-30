@@ -1,4 +1,4 @@
-import { gameState } from '../gameState.js';
+import { gameState } from '../../gameState.js';
 
 export const developpementAndMore = {
     // === FONCTIONS PRINCIPALES ===

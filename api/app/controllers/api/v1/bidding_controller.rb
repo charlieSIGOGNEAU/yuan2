@@ -5,6 +5,7 @@ class Api::V1::BiddingController < ApplicationController
 
   # POST /api/v1/games/:game_id/bidding
   def create
+    p "#"*111
     puts "💰 Tentative de création d'une enchère pour le jeu #{@game.id} par le joueur #{@game_user.id}"
     puts "📝 Données reçues: chao=#{bidding_params[:chao]}, turn=#{bidding_params[:turn]}, clan_id=#{bidding_params[:clan_id]}"
     puts "🎮 biddings_turn actuel: #{@game.biddings_turn}"
@@ -37,6 +38,9 @@ class Api::V1::BiddingController < ApplicationController
       
       if existing_bidding.save
         puts "✅ Enchère mise à jour avec succès: #{existing_bidding.chao} chao pour le joueur #{@game_user.user_name}"
+        
+        # Vérifier si le tour est terminé
+        check_turn_completion_and_broadcast(existing_bidding)
         
       else
         error_msg = "Erreur lors de la mise à jour de l'enchère: #{existing_bidding.errors.full_messages.join(', ')}"
@@ -81,7 +85,13 @@ class Api::V1::BiddingController < ApplicationController
 
   # Méthode pour autoriser les paramètres
   def bidding_params
-    params.permit(:chao, :turn, :game_user_id, :clan_id)
+    # Gérer les paramètres imbriqués dans "bidding" ou de premier niveau
+    if params[:bidding]
+      params.require(:bidding).permit(:chao, :turn, :game_user_id, :clan_id)
+    else
+      # Permettre aussi game_id et bidding pour éviter les warnings
+      params.permit(:chao, :turn, :game_user_id, :clan_id, :game_id, :bidding)
+    end
   end
 
   def find_game

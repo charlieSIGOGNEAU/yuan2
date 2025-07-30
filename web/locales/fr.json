@@ -8,7 +8,9 @@
       "bidding": {
         "instructions": "Choisis ton clan et enchéris — le plus offrant obtient le clan qu’il a choisi.",
         "waiting_for_others": "En attente que les autres joueurs fassent leurs enchères...",
-        "bid_on_clan": "Vous avez enchéri {{chao}} chao sur le clan {{color}}"
+        "bid_on_clan": "Vous avez enchéri {{chao}} chao sur le clan {{color}}",
+        "bid_confirmed": "Enchère prise en compte, en attendant les autres joueurs, vous pouvez la modifier."
+
       },
       "installation": {
         "title": "Phase d'installation"

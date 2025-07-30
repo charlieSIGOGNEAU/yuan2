@@ -486,7 +486,7 @@ export class UIManager {
         console.log('🎯 Validation de l\'action en jeu simultané');
         
         // Importer simultaneousPlayPhase pour accéder à la fonction de validation
-        import('../phases/simultaneous-play-phase.js').then(module => {
+        import('../phases/simultaneous-play-phase/simultaneous-play-phase.js').then(module => {
             const simultaneousPlayPhase = module.simultaneousPlayPhase;
             
             // Appeler la fonction de validation de l'action

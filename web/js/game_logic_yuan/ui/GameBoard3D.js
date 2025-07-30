@@ -118,7 +118,7 @@ export class GameBoard3D {
         this.setupEvents();
         this.animate();
     }
-    
+
     // Remettre les méthodes liées à l'eau
     loadWaterMesh() {
         console.log('🌊 Chargement de la mesh eau...');

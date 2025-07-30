@@ -217,16 +217,16 @@ export const gameApi = {
             if (data.success) {
                 console.log('✅ Clan et enchère envoyés avec succès:', data);
                 
-                // Nettoyer la phase
-                import('./phases/biddingPhase.js').then(module => {
-                    module.biddingPhase.cleanupPhase();
-                });
+                // // Nettoyer la phase
+                // import('./phases/biddingPhase.js').then(module => {
+                //     module.biddingPhase.cleanupPhase();
+                // });
                 
-                // Masquer toutes les barres d'action
-                uiManager.hideAllActionBars();
+                // // Masquer toutes les barres d'action
+                // uiManager.hideAllActionBars();
                 
-                // Afficher un message de confirmation
-                uiManager.updateInfoPanel('Enchère envoyée, en attente des autres joueurs...');
+                // Afficher un message de confirmation avec traduction
+                uiManager.updateInfoPanel(i18n.t('game.phases.bidding.bid_confirmed'));
                 
             } else {
                 console.error('❌ Erreur lors de l\'envoi clan + enchère:', data);
@@ -271,16 +271,14 @@ export const gameApi = {
             if (data.success) {
                 console.log('✅ Action envoyée avec succès:', data);
                 
-                // Nettoyer la phase
-                import('./phases/simultaneous-play-phase.js').then(module => {
-                    module.simultaneousPlayPhase.cleanupPhase();
-                });
+                // NE PAS nettoyer la phase pour permettre de continuer à jouer
+                // import('./phases/simultaneous-play-phase/simultaneous-play-phase.js').then(module => {
+                //     module.simultaneousPlayPhase.cleanupPhase();
+                // });
+                              
                 
-                // Masquer toutes les barres d'action
-                uiManager.hideAllActionBars();
-                
-                // Afficher un message de confirmation
-                uiManager.updateInfoPanel('Action envoyée, en attente des autres joueurs...');
+                // Afficher un message de confirmation avec traduction
+                uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.action_validated'));
                 
             } else {
                 console.error('❌ Erreur lors de l\'envoi de l\'action:', data);
