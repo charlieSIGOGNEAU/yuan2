@@ -134,12 +134,10 @@
     #rectangle-action-bar,
     #menu-only-bar {
         position: absolute;
-        width: calc(100vh / 5); /* Ratio 1:5 (largeur = hauteur/5) */
-        height: 90vh; /* Prend toute la hauteur */
         display: flex;
         flex-direction: column; /* Vertical au lieu d'horizontal */
-        justify-content: space-between;
-        align-items: center;
+        justify-content: space-between; /* Répartir l'espace */
+        align-items: center; /* Pas d'espacement supplémentaire */
         /* Centrage vertical et à droite */
         top: 50%;
         transform: translateY(-50%);
@@ -173,9 +171,9 @@
 @media (orientation: landscape) {
     .action-case {
         aspect-ratio: 1; /* Garde les cases carrées même en mode horizontal */
-        width: 60px; /* Largeur fixe */
-        height: 60px; /* Hauteur fixe */
-        flex: none; /* Ne pas étirer */
+        flex: 1; /* Prend toute la place disponible */
+        min-width: 0;
+        min-height: 0;
     }
 }
 
@@ -318,21 +316,25 @@
 
 /* Styles pour la barre de bidding */
 
-/* Case d'information bidding (2x largeur) avec dégradé transparent */
-.bidding-info-case {
-    flex: 2;
-    aspect-ratio: 2/1; /* Rectangle 2x plus large que haut, même hauteur que les cases carrées */
-    background: linear-gradient(135deg, rgba(136, 136, 136, 0.8), rgba(136, 136, 136, 0.2));
-    border-radius: 8px;
-    border: 2px solid rgba(102, 102, 102, 0.5);
+
+/* Case avec chevauchement pour la 2ème case de bidding */
+.action-case.action-menu {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Alignement à gauche */
-    color: #ffffff;
-    padding: 4px; /* Réduit de 8px à 4px */
-    gap: 6px; /* Réduit de 12px à 6px */
-    pointer-events: none; /* Pas cliquable */
-    overflow: hidden; /* Évite le débordement */
+    justify-content: center;
+}
+
+/* Éléments qui se chevauchent dans la case bidding */
+.action-case.action-menu img,
+.action-case.action-menu .numerator,
+.action-case.action-menu .slash,
+.action-case.action-menu .denominator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
 }
 
 /* Icône chao dans la case d'information - positionnée à gauche */
