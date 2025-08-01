@@ -231,7 +231,7 @@ class Territory {
             q: data.position_q ?? 0,
             r: data.position_r ?? 0
         };
-        this.user_id = data.user_id || null;
+        this.user_id = data.user_id || null; //probablement a supprimer
         this.construction_type = data.construction_type || null; // village, ville, 2villes
         this.rempart = data.protection_type || null; // fortifiee, indestruible
         this.warriors = []; // Tableau des mesh de guerriers (remplace armee)
@@ -259,7 +259,7 @@ class Territory {
         this.type = data.type || this.type;
         this.position_q = data.position_q || this.position_q;
         this.position_r = data.position_r || this.position_r;
-        this.user_id = data.user_id || this.user_id;
+        this.user_id = data.user_id || this.user_id; //probablement a supprimer
         this.construction_type = data.construction_type || this.construction_type;
         this.rempart = data.protection_type || this.protection_type;
         this.clan_id = data.clan_id || this.clan_id;

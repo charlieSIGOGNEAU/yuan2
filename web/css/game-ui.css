@@ -325,17 +325,7 @@
     justify-content: center;
 }
 
-/* Éléments qui se chevauchent dans la case bidding */
-.action-case.action-menu img,
-.action-case.action-menu .numerator,
-.action-case.action-menu .slash,
-.action-case.action-menu .denominator {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-}
+
 
 /* Icône chao dans la case d'information - positionnée à gauche */
 .chao-icon {
@@ -376,25 +366,42 @@
     letter-spacing: -0.05em; /* Rapproche les caractères */
 }
 
-/* Numérateur (nombre du dessus) */
+
+.img-chao {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    z-index: 2;
+}
+
+/* 
 .numerator {
-    transform: translateY(-0.3em);
-    margin-right: 0.02em; /* Réduit de 0.05em à 0.02em */
+    font-size: 1.5em;
+    width: 50%;
+    height: 50%;
+    transform: translate(-20%, -5%);
+    z-index: 3;
 }
 
-/* Dénominateur (nombre du dessous) */
+
 .denominator {
-    transform: translateY(0.3em);
-    margin-left: 0.02em; /* Réduit de 0.05em à 0.02em */
+    font-size: 1.5em;
+    width: 50%;
+    height: 50%;
+    transform: translate(20%, 15%);
+    z-index: 3;
 }
 
-/* Barre oblique */
+
 .slash {
-    transform: rotate(20deg);
-    margin: 0 0.02em; /* Réduit de 0.05em à 0.02em */
-    font-size: 0.9em; /* Légèrement plus petite que les nombres */
+    font-size: 1.8em;
+    width: 50%;
+    height: 50%;
+    transform: translate(0%, 0%);
+    z-index: 3;
 }
-
+*/
 /* Boutons bidding (moins et plus) sans fond */
 .bidding-button {
     background: transparent !important;
@@ -486,6 +493,9 @@
 .fraction-numerator,
 .fraction-denominator,
 .fraction-slash,
+.numerator,
+.denominator,
+.slash,
 .chao-text {
     position: absolute;
     z-index: 3;

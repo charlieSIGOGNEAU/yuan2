@@ -7,17 +7,42 @@ export const biddingPhase = {
     createdCircles: [], // [{ circle: THREE.Mesh, clan: Clan }]
     // Éviter les appels multiples
     isRunning: false,
+    lastRunTime: 0, // Timestamp du dernier lancement
+    
+    // Retourner une référence avec méthode cleanup
+    createPhaseInstance() {
+        return {
+            cleanup: () => this.cleanupPhase(),
+            isActive: () => this.isRunning
+        };
+    },
+    
+    // Références pour le nettoyage
+    currentGameBoard: null,
+    clickHandler: null,
+    selectedClan: null,
     
     // Fonction principale pour gérer la phase de bidding
     async biddingPhase(gameBoard) {
-        // Éviter les appels multiples
+        // Éviter les appels multiples avec sécurité temporelle
+        console.log('🎯 Démarrage de la phase bidding');
+        const now = Date.now();
         if (this.isRunning) {
             console.log('⚠️ Phase bidding déjà en cours, ignoré');
             return;
         }
         
+        // Éviter les appels trop rapprochés (moins d'1 seconde)
+        if (now - this.lastRunTime < 1000) {
+            console.log('⚠️ Phase bidding appelée trop rapidement, ignoré');
+            return;
+        }
+        
         this.isRunning = true;
+        this.lastRunTime = now;
         console.log('🎯 Démarrage de la phase bidding_phase');
+        this.removeAllCircles(gameBoard);
+
 
         // Mettre à jour les territories et placer les villes
         await this.setupClanTerritories(gameBoard);
@@ -35,18 +60,37 @@ export const biddingPhase = {
             bidding.turn === gameState.game.biddings_turn
         );
         
-        console.log(existingBidding ? '⏳ Bidding déjà existant pour ce joueur et ce turn' : '🎯 Joueur n\'a pas encore fait d\'enchère');
-        await this.handlePlayerBidding(gameBoard, existingBidding);
+        // Vérifier si le joueur a déjà gagné une enchère (victory) à n'importe quel tour
+        const victoryBidding = gameState.game.biddings.find(bidding => 
+            bidding.game_user_id === myGameUserId && 
+            bidding.victory === true
+        );
         
-        // Réinitialiser le flag à la fin
-        this.isRunning = false;
+        console.log(existingBidding ? '⏳ Bidding déjà existant pour ce joueur et ce turn' : '🎯 Joueur n\'a pas encore fait d\'enchère');
+        console.log(victoryBidding ? '🏆 Joueur a déjà gagné une enchère' : '🎯 Joueur n\'a pas encore gagné d\'enchère');
+        
+        // Si le joueur a déjà gagné une enchère, afficher le message d'attente
+        if (victoryBidding) {
+            console.log('🏆 Joueur a déjà gagné une enchère, affichage du message d\'attente');
+            uiManager.updateInfoPanel(i18n.t('game.phases.bidding.waiting_for_others'));
+            uiManager.showMenuOnlyBar();
+            return;
+        }
+        
+        try {
+            await this.handlePlayerBidding(gameBoard, existingBidding);
+        } catch (error) {
+            console.error('❌ Erreur dans handlePlayerBidding:', error);
+        } finally {
+            // Réinitialiser le flag à la fin (même en cas d'erreur)
+            this.isRunning = false;
+        }
     },
 
     // Fonction unifiée pour gérer la phase de bidding
     async handlePlayerBidding(gameBoard, existingBidding) {
         console.log('🎯 Gestion de la phase de bidding');
         
-        this.removeAllCircles(gameBoard);
 
         // Placer des cercles sur les clans non utilisés
         await this.placeUnusedClanCircles(gameBoard);
@@ -85,7 +129,7 @@ export const biddingPhase = {
         
         // Afficher la barre de bidding
         uiManager.showBiddingBar();
-        setTimeout(() => uiManager.updateBiddingText(0, 6), 200);
+        // setTimeout(() => uiManager.updateBiddingText(0, 6), 200);
         
         // Variables pour le suivi de la sélection
         this.selectedClan = null;
@@ -173,9 +217,11 @@ export const biddingPhase = {
     async placeUnusedClanCircles(gameBoard) {
         if (!gameBoard) return;
         
-        // Supprimer les anciens cercles d'abord
-        this.removeAllCircles(gameBoard);
-        
+        // Éviter la création en double si des cercles existent déjà
+        if (this.createdCircles.length > 0) {
+            console.log('⚠️ Cercles déjà créés, suppression avant recréation');
+            this.removeAllCircles(gameBoard);
+        }        
         // Récupérer tous les game_users du jeu
         const gameUsers = gameState.game?.game_users || [];
         
@@ -264,7 +310,7 @@ export const biddingPhase = {
 
     // Mettre à jour la sélection visuelle des cercles
     updateCircleSelection(selectedCircle) {
-        // Étape 1 : Mettre tous les cercles à scale 0.8 et opacité 0.8
+        // Étape 1 : Mettre tous les cercles à scale 0.8 
         this.createdCircles.forEach(({ circle, clan }) => {
             if (circle && circle.material) {
                 circle.material.opacity = 0.8;
@@ -273,9 +319,9 @@ export const biddingPhase = {
             }
         });
         
-        // Étape 2 : Mettre le cercle sélectionné à scale 1.5 et opacité 1
+        // Étape 2 : Mettre le cercle sélectionné à scale 1.5 
         if (selectedCircle && selectedCircle.circle && selectedCircle.circle.material) {
-            selectedCircle.circle.material.opacity = 1.0;
+            selectedCircle.circle.material.opacity = 0.8;
             selectedCircle.circle.scale.set(1.5, 1.5, 1.5);
             selectedCircle.circle.material.needsUpdate = true;
         }
@@ -294,6 +340,7 @@ export const biddingPhase = {
 
     // Fonction pour nettoyer les ressources de la phase
     cleanupPhase() {
+        console.log('🧹 Nettoyage de la phase bidding');
         if (this.currentGameBoard) {
             this.currentGameBoard.disableClickCallback();
             this.currentGameBoard = null;

@@ -14,7 +14,7 @@ export const simultaneousPlayPhase = {
         if (gameState.game.processedTurns < gameState.game.simultaneous_play_turn) {
             developpementAndMore.developpement(gameBoard);
             gameState.game.processedTurns +=1;
-            this.nomTemporaire(gameBoard);
+            this.simultaneousPlayPhase(gameBoard);
         }
         else {
             console.log('🎯 Exécution de la phase de simultaneous_play');

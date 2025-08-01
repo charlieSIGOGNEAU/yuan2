@@ -68,12 +68,12 @@ export class UIManager {
                 // Desktop
                 if (isPortrait) {
                     // Mode portrait : height = 100, width = 500
-                    barHeight = 100;
-                    barWidth = 500;
+                    barHeight = 70;
+                    barWidth = 350;
                 } else {
                     // Mode paysage : height = 500, width = 100
-                    barHeight = 500;
-                    barWidth = 100;
+                    barHeight = 350;
+                    barWidth = 70;
                 }
             }
             
@@ -83,9 +83,67 @@ export class UIManager {
                 if (bar) {
                     bar.style.width = `${barWidth}px`;
                     bar.style.height = `${barHeight}px`;
-                    console.log(`${this.isSmartphone ? '📱' : '💻'} Barre mise à jour: ${barWidth}x${barHeight}px (${isPortrait ? 'portrait' : 'paysage'})`);
                 }
             });
+            
+            // Appliquer les mêmes dimensions à la barre d'information (seulement sur desktop)
+            if (!this.isSmartphone) {
+                const infoBar = document.querySelector('#simultaneous-play-info-bar');
+                if (infoBar) {
+                    infoBar.style.width = `${barWidth}px`;
+                    infoBar.style.height = `${barHeight}px`;
+                    
+                    // Styles communs
+                    infoBar.style.position = 'absolute';
+                    infoBar.style.zIndex = '10005'; // Au-dessus de tout
+                    infoBar.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)'; // Ombre portée
+                    infoBar.style.border = '2px solid rgba(255, 255, 255, 0.2)'; // Bordure subtile
+                    infoBar.style.backdropFilter = 'blur(10px)'; // Effet de flou en arrière-plan
+                    infoBar.style.backgroundColor = 'rgba(0, 0, 0, 0.80)'; // Fond semi-transparent
+                    
+                                         if (isPortrait) {
+                         // Mode portrait : centrée en haut, coins arrondis en bas
+                         infoBar.style.left = '50%'; // Centrer horizontalement
+                         infoBar.style.top = '0px'; // Position en haut, 0 px obligatoire
+                         infoBar.style.transform = 'translateX(-50%)'; // Centrer horizontalement
+                         infoBar.style.right = 'auto';
+                         infoBar.style.bottom = 'auto';
+                         infoBar.style.borderTopLeftRadius = '0px'; // Pas d'arrondi haut gauche
+                         infoBar.style.borderTopRightRadius = '0px'; // Pas d'arrondi haut droit
+                         infoBar.style.borderBottomLeftRadius = '20px'; // Coins arrondis bas gauche
+                         infoBar.style.borderBottomRightRadius = '20px'; // Coins arrondis bas droit
+
+                         const infoPanel = document.querySelector('#info-panel');
+                         if (infoPanel) {
+                             infoPanel.style.top = '100px';
+                             infoPanel.style.left = '30px';
+                             infoPanel.style.right = '30px';
+                         }
+                     
+                     } else {
+                         // Mode paysage : centrée à gauche, coins arrondis à droite
+                         infoBar.style.top = '50%'; // Centrer verticalement
+                         infoBar.style.left = '0px'; // Position à gauche, 0 px obligatoire
+                         infoBar.style.transform = 'translateY(-50%)'; // Centrer verticalement
+                         infoBar.style.right = 'auto';
+                         infoBar.style.bottom = 'auto';
+                         infoBar.style.borderTopLeftRadius = '8px'; // Coins arrondis haut gauche
+                         infoBar.style.borderBottomLeftRadius = '8px'; // Coins arrondis bas gauche
+                         infoBar.style.borderTopRightRadius = '20px'; // Coins arrondis haut droit
+                         infoBar.style.borderBottomRightRadius = '20px'; // Coins arrondis bas droit
+
+                         const infoPanel = document.querySelector('#info-panel');
+                         if (infoPanel) {
+                            infoPanel.style.top = '30px';
+                             infoPanel.style.left = '100px';
+                             infoPanel.style.right = '100px';
+                         }
+                     }
+                    
+                }
+                
+
+            }
         };
 
         // Appliquer les dimensions initiales
@@ -152,7 +210,7 @@ export class UIManager {
             // Charger le CSS de l'interface avec un paramètre pour éviter le cache
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = `./css/game-ui.css?v=${Date.now()}`;
+            link.href = `./css/game-ui.css?v=${Date.now()}&force=${Math.random()}`;
             document.head.appendChild(link);
             
             // Références vers les éléments UI
@@ -625,7 +683,8 @@ export class UIManager {
             
             // Appliquer la couleur du clan au bouton de validation
             this.applyClanColorToValidateButton();
-            
+
+                          
             // Mettre à jour la fraction des temples (4ème case)
             this.updateTempleFraction();
             
@@ -643,9 +702,6 @@ export class UIManager {
             this.validationBar.style.display = 'flex';
             this.currentActionBar = this.validationBar;
             
-            // Appliquer la couleur du clan au bouton de validation
-            this.applyClanColorToValidateButton();
-            
             // Désactiver la sélection de texte
             this.disableTextSelection();
         } else {
@@ -659,9 +715,6 @@ export class UIManager {
         if (this.biddingBar) {
             this.biddingBar.style.display = 'flex';
             this.currentActionBar = this.biddingBar;
-            
-            // Appliquer la couleur du clan au bouton de validation
-            this.applyClanColorToValidateButton();
             
             // Désactiver la sélection de texte
             this.disableTextSelection();
@@ -785,8 +838,11 @@ export class UIManager {
     handleBiddingLessClick() {
         if (this.currentBid > 0) {
             this.currentBid--;
-            this.updateBiddingText();
+            // this.updateBiddingText();
             console.log(`➖ Mise diminuée: ${this.currentBid}/${this.maxBid}`);
+            
+            // Mettre à jour le message de bidding
+            this.updateBiddingMessage();
         } else {
             console.log('➖ Impossible de diminuer: valeur minimale atteinte (0)');
         }
@@ -796,11 +852,24 @@ export class UIManager {
     handleBiddingMoreClick() {
         if (this.currentBid < this.maxBid) {
             this.currentBid++;
-            this.updateBiddingText();
+            // this.updateBiddingText();
             console.log(`➕ Mise augmentée: ${this.currentBid}/${this.maxBid}`);
+            
+            // Mettre à jour le message de bidding
+            this.updateBiddingMessage();
         } else {
             console.log(`➕ Impossible d'augmenter: valeur maximale atteinte (${this.maxBid})`);
         }
+    }
+
+    // Mettre à jour le message de bidding
+    updateBiddingMessage() {
+        // Importer et appeler la fonction de biddingPhase
+        import('../phases/biddingPhase.js').then(module => {
+            module.biddingPhase.updateBiddingMessage();
+        }).catch(error => {
+            console.error('❌ Erreur lors de la mise à jour du message de bidding:', error);
+        });
     }
 
     // Méthode de fallback pour créer les éléments de fraction manquants

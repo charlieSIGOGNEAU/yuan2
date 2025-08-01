@@ -294,7 +294,6 @@ export class GameBoard3D {
             this.gltfLoader.load(
                 modelUrl,
                 (gltf) => {
-                    console.log(`✅ Modèle chargé avec succès: ${modelUrl}`, gltf);
                     const tile = gltf.scene;
                     
                     // Corriger l'espace colorimétrique des textures pour éviter la saturation
@@ -336,7 +335,6 @@ export class GameBoard3D {
                         if (waterInstance) {
                             // Attacher l'eau comme enfant de la tuile
                             tile.add(waterInstance);
-                            console.log('🌊 Mesh eau attachée à la tuile');
                         }
                     }).catch(error => {
                         console.warn('⚠️ Impossible d\'ajouter l\'eau à la tuile:', error);
@@ -355,7 +353,6 @@ export class GameBoard3D {
                     resolve(tile);
                 },
                 (progress) => {
-                    console.log(`📊 Progression du chargement: ${modelUrl}`, progress);
                 },
                 (error) => {
                     console.error(`❌ Erreur lors du chargement du modèle ${modelUrl}:`, error);

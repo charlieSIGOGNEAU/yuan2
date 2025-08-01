@@ -13,6 +13,7 @@ export const gameApi = {
     gameBoard: null,
     executedPhases: new Set(), // Pour éviter les exécutions multiples
     uiLoadingPromise: null, // Pour éviter les chargements multiples de l'UI
+    currentPhaseInstance: null, // Référence vers l'instance de phase active
 
     async handleGameMessage(data) {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
@@ -21,8 +22,7 @@ export const gameApi = {
         
         // Gestion du message d'attente des autres joueurs
         if (data.message && data.message.type === 'waiting_for_other_players') {
-            console.log('⏳ Message d\'attente reçu:', data);
-            uiManager.updateInfoPanel(i18n.t('game.ui.waiting_for_others'));
+            // uiManager.updateInfoPanel(i18n.t('game.ui.waiting_for_others'));
             return;
         }
         
@@ -37,7 +37,6 @@ export const gameApi = {
             
             // Charger l'interface UI en premier si pas déjà chargée
             if (!uiManager.gameUI && !this.uiLoadingPromise) {
-                console.log('🎨 Début du chargement de l\'interface UI...');
                 this.uiLoadingPromise = uiManager.loadGameUI();
                 
                 try {
@@ -54,14 +53,12 @@ export const gameApi = {
                     // ici on peut rajouter des information entre les guimets qui s'aficheron par decu le game board3d
                     uiManager.updateInfoPanel('');
                     
-                    console.log('✅ Interface UI chargée avec succès');
                 } catch (error) {
                     console.error('❌ Erreur lors du chargement de l\'interface UI:', error);
                 } finally {
                     this.uiLoadingPromise = null;
                 }
             } else if (this.uiLoadingPromise) {
-                console.log('⏳ Interface UI en cours de chargement, attente...');
                 await this.uiLoadingPromise;
             } else {
                 console.log('⏭️ Interface UI déjà chargée');
@@ -83,7 +80,6 @@ export const gameApi = {
             if (gameState.game.game_status === 'initial_placement' && window.gameBoard && gameState.isLowestIdPlayer()) {
                 const phaseKey = `initial_placement_${gameState.game.id}`;
                 if (!this.executedPhases.has(phaseKey)) {
-                    console.log('🎯 Exécution de la phase de placement initial (joueur ID le plus bas)');
                     this.executedPhases.add(phaseKey);
                     initialPlacement.execute(window.gameBoard);
                 } else {
@@ -93,13 +89,32 @@ export const gameApi = {
 
             // Exécuter la phase de bidding
             if (gameState.game.game_status === 'bidding_phase' && window.gameBoard) {
-                console.log('🎯 Exécution de la phase de bidding');
+                
+                // Nettoyer la phase précédente si elle existe
+                if (this.currentPhaseInstance) {
+                    console.log('🧹 Nettoyage de la phase précédente...');
+                    this.currentPhaseInstance.cleanup();
+                    this.currentPhaseInstance = null;
+                }
+                
+                // Créer une nouvelle instance de phase
+                this.currentPhaseInstance = biddingPhase.createPhaseInstance();
+                
                 biddingPhase.biddingPhase(window.gameBoard);
             }
 
             // exécuter la phasse de simultaneous_play
             if (gameState.game.game_status === 'simultaneous_play' && window.gameBoard) {
-                console.log('🎯 Exécution de la phase de simultaneous_play');
+                // Nettoyer la phase précédente si elle existe
+                if (this.currentPhaseInstance) {
+                    console.log('🧹 Nettoyage de la phase précédente...');
+                    this.currentPhaseInstance.cleanup();
+                    this.currentPhaseInstance = null;
+                }
+                
+                // Créer une nouvelle instance de phase (si simultaneousPlayPhase a aussi createPhaseInstance)
+                // this.currentPhaseInstance = simultaneousPlayPhase.createPhaseInstance();
+                
                 simultaneousPlayPhase.simultaneousPlayPhase(window.gameBoard);
             }
 
@@ -108,14 +123,10 @@ export const gameApi = {
 
     // Envoyer une tile à l'API
     async sendTileToApi(tileData) {
-        try {
-            console.log('📤 Envoi tile à l\'API:', tileData);
-            
+        try {          
             // Déterminer si c'est la dernière tuile
             const tilesWithoutName = gameState.game.tiles.filter(tile => tile.name === null);
-            console.log('🔍 Tiles sans nom:', tilesWithoutName);
             const isLastTile = tilesWithoutName.length === 1;
-            console.log('🔍 isLastTile:', isLastTile);
             
             const response = await fetch(`http://localhost:3000/api/v1/games/${tileData.game_id}/tiles/${tileData.tile_id}/place`, {
                 method: 'POST',
@@ -135,7 +146,6 @@ export const gameApi = {
             const data = await response.json();
             
             if (data.success) {
-                console.log('✅ Tile envoyée avec succès:', data);
             } else {
                 console.error('❌ Erreur lors de l\'envoi de la tile:', data);
             }
@@ -146,15 +156,9 @@ export const gameApi = {
 
     // Envoyer les positions des clans à l'API
     async sendClansToApi(clansData) {
-        try {
-            console.log('📤 Envoi des clans à l\'API:', clansData);
-            
+        try {            
             const gameId = gameState.game.id;
-            if (!gameId) {
-                console.error('❌ ID de jeu manquant');
-                return;
-            }
-            
+
             const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/clans`, {
                 method: 'POST',
                 headers: {
@@ -169,7 +173,6 @@ export const gameApi = {
             const data = await response.json();
             
             if (data.success) {
-                console.log('✅ Clans envoyés avec succès:', data);
                 
                 // Désactiver le drag & drop des villes (phase terminée)
                 if (this.gameBoard) {
@@ -194,9 +197,6 @@ export const gameApi = {
             const turn = gameState.game.biddings_turn;
             const gameId = gameState.game.id;
             const myGameUser = gameState.getMyGameUser();
-            
-            console.log(`📤 Envoi clan + enchère à l'API: clan=${clanId}, chao=${chao}, turn=${turn}`);
-
             // Envoyer clan_id, game_user_id et chao au bidding_controller
             const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/bidding`, {
                 method: 'POST',
@@ -216,16 +216,7 @@ export const gameApi = {
             
             if (data.success) {
                 console.log('✅ Clan et enchère envoyés avec succès:', data);
-                
-                // // Nettoyer la phase
-                // import('./phases/biddingPhase.js').then(module => {
-                //     module.biddingPhase.cleanupPhase();
-                // });
-                
-                // // Masquer toutes les barres d'action
-                // uiManager.hideAllActionBars();
-                
-                // Afficher un message de confirmation avec traduction
+
                 uiManager.updateInfoPanel(i18n.t('game.phases.bidding.bid_confirmed'));
                 
             } else {
@@ -244,9 +235,6 @@ export const gameApi = {
             const gameId = gameState.game.id;
             const myGameUserId = gameState.myGameUserId;
             const turn = gameState.game.simultaneous_play_turn;
-            
-            console.log(`📤 Envoi action à l'API:`, actionData);
-            console.log(`📤 Données complètes: game_user_id=${myGameUserId}, game_id=${gameId}, turn=${turn}`);
 
             const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/actions`, {
                 method: 'POST',
@@ -269,15 +257,6 @@ export const gameApi = {
             const data = await response.json();
             
             if (data.success) {
-                console.log('✅ Action envoyée avec succès:', data);
-                
-                // NE PAS nettoyer la phase pour permettre de continuer à jouer
-                // import('./phases/simultaneous-play-phase/simultaneous-play-phase.js').then(module => {
-                //     module.simultaneousPlayPhase.cleanupPhase();
-                // });
-                              
-                
-                // Afficher un message de confirmation avec traduction
                 uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.action_validated'));
                 
             } else {
