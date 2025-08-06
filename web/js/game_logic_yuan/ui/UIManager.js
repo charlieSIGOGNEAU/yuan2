@@ -84,9 +84,7 @@ export class UIManager {
                     // Mode paysage : height = hauteur de l'écran, width = 1/5 de la hauteur
                     barHeight = screenHeight;
                     barWidth = screenHeight / 5;
-                    console.log('screenHeight', screenHeight);
-                    console.log('barHeight', barHeight);
-                    console.log('barWidth', barWidth);
+
 
                 }
             } else {
@@ -106,14 +104,12 @@ export class UIManager {
                     bar.style.height = `${barHeight}px`;
                 }
             });
-            
             // Ajouter des marges à l'info panel en mode smartphone paysage
-            if (this.isSmartphone) {
+            if (this.isSmartphone && gameState.game.game_status === 'simultaneous_play') {
                 if (!isPortrait) {
                     // Mode smartphone paysage : ajouter barHeight aux marges gauche et droite de l'info panel
                     const infoPanel = document.querySelector('#info-panel');
                     if (infoPanel) {
-                        console.log('barHeight', barHeight);
                         infoPanel.style.marginLeft = `${barWidth}px`;
                         infoPanel.style.marginRight = `${barWidth}px`;
                         infoPanel.style.marginTop = `0px`;
@@ -157,9 +153,14 @@ export class UIManager {
 
                     const infoPanel = document.querySelector('#info-panel');
                     if (infoPanel) {
-                        infoPanel.style.top = '100px';
+                        if (gameState.game.game_status === 'simultaneous_play') {
+                            infoPanel.style.top = '100px';
+                        } else {
+                            infoPanel.style.top = '30px';
+                        }
                         infoPanel.style.left = '30px';
                         infoPanel.style.right = '30px';
+
                     }                              
                 }
                 

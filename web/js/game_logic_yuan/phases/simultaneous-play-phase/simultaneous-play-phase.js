@@ -11,6 +11,7 @@ export const simultaneousPlayPhase = {
     
     // nom temporaire
     simultaneousPlayPhase(gameBoard) {
+        uiManager.setupResponsiveDimensions();
         if (gameState.game.processedTurns < gameState.game.simultaneous_play_turn) {
             developpementAndMore.developpement(gameBoard);
             gameState.game.processedTurns +=1;
