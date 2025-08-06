@@ -48,6 +48,27 @@ export class UIManager {
         const updateDimensions = () => {
             const isPortrait = window.innerHeight > window.innerWidth;
             
+            // Ajouter/supprimer la classe smartphone/desktop sur le body
+            if (this.isSmartphone) {
+                document.body.classList.add('smartphone');
+                document.body.classList.remove('desktop');
+                
+                // Sur smartphone, ajouter aussi la classe d'orientation
+                if (isPortrait) {
+                    document.body.classList.add('portrait');
+                    document.body.classList.remove('landscape');
+                } else {
+                    document.body.classList.add('landscape');
+                    document.body.classList.remove('portrait');
+                }
+            } else {
+                document.body.classList.add('desktop');
+                document.body.classList.remove('smartphone');
+                // Sur desktop, toujours en mode portrait
+                document.body.classList.add('portrait');
+                document.body.classList.remove('landscape');
+            }
+            
             let barHeight, barWidth;
             
             if (this.isSmartphone) {
@@ -66,15 +87,11 @@ export class UIManager {
                 }
             } else {
                 // Desktop
-                if (isPortrait) {
-                    // Mode portrait : height = 100, width = 500
+                
                     barHeight = 70;
                     barWidth = 350;
-                } else {
-                    // Mode paysage : height = 500, width = 100
-                    barHeight = 350;
-                    barWidth = 70;
-                }
+                
+                
             }
             
             // Appliquer les dimensions à toutes les barres d'action
@@ -101,45 +118,23 @@ export class UIManager {
                     infoBar.style.backdropFilter = 'blur(10px)'; // Effet de flou en arrière-plan
                     infoBar.style.backgroundColor = 'rgba(0, 0, 0, 0.80)'; // Fond semi-transparent
                     
-                                         if (isPortrait) {
-                         // Mode portrait : centrée en haut, coins arrondis en bas
-                         infoBar.style.left = '50%'; // Centrer horizontalement
-                         infoBar.style.top = '0px'; // Position en haut, 0 px obligatoire
-                         infoBar.style.transform = 'translateX(-50%)'; // Centrer horizontalement
-                         infoBar.style.right = 'auto';
-                         infoBar.style.bottom = 'auto';
-                         infoBar.style.borderTopLeftRadius = '0px'; // Pas d'arrondi haut gauche
-                         infoBar.style.borderTopRightRadius = '0px'; // Pas d'arrondi haut droit
-                         infoBar.style.borderBottomLeftRadius = '20px'; // Coins arrondis bas gauche
-                         infoBar.style.borderBottomRightRadius = '20px'; // Coins arrondis bas droit
 
-                         const infoPanel = document.querySelector('#info-panel');
-                         if (infoPanel) {
-                             infoPanel.style.top = '100px';
-                             infoPanel.style.left = '30px';
-                             infoPanel.style.right = '30px';
-                         }
-                     
-                     } else {
-                         // Mode paysage : centrée à gauche, coins arrondis à droite
-                         infoBar.style.top = '50%'; // Centrer verticalement
-                         infoBar.style.left = '0px'; // Position à gauche, 0 px obligatoire
-                         infoBar.style.transform = 'translateY(-50%)'; // Centrer verticalement
-                         infoBar.style.right = 'auto';
-                         infoBar.style.bottom = 'auto';
-                         infoBar.style.borderTopLeftRadius = '8px'; // Coins arrondis haut gauche
-                         infoBar.style.borderBottomLeftRadius = '8px'; // Coins arrondis bas gauche
-                         infoBar.style.borderTopRightRadius = '20px'; // Coins arrondis haut droit
-                         infoBar.style.borderBottomRightRadius = '20px'; // Coins arrondis bas droit
+                    infoBar.style.left = '50%'; // Centrer horizontalement
+                    infoBar.style.top = '0px'; // Position en haut, 0 px obligatoire
+                    infoBar.style.transform = 'translateX(-50%)'; // Centrer horizontalement
+                    infoBar.style.right = 'auto';
+                    infoBar.style.bottom = 'auto';
+                    infoBar.style.borderTopLeftRadius = '0px'; // Pas d'arrondi haut gauche
+                    infoBar.style.borderTopRightRadius = '0px'; // Pas d'arrondi haut droit
+                    infoBar.style.borderBottomLeftRadius = '20px'; // Coins arrondis bas gauche
+                    infoBar.style.borderBottomRightRadius = '20px'; // Coins arrondis bas droit
 
-                         const infoPanel = document.querySelector('#info-panel');
-                         if (infoPanel) {
-                            infoPanel.style.top = '30px';
-                             infoPanel.style.left = '100px';
-                             infoPanel.style.right = '100px';
-                         }
-                     }
-                    
+                    const infoPanel = document.querySelector('#info-panel');
+                    if (infoPanel) {
+                        infoPanel.style.top = '100px';
+                        infoPanel.style.left = '30px';
+                        infoPanel.style.right = '30px';
+                    }                              
                 }
                 
 
@@ -310,14 +305,14 @@ export class UIManager {
                 });
             });
             
-            // Ajouter aussi un listener pour les événements tactiles
-            this.infoPanel.addEventListener('touchstart', (event) => {
-                console.log('👆 Touch sur le panneau d\'information:', {
-                    target: event.target,
-                    currentTarget: event.currentTarget,
-                    textContent: event.currentTarget.textContent
-                });
-            });
+            // Ajouter aussi un listener pour les événements tactiles, la fonction de base fonctione deja
+            // this.infoPanel.addEventListener('touchstart', (event) => {
+            //     console.log('👆 Touch sur le panneau d\'information:', {
+            //         target: event.target,
+            //         currentTarget: event.currentTarget,
+            //         textContent: event.currentTarget.textContent
+            //     });
+            // });
             
             console.log('✅ Event listener ajouté pour le panneau d\'information');
         } else {
