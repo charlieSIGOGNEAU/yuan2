@@ -84,6 +84,10 @@ export class UIManager {
                     // Mode paysage : height = hauteur de l'écran, width = 1/5 de la hauteur
                     barHeight = screenHeight;
                     barWidth = screenHeight / 5;
+                    console.log('screenHeight', screenHeight);
+                    console.log('barHeight', barHeight);
+                    console.log('barWidth', barWidth);
+
                 }
             } else {
                 // Desktop
@@ -102,6 +106,28 @@ export class UIManager {
                     bar.style.height = `${barHeight}px`;
                 }
             });
+            
+            // Ajouter des marges à l'info panel en mode smartphone paysage
+            if (this.isSmartphone) {
+                if (!isPortrait) {
+                    // Mode smartphone paysage : ajouter barHeight aux marges gauche et droite de l'info panel
+                    const infoPanel = document.querySelector('#info-panel');
+                    if (infoPanel) {
+                        console.log('barHeight', barHeight);
+                        infoPanel.style.marginLeft = `${barWidth}px`;
+                        infoPanel.style.marginRight = `${barWidth}px`;
+                        infoPanel.style.marginTop = `0px`;
+                    }
+                } else {
+                    // Réinitialiser les marges pour les autres modes
+                    const infoPanel = document.querySelector('#info-panel');
+                    if (infoPanel) {
+                        infoPanel.style.marginLeft = '0px';
+                        infoPanel.style.marginRight = '0px';
+                        infoPanel.style.marginTop = `${barHeight}px`;
+                    }
+                }
+            }
             
             // Appliquer les mêmes dimensions à la barre d'information (seulement sur desktop)
             if (!this.isSmartphone) {
@@ -303,6 +329,9 @@ export class UIManager {
                     textContent: event.currentTarget.textContent,
                     innerHTML: event.currentTarget.innerHTML
                 });
+                
+                // Vider le texte de l'info panel
+                this.infoPanel.textContent = '';
             });
             
             // Ajouter aussi un listener pour les événements tactiles, la fonction de base fonctione deja

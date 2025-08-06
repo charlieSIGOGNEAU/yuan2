@@ -57,6 +57,7 @@
     top: calc(5vw); /* 10% de la largeur de la fenêtre */
     left: 5%;
     right: 5%;
+    max-width: 700px; /* Largeur maximale de 700px */
     background: rgba(0, 0, 0, 0.9);
     color: white;
     padding: 15px 20px;
@@ -106,7 +107,6 @@
     pointer-events: auto;
     white-space: normal;
     word-wrap: break-word;
-    display: none;
 }
 
 /* Barre d'actions du joueur avec 6 cases */
