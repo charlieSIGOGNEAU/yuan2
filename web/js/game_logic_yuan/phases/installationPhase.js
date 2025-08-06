@@ -97,7 +97,6 @@ export const installationPhase = {
                         
                         gameApi.gameBoard.workplane.add(circleInstance);
                         gameApi.gameBoard.circles.push(circleInstance);
-                        console.log(`🔵 Cercle d'instance créé à (${position.q}, ${position.r})`);
                     }
                 }
             })

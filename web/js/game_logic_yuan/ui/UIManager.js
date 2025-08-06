@@ -261,6 +261,9 @@ export class UIManager {
     setupUIEventListeners() {
         // Event listeners partagés pour toutes les barres d'actions
         this.setupSharedActionListeners();
+        
+        // Event listener pour le panneau d'information
+        this.setupInfoPanelListener();
     }
 
     // Configuration des event listeners partagés (settings et check)
@@ -293,6 +296,33 @@ export class UIManager {
 
         // Gestion des champs de texte des boutons d'action (2, 3, 4)
         this.setupActionSlotTextListeners();
+    }
+
+    // Configuration de l'event listener pour le panneau d'information
+    setupInfoPanelListener() {
+        if (this.infoPanel) {
+            this.infoPanel.addEventListener('click', (event) => {
+                console.log('🖱️ Clic sur le panneau d\'information:', {
+                    target: event.target,
+                    currentTarget: event.currentTarget,
+                    textContent: event.currentTarget.textContent,
+                    innerHTML: event.currentTarget.innerHTML
+                });
+            });
+            
+            // Ajouter aussi un listener pour les événements tactiles
+            this.infoPanel.addEventListener('touchstart', (event) => {
+                console.log('👆 Touch sur le panneau d\'information:', {
+                    target: event.target,
+                    currentTarget: event.currentTarget,
+                    textContent: event.currentTarget.textContent
+                });
+            });
+            
+            console.log('✅ Event listener ajouté pour le panneau d\'information');
+        } else {
+            console.warn('⚠️ Panneau d\'information non trouvé pour l\'event listener');
+        }
     }
 
     // Configuration des listeners pour les champs de texte des boutons d'action

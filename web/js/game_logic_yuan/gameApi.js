@@ -219,6 +219,9 @@ export const gameApi = {
 
                 uiManager.updateInfoPanel(i18n.t('game.phases.bidding.bid_confirmed'));
                 
+                // Masquer la barre de bidding après envoi réussi
+                uiManager.hideAllActionBars();
+                
             } else {
                 console.error('❌ Erreur lors de l\'envoi clan + enchère:', data);
                 uiManager.updateInfoPanel('Erreur lors de l\'envoi de la mise');

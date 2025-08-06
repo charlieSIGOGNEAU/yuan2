@@ -108,9 +108,8 @@ export const biddingPhase = {
             // // Afficher les instructions
             // uiManager.updateInfoPanel(i18n.t('game.phases.bidding.instructions'));
             
-            // Afficher la barre de bidding
-            uiManager.showBiddingBar();
-            setTimeout(() => uiManager.updateBiddingText(0, 6), 200);
+            // Mettre l'enchère à 0 sans afficher la barre de bidding
+            uiManager.currentBid = 0;
             
             // Envoyer automatiquement à l'API
             console.log(`🚀 Envoi automatique: clan ${this.selectedClan.name} avec enchère 0`);
