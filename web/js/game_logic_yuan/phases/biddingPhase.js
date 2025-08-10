@@ -128,7 +128,7 @@ export const biddingPhase = {
         
         // Afficher la barre de bidding
         uiManager.showBiddingBar();
-        // setTimeout(() => uiManager.updateBiddingText(0, 6), 200);
+        // setTimeout(() => uiManager.updateBiddingText(0, 6), 200); je crois que ca pose probleme car la phase s'arete que par le declanchement d'une nouvelle phase identique et que les info de info panel cahnge en fonction des action de lutilisateur dans la meme ou autre phase de bidding
         
         // Variables pour le suivi de la sélection
         this.selectedClan = null;

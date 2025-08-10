@@ -286,6 +286,9 @@ export class UIManager {
         
         // Event listener pour le panneau d'information
         this.setupInfoPanelListener();
+        
+        // Event listeners pour les cases de la barre d'information
+        this.setupInfoBarListeners();
     }
 
     // Configuration des event listeners partagés (settings et check)
@@ -792,6 +795,101 @@ export class UIManager {
         }
     }
 
+    // Configuration des event listeners pour les cases de la barre d'information
+    setupInfoBarListeners() {
+        // Attendre que la barre d'information soit chargée
+        const setupListeners = () => {
+            const infoBar = document.getElementById('simultaneous-play-info-bar');
+            if (!infoBar) {
+                // Réessayer après un délai si la barre n'est pas encore chargée
+                setTimeout(setupListeners, 100);
+                return;
+            }
+
+            // Supprimer les anciens listeners pour éviter les doublons
+            const existingSquares = infoBar.querySelectorAll('.info-square');
+            existingSquares.forEach(square => {
+                // Cloner et remplacer pour supprimer tous les event listeners
+                const newSquare = square.cloneNode(true);
+                square.parentNode.replaceChild(newSquare, square);
+            });
+
+            // Récupérer les 5 cases de la barre d'information (après nettoyage)
+            const infoSquares = infoBar.querySelectorAll('.info-square');
+            
+            infoSquares.forEach((square, index) => {
+                // Noms des cases pour le log
+                const caseNames = ['Riz', 'Forêt', 'Mine', 'Temples', 'Chao'];
+                const caseName = caseNames[index] || `Case ${index + 1}`;
+                
+                // Fonction de gestion du clic
+                const handleClick = (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    console.log(`🖱️ Clic sur la case ${index + 1} (${caseName}) de la barre d'information`);
+                    
+                    // Messages pour l'info panel selon la case
+                    let infoMessage = '';
+                    switch(index) {
+                        case 0: // Riz
+                            const riceText = square.querySelector('.home-text');
+                            console.log(`🌾 Valeur riz: ${riceText ? riceText.value : 'N/A'}`);
+                            infoMessage = 'game.phases.simultaneous_play.info_development';
+                            break;
+                        case 1: // Forêt
+                            const forestText = square.querySelector('.shield-text');
+                            console.log(`🌲 Valeur forêt: ${forestText ? forestText.value : 'N/A'}`);
+                            infoMessage = 'game.phases.simultaneous_play.info_fortification';
+                            break;
+                        case 2: // Mine
+                            const mineText = square.querySelector('.sword-text');
+                            console.log(`⛏️ Valeur mine: ${mineText ? mineText.value : 'N/A'}`);
+                            infoMessage = 'game.phases.simultaneous_play.info_war';
+                            break;
+                        case 3: // Temples
+                            const numerator = square.querySelector('.fraction-numerator');
+                            const denominator = square.querySelector('.fraction-denominator');
+                            console.log(`🏛️ Temples: ${numerator ? numerator.value : 'N/A'}/${denominator ? denominator.value : 'N/A'}`);
+                            infoMessage = 'game.phases.simultaneous_play.info_temple';
+                            break;
+                        case 4: // Chao
+                            const chaoText = square.querySelector('.chao-text');
+                            console.log(`💰 Valeur chao: ${chaoText ? chaoText.value : 'N/A'}`);
+                            infoMessage = 'game.phases.simultaneous_play.info_chao';
+                            break;
+                    }
+                    
+                    // Afficher le message dans l'info panel
+                    if (infoMessage) {
+                        // Importer le système de traduction et afficher le message
+                        import('../../core/i18n.js').then(module => {
+                            const i18n = module.i18n;
+                            const message = i18n.t(infoMessage);
+                            this.updateInfoPanel(message);
+                            console.log(`📝 Message affiché dans l'info panel: ${message}`);
+                        }).catch(error => {
+                            console.error('❌ Erreur lors de l\'affichage du message:', error);
+                            // Fallback : afficher le message directement
+                            this.updateInfoPanel(infoMessage);
+                        });
+                    }
+                };
+                
+                // Ajouter UN SEUL listener pour éviter les doublons
+                square.addEventListener('click', handleClick, { once: false });
+                
+                // Rendre la case cliquable visuellement
+                square.style.cursor = 'pointer';
+                square.style.pointerEvents = 'auto';
+            });
+            
+            console.log('✅ Event listeners ajoutés pour les 5 cases de la barre d\'information (nettoyés)');
+        };
+        
+        // Démarrer la configuration des listeners
+        setupListeners();
+    }
+
     // Fonction pour afficher la barre d'information de la phase simultaneous_play
     showSimultaneousPlayInfoBar() {
         // Masquer toutes les autres barres
@@ -827,6 +925,9 @@ export class UIManager {
         // Afficher la barre
         infoBar.style.display = 'flex';
         console.log('🎯 Barre d\'information simultaneous_play affichée');
+        
+        // Réappliquer les event listeners après l'affichage
+        this.setupInfoBarListeners();
     }
 
 
@@ -1140,6 +1241,8 @@ export class UIManager {
         document.documentElement.style.setProperty('--player-clan-color', clanColor);
         console.log(`🎨 Couleur du clan appliquée au bouton de validation: ${clanColor}`);
     }
+
+
 
     // Fonction pour désactiver la sélection sur tous les éléments des barres
     disableTextSelection() {

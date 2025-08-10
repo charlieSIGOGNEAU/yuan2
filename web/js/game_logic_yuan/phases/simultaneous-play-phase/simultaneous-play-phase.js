@@ -11,7 +11,6 @@ export const simultaneousPlayPhase = {
     
     // nom temporaire
     simultaneousPlayPhase(gameBoard) {
-        uiManager.setupResponsiveDimensions();
         if (gameState.game.processedTurns < gameState.game.simultaneous_play_turn) {
             developpementAndMore.developpement(gameBoard);
             gameState.game.processedTurns +=1;
@@ -29,11 +28,16 @@ export const simultaneousPlayPhase = {
             // Afficher la barre d'action à 6 cases
             uiManager.showPlayerActionBar();
             
+            // Appliquer les dimensions responsives avec un délai pour s'assurer que les barres sont affichées avant de les modifier.
+            setTimeout(() => {
+                uiManager.setupResponsiveDimensions();
+            }, 1000);
+            
             // Activer la détection de clic sur les territoires
             this.setupTerritoryClickDetection(gameBoard);
             
             // si premier tour
-            if (gameState.game.simultaneous_play_turn = 1) {
+            if (gameState.game.simultaneous_play_turn === 1) {
                 this.processVictoryBiddings(gameBoard);
             } else {
 
@@ -303,26 +307,26 @@ export const simultaneousPlayPhase = {
         uiManager.updateSimultaneousPlayInfoBar();
         
         // Afficher le message d'accueil avec la couleur du clan du joueur
-        const playerClan = gameState.game.myClan;
-        console.log('🔍 Debug - playerClan:', playerClan);
-        
-        if (playerClan) {
-            console.log('🔍 Debug - playerClan.color_name:', playerClan.color_name);
+            const playerClan = gameState.game.myClan;
+            console.log('🔍 Debug - playerClan:', playerClan);
             
-            // Récupérer le nom du joueur
-            const myGameUser = gameState.getMyGameUser();
-            const playerName = myGameUser ? myGameUser.user_name : 'Joueur';
-            
-            const welcomeMessage = i18n.t('game.phases.simultaneous_play.welcome_message', {
-                playerName: playerName,
-                color: i18n.t(`colors.${playerClan.color_name}`),
-                colorHex: playerClan.color
-            });
-            console.log('🔍 Debug - welcomeMessage:', welcomeMessage);
-            this.showSimultaneousPlayHelpMessage(welcomeMessage);
-        } else {
-            console.warn('⚠️ playerClan non trouvé, impossible d\'afficher le message d\'accueil');
-        }
+            if (playerClan) {
+                console.log('🔍 Debug - playerClan.color_name:', playerClan.color_name);
+                
+                // Récupérer le nom du joueur
+                const myGameUser = gameState.getMyGameUser();
+                const playerName = myGameUser ? myGameUser.user_name : 'Joueur';
+                
+                const welcomeMessage = i18n.t('game.phases.simultaneous_play.welcome_message', {
+                    playerName: playerName,
+                    color: i18n.t(`colors.${playerClan.color_name}`),
+                    colorHex: playerClan.color
+                });
+                console.log('🔍 Debug - welcomeMessage:', welcomeMessage);
+                this.showSimultaneousPlayHelpMessage(welcomeMessage);
+            } else {
+                console.warn('⚠️ playerClan non trouvé, impossible d\'afficher le message d\'accueil');
+            }
     },
 
     // Fonction pour afficher les messages d'aide de la phase simultaneous_play
