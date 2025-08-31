@@ -1,5 +1,5 @@
 import { uiManager } from '../../ui/UIManager.js';
-import { gameState } from '../../gameState.js';
+import { gameState, Lake } from '../../gameState.js';
 import { biddingPhase } from '../biddingPhase.js';
 import { i18n } from '../../../core/i18n.js';
 import * as THREE from 'three';
@@ -19,6 +19,10 @@ export const simultaneousPlayPhase = {
                 territory.updateProvinceTerritories();
             }
             console.log('✅ Territoires adjacents initialisés');
+
+            // Initialiser tous les lacs
+            Lake.initializeAllLakes();
+
             // Exécuter getConnectedTerritories pour tous les territoires
             console.log('🔄 Initialisation des territoires connectes...');
             for (const territory of gameState.game.territories) {

@@ -165,13 +165,6 @@ class Tile {
             gameState.game.territories = [];
         }
         gameState.game.territories.push(...newTerrains);
-        // Traiter chaque terrain water individuellement
-        const newWaterTerrains = newTerrains.filter(t => t.type === 'water');
-        for (const waterTerrain of newWaterTerrains) {
-            Lake.createOrUpdateLake(waterTerrain);
-            Lake.updateConnectedTerritories();
-
-        }
         
         // Marquer que les terrains ont été créés pour cette tile
         this.terrainsCreated = true;
@@ -593,51 +586,51 @@ class Lake {
         this.id = Math.random().toString(36).substr(2, 9);
     }
 
-    static createOrUpdateLake(waterTerrain) {
-        // Trouver les terrains water adjacents qui sont déjà dans des lacs
-        const adjacentWaterTerrains = waterTerrain.getAdjacentTerritories().filter(t => t.type === 'water');
-        const adjacentLakes = new Set();
+    // static createOrUpdateLake(waterTerrain) {
+    //     // Trouver les terrains water adjacents qui sont déjà dans des lacs
+    //     const adjacentWaterTerrains = waterTerrain.getAdjacentTerritories().filter(t => t.type === 'water');
+    //     const adjacentLakes = new Set();
         
-        // Pour chaque terrain water adjacent, trouver son lac
-        for (const adjacentWater of adjacentWaterTerrains) {
-            for (const lake of gameState.game.lakes.values()) {
-                if (lake.waterTiles.has(adjacentWater)) {
-                    adjacentLakes.add(lake);
-                    break;
-                }
-            }
-        }
+    //     // Pour chaque terrain water adjacent, trouver son lac
+    //     for (const adjacentWater of adjacentWaterTerrains) {
+    //         for (const lake of gameState.game.lakes.values()) {
+    //             if (lake.waterTiles.has(adjacentWater)) {
+    //                 adjacentLakes.add(lake);
+    //                 break;
+    //             }
+    //         }
+    //     }
 
-        // Cas 1: Pas de lac adjacent -> créer un nouveau lac
-        if (adjacentLakes.size === 0) {
-            const newLake = new Lake();
-            newLake.waterTiles.add(waterTerrain);
-            gameState.game.lakes.set(newLake.id, newLake);
-        }
-        // Cas 2: Un seul lac adjacent -> ajouter à ce lac
-        else if (adjacentLakes.size === 1) {
-            const lake = Array.from(adjacentLakes)[0];
-            lake.waterTiles.add(waterTerrain);
-        }
-        // Cas 3: Plusieurs lacs adjacents -> fusionner les lacs
-        else {
-            const lakes = Array.from(adjacentLakes);
-            const mainLake = lakes[0];
+    //     // Cas 1: Pas de lac adjacent -> créer un nouveau lac
+    //     if (adjacentLakes.size === 0) {
+    //         const newLake = new Lake();
+    //         newLake.waterTiles.add(waterTerrain);
+    //         gameState.game.lakes.set(newLake.id, newLake);
+    //     }
+    //     // Cas 2: Un seul lac adjacent -> ajouter à ce lac
+    //     else if (adjacentLakes.size === 1) {
+    //         const lake = Array.from(adjacentLakes)[0];
+    //         lake.waterTiles.add(waterTerrain);
+    //     }
+    //     // Cas 3: Plusieurs lacs adjacents -> fusionner les lacs
+    //     else {
+    //         const lakes = Array.from(adjacentLakes);
+    //         const mainLake = lakes[0];
             
             
-            // Ajouter le nouveau terrain au lac principal
-            mainLake.waterTiles.add(waterTerrain);
+    //         // Ajouter le nouveau terrain au lac principal
+    //         mainLake.waterTiles.add(waterTerrain);
             
-            // Fusionner tous les autres lacs dans le premier
-            for (let i = 1; i < lakes.length; i++) {
-                const lakeToMerge = lakes[i];
-                for (const tile of lakeToMerge.waterTiles) {
-                    mainLake.waterTiles.add(tile);
-                }
-                gameState.game.lakes.delete(lakeToMerge.id);
-            }
-        }
-    }
+    //         // Fusionner tous les autres lacs dans le premier
+    //         for (let i = 1; i < lakes.length; i++) {
+    //             const lakeToMerge = lakes[i];
+    //             for (const tile of lakeToMerge.waterTiles) {
+    //                 mainLake.waterTiles.add(tile);
+    //             }
+    //             gameState.game.lakes.delete(lakeToMerge.id);
+    //         }
+    //     }
+    // }
 
     static updateConnectedTerritories() {
         // Parcourir tous les lacs
@@ -655,6 +648,67 @@ class Lake {
                     }
                 }
             }
+        }
+    }
+
+    // Fonction d'initialisation complète des lacs
+    static initializeAllLakes() {
+        console.log('🔄 Initialisation complète des lacs...');
+        
+        // Vider tous les lacs existants
+        gameState.game.lakes.clear();
+        
+        // Récupérer tous les territoires water
+        const waterTerritories = gameState.game.territories.filter(t => t.type === 'water');
+        console.log(`Traitement de ${waterTerritories.length} territoires d'eau`);
+        
+        // Marquer tous les territoires water comme non traités
+        const processedTerritories = new Set();
+        
+        // Pour chaque territoire water non traité
+        for (const waterTerritory of waterTerritories) {
+            if (processedTerritories.has(waterTerritory)) {
+                continue; // Déjà traité
+            }
+            
+            // Créer un nouveau lac
+            const newLake = new Lake();
+            
+            // Trouver tous les territoires water connectés par adjacence
+            const territoriesToProcess = [waterTerritory];
+            
+            while (territoriesToProcess.length > 0) {
+                const currentTerritory = territoriesToProcess.pop();
+                
+                if (processedTerritories.has(currentTerritory)) {
+                    continue;
+                }
+                
+                // Ajouter ce territoire au lac
+                newLake.waterTiles.add(currentTerritory);
+                processedTerritories.add(currentTerritory);
+                
+                // Trouver les territoires water adjacents non traités
+                const adjacentTerritories = currentTerritory.getAdjacentTerritories();
+                for (const adjacent of adjacentTerritories) {
+                    if (adjacent.type === 'water' && !processedTerritories.has(adjacent)) {
+                        territoriesToProcess.push(adjacent);
+                    }
+                }
+            }
+            
+            // Ajouter le lac à la liste des lacs
+            gameState.game.lakes.set(newLake.id, newLake);
+        }
+        
+        // Calculer les territoires connectés pour chaque lac
+        Lake.updateConnectedTerritories();
+        
+        console.log(`✅ ${gameState.game.lakes.size} lacs initialisés`);
+        
+        // Afficher un résumé des lacs
+        for (const [lakeId, lake] of gameState.game.lakes.entries()) {
+            console.log(`Lac ${lakeId}: ${lake.waterTiles.size} territoires water, ${lake.connectedTerritories.size} territoires connectés`);
         }
     }
 }
@@ -862,6 +916,9 @@ class GameState {
 
 // Instance globale du gameState (vide au départ)
 export const gameState = new GameState();
+
+// Exporter la classe Lake pour l'utiliser dans d'autres modules
+export { Lake };
 
 // Rendre gameState accessible globalement pour les fonctions utilitaires
 window.gameState = gameState;
