@@ -31,14 +31,6 @@ export class UIManager {
         
         const isSmartphone = isMobile && isTouch && (isSmallScreen || hasHighDPR);
         
-        console.log(`📱 Détection smartphone:`, {
-            userAgent: userAgent.includes('mobile'),
-            touch: isTouch,
-            smallScreen: isSmallScreen,
-            highDPR: hasHighDPR,
-            isSmartphone: isSmartphone
-        });
-        
         return isSmartphone;
     }
 
@@ -178,29 +170,25 @@ export class UIManager {
             setTimeout(updateDimensions, 100);
         });
         
-        console.log(`${this.isSmartphone ? '📱' : '💻'} Gestionnaire de dimensions responsives configuré`);
+
     }
 
     // Charger l'interface UI du jeu
     async loadGameUI() {
         // Vérifier si l'interface est déjà chargée
         if (this.gameUI) {
-            console.log('⏭️ Interface UI déjà chargée, skip');
             return;
         }
         
         // Vérifier si un chargement est déjà en cours
         if (this._loadingPromise) {
-            console.log('⏳ Interface UI en cours de chargement, attente...');
             return this._loadingPromise;
         }
         
-        console.log('🎨 Début du chargement de l\'interface UI...');
         this._loadingPromise = this._loadGameUIInternal();
         
         try {
             await this._loadingPromise;
-            console.log('✅ Interface UI chargée avec succès');
         } finally {
             this._loadingPromise = null;
         }
@@ -213,7 +201,6 @@ export class UIManager {
             const appDiv = document.getElementById('app');
             if (appDiv) {
                 appDiv.remove();
-                console.log('🗑️ Div app supprimée');
             }
             
             // Charger le HTML de l'interface avec un paramètre pour éviter le cache
@@ -254,7 +241,6 @@ export class UIManager {
             await this.loadGameBoard3D();
             
         } catch (error) {
-            console.error('❌ Erreur lors du chargement de l\'interface UI:', error);
             throw error;
         }
     }
@@ -264,18 +250,11 @@ export class UIManager {
         try {
             // Vérifier si le GameBoard3D n'est pas déjà chargé
             if (!window.gameBoard) {
-                console.log('🎮 Chargement du GameBoard3D...');
-                
                 // Importer et créer le GameBoard3D
                 const { GameBoard3D } = await import('../ui/GameBoard3D.js');
                 window.gameBoard = new GameBoard3D('game-board-container');
-                
-                console.log('✅ GameBoard3D chargé avec succès');
-            } else {
-                console.log('⏭️ GameBoard3D déjà chargé, skip');
             }
         } catch (error) {
-            console.error('❌ Erreur lors du chargement du GameBoard3D:', error);
         }
     }
 
@@ -323,35 +302,15 @@ export class UIManager {
         this.setupActionSlotTextListeners();
     }
 
-    // Configuration de l'event listener pour le panneau d'information
-    setupInfoPanelListener() {
-        if (this.infoPanel) {
-            this.infoPanel.addEventListener('click', (event) => {
-                console.log('🖱️ Clic sur le panneau d\'information:', {
-                    target: event.target,
-                    currentTarget: event.currentTarget,
-                    textContent: event.currentTarget.textContent,
-                    innerHTML: event.currentTarget.innerHTML
+            // Configuration de l'event listener pour le panneau d'information
+        setupInfoPanelListener() {
+            if (this.infoPanel) {
+                this.infoPanel.addEventListener('click', (event) => {
+                    // Vider le texte de l'info panel
+                    this.infoPanel.textContent = '';
                 });
-                
-                // Vider le texte de l'info panel
-                this.infoPanel.textContent = '';
-            });
-            
-            // Ajouter aussi un listener pour les événements tactiles, la fonction de base fonctione deja
-            // this.infoPanel.addEventListener('touchstart', (event) => {
-            //     console.log('👆 Touch sur le panneau d\'information:', {
-            //         target: event.target,
-            //         currentTarget: event.currentTarget,
-            //         textContent: event.currentTarget.textContent
-            //     });
-            // });
-            
-            console.log('✅ Event listener ajouté pour le panneau d\'information');
-        } else {
-            console.warn('⚠️ Panneau d\'information non trouvé pour l\'event listener');
+            }
         }
-    }
 
     // Configuration des listeners pour les champs de texte des boutons d'action
     setupActionSlotTextListeners() {
@@ -455,7 +414,7 @@ export class UIManager {
             
             totalAdjustedCost += adjustedCost;
         });
-        console.log(`💰 totalAdjustedCost: ${totalAdjustedCost}`);
+
 
 
         if (gameState.game.myChaoTemp === undefined) {
@@ -463,11 +422,11 @@ export class UIManager {
           }
 
         let chaoModification = gameState.game.myClan.available_chao - totalAdjustedCost - gameState.game.myChaoTemp;
-        console.log(`💰 chaoModification: ${chaoModification}`);
+
 
         gameState.game.myChaoTemp = gameState.game.myClan.available_chao - totalAdjustedCost ;
-        console.log(`💰 gameState.game.myChaoTemp: ${gameState.game.myChaoTemp}`);
-        console.log(" -------------------------------- ")
+
+
         // console.log(`💰 Coût total ajusté: ${totalAdjustedCost}`);
         
         this.createChaoModificationAnimation(chaoModification);
@@ -478,7 +437,7 @@ export class UIManager {
     createChaoModificationAnimation(chaoModification) {
         // Ne pas créer de cercle si la modification est 0
         if (chaoModification === 0) {
-            console.log('🎬 Pas d\'animation créée car modification = 0');
+    
             return;
         }
 
@@ -538,7 +497,7 @@ export class UIManager {
             this.animateChaoCircleUpdate();
         }, 500);
         
-        console.log(`🎬 Animation créée: cercle temporaire avec valeur ${chaoModification} positionné en dessous du cercle chao`);
+
     }
 
     // Fonction pour animer la remontée du cercle temporaire
@@ -571,7 +530,7 @@ export class UIManager {
                 if (tempCircle.parentElement) {
                     tempCircle.parentElement.removeChild(tempCircle);
                 }
-                console.log('🎬 Animation de remontée terminée, cercle temporaire supprimé');
+
             }
         };
         
@@ -597,29 +556,24 @@ export class UIManager {
         });
     }
 
-    // Action du bouton settings (partagée par toutes les interfaces)
-    handleSettingsClick() {
-        console.log('🔧 Ouverture du menu settings...');
-        // TODO: Implémenter l'ouverture du menu settings
-    }
-
-    // Action du bouton validation (partagée par toutes les interfaces)
-    handleValidateClick() {
-        console.log('🔘 Bouton de validation cliqué');
-        
-        // Vérifier le statut du jeu pour déterminer l'action
-        if (gameState.game.game_status === 'initial_placement') {
-            this.handleInitialPlacementValidation();
-        } else if (gameState.game.game_status === 'bidding_phase') {
-            this.handleBiddingValidation();
-        } else if (gameState.game.game_status === 'starting_spot_selection') {
-            this.handleStartingSpotSelectionValidation();
-        } else if (gameState.game.game_status === 'simultaneous_play') {
-            this.handleSimultaneousPlayValidation();
-        } else {
-            console.log('⚠️ Statut de jeu non géré pour la validation:', gameState.game.game_status);
+            // Action du bouton settings (partagée par toutes les interfaces)
+        handleSettingsClick() {
+            // TODO: Implémenter l'ouverture du menu settings
         }
-    }
+
+            // Action du bouton validation (partagée par toutes les interfaces)
+        handleValidateClick() {
+            // Vérifier le statut du jeu pour déterminer l'action
+            if (gameState.game.game_status === 'initial_placement') {
+                this.handleInitialPlacementValidation();
+            } else if (gameState.game.game_status === 'bidding_phase') {
+                this.handleBiddingValidation();
+            } else if (gameState.game.game_status === 'starting_spot_selection') {
+                this.handleStartingSpotSelectionValidation();
+            } else if (gameState.game.game_status === 'simultaneous_play') {
+                this.handleSimultaneousPlayValidation();
+            }
+        }
 
     // Validation spécifique pour la phase de placement initial
     handleInitialPlacementValidation() {
@@ -644,67 +598,53 @@ export class UIManager {
                 if (clansData.length > 0) {
                     // Appeler la fonction d'envoi de l'API
                     apiModule.gameApi.sendClansToApi(clansData);
-                } else {
-                    console.warn('⚠️ Aucune ville trouvée pour validation');
                 }
-            } else {
-                console.error('❌ GameBoard3D non disponible');
             }
         });
     }
 
-    // Validation spécifique pour la phase de bidding
-    handleBiddingValidation() {
-        console.log('💰 Validation de l\'enchère');
-        
-        // Importer biddingPhase pour accéder au clan sélectionné
-        import('../phases/biddingPhase.js').then(module => {
-            const biddingPhase = module.biddingPhase;
-            
-            // Vérifier si un clan est sélectionné
-            if (!biddingPhase.selectedClan) {
-                console.log('❌ Aucun clan sélectionné');
-                uiManager.updateInfoPanel('Veuillez sélectionner un clan');
-                return;
-            }
-            
-            // Récupérer la valeur actuelle de l'enchère
-            const currentBid = this.currentBid;
-            console.log(`💰 Envoi de l'enchère: ${currentBid} chao pour le clan ${biddingPhase.selectedClan.name}`);
-            
-            // Envoyer le clan et l'enchère à l'API
-            gameApi.sendClanBiddingToApi(biddingPhase.selectedClan.id, currentBid);
-        });
-    }
-
-    handleStartingSpotSelectionValidation() {
-        console.log('🎯 Validation de la sélection de position de départ');
-        
-        // Appeler la fonction de validation via gameApi
-        gameApi.sendClanSelectionToApi();
-    }
-
-    // Validation spécifique pour la phase de jeu simultané
-    handleSimultaneousPlayValidation() {
-        console.log('🎯 Validation de l\'action en jeu simultané');
-        
-        // Importer simultaneousPlayPhase pour accéder à la fonction de validation
-        import('../phases/simultaneous-play-phase/simultaneous-play-phase.js').then(module => {
-            const simultaneousPlayPhase = module.simultaneousPlayPhase;
-            
-            // Appeler la fonction de validation de l'action
-            simultaneousPlayPhase.handleActionValidation();
-        });
-    }
-
-    // Fonction pour mettre à jour le panneau d'informations
-    updateInfoPanel(text) {
-        if (this.infoPanel) {
-            this.infoPanel.innerHTML = text || '';
-        } else {
-            console.warn('⚠️ Panneau d\'informations non initialisé');
+            // Validation spécifique pour la phase de bidding
+        handleBiddingValidation() {
+            // Importer biddingPhase pour accéder au clan sélectionné
+            import('../phases/biddingPhase.js').then(module => {
+                const biddingPhase = module.biddingPhase;
+                
+                // Vérifier si un clan est sélectionné
+                if (!biddingPhase.selectedClan) {
+                    uiManager.updateInfoPanel('Veuillez sélectionner un clan');
+                    return;
+                }
+                
+                // Récupérer la valeur actuelle de l'enchère
+                const currentBid = this.currentBid;
+                
+                // Envoyer le clan et l'enchère à l'API
+                gameApi.sendClanBiddingToApi(biddingPhase.selectedClan.id, currentBid);
+            });
         }
-    }
+
+            handleStartingSpotSelectionValidation() {
+            // Appeler la fonction de validation via gameApi
+            gameApi.sendClanSelectionToApi();
+        }
+
+            // Validation spécifique pour la phase de jeu simultané
+        handleSimultaneousPlayValidation() {
+            // Importer simultaneousPlayPhase pour accéder à la fonction de validation
+            import('../phases/simultaneous-play-phase/simultaneous-play-phase.js').then(module => {
+                const simultaneousPlayPhase = module.simultaneousPlayPhase;
+                
+                // Appeler la fonction de validation de l'action
+                simultaneousPlayPhase.handleActionValidation();
+            });
+        }
+
+            // Fonction pour mettre à jour le panneau d'informations
+        updateInfoPanel(text) {
+            if (this.infoPanel) {
+                this.infoPanel.innerHTML = text || '';
+            }
+        }
 
     // Fonction pour masquer le panneau d'informations
     hideInfoPanel() {
@@ -732,68 +672,60 @@ export class UIManager {
         this.currentActionBar = null;
     }
 
-    // Fonction pour afficher la barre d'actions complète (5 cases)
-    showPlayerActionBar() {
-        this.hideAllActionBars();
-        if (this.playerActionBar) {
-            this.playerActionBar.style.display = 'flex';
-            this.currentActionBar = this.playerActionBar;
-            
-            // Appliquer la couleur du clan au bouton de validation
-            this.applyClanColorToValidateButton();
+            // Fonction pour afficher la barre d'actions complète (5 cases)
+        showPlayerActionBar() {
+            this.hideAllActionBars();
+            if (this.playerActionBar) {
+                this.playerActionBar.style.display = 'flex';
+                this.currentActionBar = this.playerActionBar;
+                
+                // Appliquer la couleur du clan au bouton de validation
+                this.applyClanColorToValidateButton();
 
                           
-            // Mettre à jour la fraction des temples (4ème case)
-            this.updateTempleFraction();
-            
-            // Désactiver la sélection de texte
-            this.disableTextSelection();
-        } else {
-            console.warn('⚠️ Barre d\'actions complète non initialisée');
+                // Mettre à jour la fraction des temples (4ème case)
+                this.updateTempleFraction();
+                
+                // Désactiver la sélection de texte
+                this.disableTextSelection();
+            }
         }
-    }
 
-    // Fonction pour afficher la barre de validation simple (settings + check)
-    showValidationBar() {
-        this.hideAllActionBars();
-        if (this.validationBar) {
-            this.validationBar.style.display = 'flex';
-            this.currentActionBar = this.validationBar;
-            
-            // Désactiver la sélection de texte
-            this.disableTextSelection();
-        } else {
-            console.warn('⚠️ Barre de validation non initialisée');
+            // Fonction pour afficher la barre de validation simple (settings + check)
+        showValidationBar() {
+            this.hideAllActionBars();
+            if (this.validationBar) {
+                this.validationBar.style.display = 'flex';
+                this.currentActionBar = this.validationBar;
+                
+                // Désactiver la sélection de texte
+                this.disableTextSelection();
+            }
         }
-    }
 
-    // Fonction pour afficher la barre de bidding (settings + info + boutons + check)
-    showBiddingBar() {
-        this.hideAllActionBars();
-        if (this.biddingBar) {
-            this.biddingBar.style.display = 'flex';
-            this.currentActionBar = this.biddingBar;
-            
-            // Désactiver la sélection de texte
-            this.disableTextSelection();
-        } else {
-            console.warn('⚠️ Barre de bidding non initialisée');
+            // Fonction pour afficher la barre de bidding (settings + info + boutons + check)
+        showBiddingBar() {
+            this.hideAllActionBars();
+            if (this.biddingBar) {
+                this.biddingBar.style.display = 'flex';
+                this.currentActionBar = this.biddingBar;
+                
+                // Désactiver la sélection de texte
+                this.disableTextSelection();
+            }
         }
-    }
 
-    // Fonction pour afficher la barre avec seulement le menu
-    showMenuOnlyBar() {
-        this.hideAllActionBars();
-        if (this.menuOnlyBar) {
-            this.menuOnlyBar.style.display = 'flex';
-            this.currentActionBar = this.menuOnlyBar;
-            
-            // Désactiver la sélection de texte
-            this.disableTextSelection();
-        } else {
-            console.warn('⚠️ Barre menu-only non initialisée');
+            // Fonction pour afficher la barre avec seulement le menu
+        showMenuOnlyBar() {
+            this.hideAllActionBars();
+            if (this.menuOnlyBar) {
+                this.menuOnlyBar.style.display = 'flex';
+                this.currentActionBar = this.menuOnlyBar;
+                
+                // Désactiver la sélection de texte
+                this.disableTextSelection();
+            }
         }
-    }
 
     // Configuration des event listeners pour les cases de la barre d'information
     setupInfoBarListeners() {
@@ -826,35 +758,29 @@ export class UIManager {
                 const handleClick = (event) => {
                     event.preventDefault();
                     event.stopPropagation();
-                    console.log(`🖱️ Clic sur la case ${index + 1} (${caseName}) de la barre d'information`);
                     
                     // Messages pour l'info panel selon la case
                     let infoMessage = '';
                     switch(index) {
                         case 0: // Riz
                             const riceText = square.querySelector('.home-text');
-                            console.log(`🌾 Valeur riz: ${riceText ? riceText.value : 'N/A'}`);
                             infoMessage = 'game.phases.simultaneous_play.info_development';
                             break;
                         case 1: // Forêt
                             const forestText = square.querySelector('.shield-text');
-                            console.log(`🌲 Valeur forêt: ${forestText ? forestText.value : 'N/A'}`);
                             infoMessage = 'game.phases.simultaneous_play.info_fortification';
                             break;
                         case 2: // Mine
                             const mineText = square.querySelector('.sword-text');
-                            console.log(`⛏️ Valeur mine: ${mineText ? mineText.value : 'N/A'}`);
                             infoMessage = 'game.phases.simultaneous_play.info_war';
                             break;
                         case 3: // Temples
                             const numerator = square.querySelector('.fraction-numerator');
                             const denominator = square.querySelector('.fraction-denominator');
-                            console.log(`🏛️ Temples: ${numerator ? numerator.value : 'N/A'}/${denominator ? denominator.value : 'N/A'}`);
                             infoMessage = 'game.phases.simultaneous_play.info_temple';
                             break;
                         case 4: // Chao
                             const chaoText = square.querySelector('.chao-text');
-                            console.log(`💰 Valeur chao: ${chaoText ? chaoText.value : 'N/A'}`);
                             infoMessage = 'game.phases.simultaneous_play.info_chao';
                             break;
                     }
@@ -866,9 +792,7 @@ export class UIManager {
                             const i18n = module.i18n;
                             const message = i18n.t(infoMessage);
                             this.updateInfoPanel(message);
-                            console.log(`📝 Message affiché dans l'info panel: ${message}`);
                         }).catch(error => {
-                            console.error('❌ Erreur lors de l\'affichage du message:', error);
                             // Fallback : afficher le message directement
                             this.updateInfoPanel(infoMessage);
                         });
@@ -882,8 +806,6 @@ export class UIManager {
                 square.style.cursor = 'pointer';
                 square.style.pointerEvents = 'auto';
             });
-            
-            console.log('✅ Event listeners ajoutés pour les 5 cases de la barre d\'information (nettoyés)');
         };
         
         // Démarrer la configuration des listeners
@@ -916,7 +838,7 @@ export class UIManager {
         if (chaoTextElement) {
             const displayedChao = parseInt(chaoTextElement.value) || 0;
             gameState.game.myChaoTemp = displayedChao;
-            console.log(`💰 myChaoTemp actualisé: ${displayedChao}`);
+
         }
         
         // Désactiver la sélection de texte
@@ -924,7 +846,7 @@ export class UIManager {
         
         // Afficher la barre
         infoBar.style.display = 'flex';
-        console.log('🎯 Barre d\'information simultaneous_play affichée');
+
         
         // Réappliquer les event listeners après l'affichage
         this.setupInfoBarListeners();
@@ -970,7 +892,6 @@ export class UIManager {
                 const delay = attempt * 100; // Délai progressif: 100, 200, 300, 400ms
                 setTimeout(() => tryUpdate(attempt + 1, maxAttempts), delay);
             } else {
-                console.warn(`⚠️ Éléments de fraction non trouvés après ${maxAttempts} tentatives`);
                 // Si la barre est visible mais les éléments fraction manquent, forcer une recréation
                 const rectangleBar = document.querySelector('#rectangle-action-bar');
                 if (rectangleBar && rectangleBar.style.display !== 'none') {
@@ -995,12 +916,9 @@ export class UIManager {
         if (this.currentBid > 0) {
             this.currentBid--;
             // this.updateBiddingText();
-            console.log(`➖ Mise diminuée: ${this.currentBid}/${this.maxBid}`);
             
             // Mettre à jour le message de bidding
             this.updateBiddingMessage();
-        } else {
-            console.log('➖ Impossible de diminuer: valeur minimale atteinte (0)');
         }
     }
 
@@ -1009,12 +927,9 @@ export class UIManager {
         if (this.currentBid < this.maxBid) {
             this.currentBid++;
             // this.updateBiddingText();
-            console.log(`➕ Mise augmentée: ${this.currentBid}/${this.maxBid}`);
             
             // Mettre à jour le message de bidding
             this.updateBiddingMessage();
-        } else {
-            console.log(`➕ Impossible d'augmenter: valeur maximale atteinte (${this.maxBid})`);
         }
     }
 
@@ -1024,7 +939,6 @@ export class UIManager {
         import('../phases/biddingPhase.js').then(module => {
             module.biddingPhase.updateBiddingMessage();
         }).catch(error => {
-            console.error('❌ Erreur lors de la mise à jour du message de bidding:', error);
         });
     }
 
@@ -1032,7 +946,6 @@ export class UIManager {
     createFallbackFraction(current, max) {
         const biddingBar = document.querySelector('.bidding-info-case');
         if (!biddingBar) {
-            console.error('❌ Barre de bidding introuvable pour le fallback');
             return;
         }
 
@@ -1051,9 +964,6 @@ export class UIManager {
                     <span class="slash">/</span>
                     <span class="chao-denominator denominator">${max}</span>
                 `;
-                console.log('✅ Éléments de fraction recréés par fallback');
-            } else {
-                console.error('❌ Container de fraction introuvable');
             }
         }
     }
@@ -1063,7 +973,6 @@ export class UIManager {
         // Utiliser directement le clan du joueur actuel
         const playerClan = gameState.game.myClan;
         if (!playerClan) {
-            console.warn('⚠️ Clan du joueur actuel non trouvé');
             return;
         }
 
@@ -1071,9 +980,6 @@ export class UIManager {
         const chaoText = document.querySelector('#simultaneous-play-info-bar .chao-text');
         if (chaoText) {
             chaoText.value = playerClan.available_chao.toString();
-            console.log(`💰 Texte chao mis à jour: ${playerClan.available_chao} pour le clan ${playerClan.name}`);
-        } else {
-            console.warn('⚠️ Élément chao-text non trouvé dans la barre d\'information');
         }
     }
 
@@ -1089,44 +995,13 @@ export class UIManager {
         // Utiliser directement le clan du joueur actuel
         const playerClan = gameState.game.myClan;
         if (!playerClan) {
-            console.warn('⚠️ Clan du joueur actuel non trouvé');
             return;
         }
 
-        // Compter les territoires du clan selon les critères
-        const territories = gameState.game.territories.filter(territory => 
-            territory.clan_id === playerClan.id
-        );
-
-        // Case 1: Riz (type 'rice' avec construction_type 'ville' ou '2villes')
-        const riceTerritories = territories.filter(territory => 
-            territory.type === 'rice' && 
-            (territory.construction_type === 'ville' || territory.construction_type === '2villes')
-        );
-        let riceCount = 0;
-        riceTerritories.forEach(territory => {
-            riceCount += territory.construction_type === '2villes' ? 2 : 1;
-        });
-
-        // Case 2: Forêt (type 'forest' avec construction_type 'ville' ou '2villes')
-        const forestTerritories = territories.filter(territory => 
-            territory.type === 'forest' && 
-            (territory.construction_type === 'ville' || territory.construction_type === '2villes')
-        );
-        let forestCount = 0;
-        forestTerritories.forEach(territory => {
-            forestCount += territory.construction_type === '2villes' ? 2 : 1;
-        });
-
-        // Case 3: Mine (type 'mine' avec construction_type 'ville' ou '2villes')
-        const mineTerritories = territories.filter(territory => 
-            territory.type === 'mine' && 
-            (territory.construction_type === 'ville' || territory.construction_type === '2villes')
-        );
-        let mineCount = 0;
-        mineTerritories.forEach(territory => {
-            mineCount += territory.construction_type === '2villes' ? 2 : 1;
-        });
+        // Utiliser les compteurs pré-calculés du clan (mis à jour par simultaneousPlayPhase.updateAllClansResources())
+        const riceCount = playerClan.numRices || 0;
+        const forestCount = playerClan.numForests || 0;
+        const mineCount = playerClan.numMines || 0;
 
         // Mettre à jour les textes dans les 3 premières cases
         const homeText = document.querySelector('#simultaneous-play-info-bar .home-text');
@@ -1135,21 +1010,16 @@ export class UIManager {
 
         if (homeText) {
             homeText.value = riceCount.toString();
-            console.log(`🌾 Riz mis à jour: ${riceCount} territoires`);
         }
         if (shieldText) {
             shieldText.value = forestCount.toString();
-            console.log(`🌲 Forêt mis à jour: ${forestCount} territoires`);
         }
         if (swordText) {
             swordText.value = mineCount.toString();
-            console.log(`⛏️ Mine mis à jour: ${mineCount} territoires`);
         }
 
         // Mettre à jour la fraction des temples (4ème case)
         this.updateTempleFraction();
-
-        console.log(`📊 Ressources mises à jour pour le clan ${playerClan.name}: Riz=${riceCount}, Forêt=${forestCount}, Mine=${mineCount}`);
     }
 
     // Fonction pour calculer le dénominateur selon le tour
@@ -1182,11 +1052,8 @@ export class UIManager {
             return;
         }
 
-        // Compter les territoires avec hasTemple = true et le même clan_id
-        const templeTerritories = gameState.game.territories.filter(territory => 
-            territory.clan_id === playerClan.id && territory.hasTemple === true
-        );
-        const templeCount = templeTerritories.length;
+        // Utiliser le compteur pré-calculé du clan (mis à jour par simultaneousPlayPhase.updateAllClansResources())
+        const templeCount = playerClan.numTemples || 0;
 
         // Calculer le dénominateur selon le tour
         const currentTurn = gameState.game.simultaneous_play_turn || 1;
@@ -1225,7 +1092,7 @@ export class UIManager {
             return null;
         }
 
-        console.log(`🎨 Couleur du clan ${playerClan.name} récupérée: ${playerClan.color}`);
+
         return playerClan.color;
     }
 
@@ -1239,7 +1106,7 @@ export class UIManager {
 
         // Appliquer la couleur via CSS custom property
         document.documentElement.style.setProperty('--player-clan-color', clanColor);
-        console.log(`🎨 Couleur du clan appliquée au bouton de validation: ${clanColor}`);
+
     }
 
 
@@ -1319,7 +1186,7 @@ export class UIManager {
                         // Animation terminée, remettre les styles par défaut
                         chaoCircle.style.width = '';
                         chaoText.style.width = '';
-                        console.log('🎬 Animation de mise à jour du cercle chao terminée');
+
                     }
                 };
                 

@@ -8,23 +8,32 @@ import { developpementAndMore } from './developpement.js';
 export const simultaneousPlayPhase = {
     // Stockage du cercle actuel (un seul à la fois)
     currentCircle: null, // { circle: THREE.Mesh, territory: Territory }
+    processedTurns: 1,
     
     // nom temporaire
     simultaneousPlayPhase(gameBoard) {
-        if (gameState.game.processedTurns < gameState.game.simultaneous_play_turn) {
-            developpementAndMore.developpement(gameBoard);
-            gameState.game.processedTurns +=1;
-            this.simultaneousPlayPhase(gameBoard);
-        }
-        else {
-            console.log('🎯 Exécution de la phase de simultaneous_play');
+        if (this.processedTurns === 1) {
+            // Exécuter getAdjacentTerritories pour tous les territoires
+            console.log('🔄 Initialisation des territoires adjacents...');
+            for (const territory of gameState.game.territories) {
+                territory.updateProvinceTerritories();
+            }
+            console.log('✅ Territoires adjacents initialisés');
+            // Exécuter getConnectedTerritories pour tous les territoires
+            console.log('🔄 Initialisation des territoires connectes...');
+            for (const territory of gameState.game.territories) {
+                territory.updateConnectedProvinces();
+            }
+            console.log('✅ Territoires connectes initialisés');
+
+
 
             // Récupérer le clan du joueur actuel
             gameState.game.setMyClanFromVictoryBidding(gameState.myGameUserId);
-            
+
             // Afficher la barre d'information spécifique à cette phase
             uiManager.showSimultaneousPlayInfoBar();
-            
+
             // Afficher la barre d'action à 6 cases
             uiManager.showPlayerActionBar();
             
@@ -32,16 +41,44 @@ export const simultaneousPlayPhase = {
             setTimeout(() => {
                 uiManager.setupResponsiveDimensions();
             }, 1000);
-            
+
+            this.processVictoryBiddings(gameBoard);
+            // Mettre à jour les compteurs de ressources de tous les clans
+            this.updateAllClansResources();
+            setTimeout(() => {
+                this.updateAllClansResources();
+                uiManager.updateSimultaneousPlayInfoBar();
+              }, 5000);
+
+        }
+        else {
+            // a faire : fonction qui mes a jour available_chao  de chaque clan, updatAvailableChaos(this.processedTurns)
+        }
+
+        if (this.processedTurns + 1 === gameState.game.simultaneous_play_turn) {
+            developpementAndMore.annimation = true;
+        }
+        else {
+            developpementAndMore.annimation = false;
+        }
+
+        if (this.processedTurns === gameState.game.simultaneous_play_turn) {
+
+            // afichee la barre d'action a 6 cases
             // Activer la détection de clic sur les territoires
             this.setupTerritoryClickDetection(gameBoard);
-            
-            // si premier tour
-            if (gameState.game.simultaneous_play_turn === 1) {
-                this.processVictoryBiddings(gameBoard);
-            } else {
+        }
+        else {
+            // enleve la barre d'action a 6 cases et la remplacer par la barre avec seulement option et suivant
+            developpementAndMore.developpement(gameBoard, this.processedTurns);
+            // pluis les autres actions
+            // Mettre à jour les compteurs de ressources de tous les clans
+            this.updateAllClansResources();
+            // a faire : fonction qui verifi si un joueur et victorieux
 
-            }
+
+            this.processedTurns +=1;
+            this.simultaneousPlayPhase(gameBoard);
         }
     },
 
@@ -231,6 +268,55 @@ export const simultaneousPlayPhase = {
         });
     },
 
+    // Mettre à jour les compteurs de ressources pour tous les clans
+    updateAllClansResources() {
+        console.log('📊 Mise à jour des compteurs de ressources pour tous les clans');
+        
+        // Réinitialiser tous les compteurs des clans
+        gameState.game.clans.forEach(clan => {
+            clan.numForests = 0;
+            clan.numRices = 0;
+            clan.numMines = 0;
+            clan.numTemples = 0;
+        });
+        
+        // Parcourir tous les territoires pour compter les ressources
+        gameState.game.territories.forEach(territory => {
+            if (!territory.clan_id) return;
+            
+            const clan = gameState.game.clans.find(c => c.id === territory.clan_id);
+            if (!clan) return;
+            
+            // Compter les forêts
+            if (territory.type === 'forest' && 
+                (territory.construction_type === 'ville' || territory.construction_type === '2villes')) {
+                clan.numForests += territory.construction_type === '2villes' ? 2 : 1;
+            }
+            
+            // Compter les riz
+            if (territory.type === 'rice' && 
+                (territory.construction_type === 'ville' || territory.construction_type === '2villes')) {
+                clan.numRices += territory.construction_type === '2villes' ? 2 : 1;
+            }
+            
+            // Compter les mines
+            if (territory.type === 'mine' && 
+                (territory.construction_type === 'ville' || territory.construction_type === '2villes')) {
+                clan.numMines += territory.construction_type === '2villes' ? 2 : 1;
+            }
+            
+            // Compter les temples (pas de compte double)
+            if (territory.hasTemple) {
+                clan.numTemples += 1;
+            }
+        });
+        
+        // Log des résultats pour debug
+        gameState.game.clans.forEach(clan => {
+            console.log(`📊 Clan ${clan.name}: Forêts=${clan.numForests}, Riz=${clan.numRices}, Mines=${clan.numMines}, Temples=${clan.numTemples}`);
+        });
+    },
+
     // Nettoyer les ressources de la phase
     cleanupPhase() {
         if (this.currentGameBoard) {
@@ -333,6 +419,6 @@ export const simultaneousPlayPhase = {
     showSimultaneousPlayHelpMessage(message) {
         uiManager.updateInfoPanel(message);
     },
-
-
 }
+// pour le debug
+window.simultaneousPlayPhase = simultaneousPlayPhase;

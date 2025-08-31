@@ -2,11 +2,12 @@ import { gameState } from '../../gameState.js';
 
 export const developpementAndMore = {
     // === FONCTIONS PRINCIPALES ===
+    annimation: true,
     
-    developpement(gameBoard) {
+    developpement(gameBoard, processedTurns) {
         console.log('🎯 Exécution de la phase de developpement');
         
-        const currentTurn = gameState.game.processedTurns + 1;
+        const currentTurn = processedTurns;
         const actionsForTurn = this.getActionsForTurn(currentTurn);
         
         console.log(`📋 Actions trouvées pour le tour ${currentTurn}:`, actionsForTurn.length);
@@ -164,3 +165,5 @@ export const developpementAndMore = {
         console.log(`🎯 Exécution de la phase d'expansion sur territoire (${territory.position.q}, ${territory.position.r}) avec niveau ${developpement_level} pour clan ${clan_id}`);
     }
 }
+// pour le debug
+window.developpementAndMore = developpementAndMore;

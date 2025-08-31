@@ -80,13 +80,10 @@ export class MeepleManager {
         // Créer une nouvelle promise de chargement
         const loadPromise = new Promise((resolve, reject) => {
             const meepleInfo = this.meepleTypes[type];
-            console.log(`🎭 Préchargement du meeple: ${type} depuis ${meepleInfo.path}`);
 
             this.gltfLoader.load(
                 meepleInfo.path,
                 (gltf) => {
-                    console.log(`✅ Meeple ${type} préchargé avec succès`);
-                    
                     // Corriger l'espace colorimétrique des textures
                     gltf.scene.traverse((child) => {
                         if (child.isMesh && child.material) {
@@ -119,10 +116,8 @@ export class MeepleManager {
                     resolve(gltf.scene);
                 },
                 (progress) => {
-                    console.log(`📊 Progression chargement ${type}:`, Math.round(progress.loaded / progress.total * 100) + '%');
                 },
                 (error) => {
-                    console.error(`❌ Erreur lors du chargement du meeple ${type}:`, error);
                     this.loadPromises.delete(type); // Nettoyer la promise même en cas d'erreur
                     reject(error);
                 }
@@ -153,14 +148,11 @@ export class MeepleManager {
         // Créer une nouvelle promise de chargement
         const loadPromise = new Promise((resolve, reject) => {
             const circleInfo = this.circleTypes[type];
-            console.log(`🔵 Préchargement du cercle: ${type} depuis ${circleInfo.path}`);
 
             const textureLoader = new THREE.TextureLoader();
             textureLoader.load(
                 circleInfo.path,
                 (texture) => {
-                    console.log(`✅ Cercle ${type} préchargé avec succès`);
-                    
                     // Corriger l'espace colorimétrique
                     texture.colorSpace = THREE.SRGBColorSpace;
                     
@@ -184,10 +176,8 @@ export class MeepleManager {
                     resolve(circleMesh);
                 },
                 (progress) => {
-                    console.log(`📊 Progression chargement cercle ${type}:`, Math.round(progress.loaded / progress.total * 100) + '%');
                 },
                 (error) => {
-                    console.error(`❌ Erreur lors du chargement du cercle ${type}:`, error);
                     this.loadPromises.delete(`circle_${type}`); // Nettoyer la promise même en cas d'erreur
                     reject(error);
                 }
@@ -201,16 +191,13 @@ export class MeepleManager {
 
     // Précharger tous les types de meeples
     async preloadAllMeeples() {
-        console.log('🎭 Préchargement de tous les meeples...');
         const preloadPromises = Object.keys(this.meepleTypes).map(type => 
             this.preloadMeepleModel(type)
         );
 
         try {
             await Promise.all(preloadPromises);
-            console.log('✅ Tous les meeples ont été préchargés avec succès');
         } catch (error) {
-            console.error('❌ Erreur lors du préchargement des meeples:', error);
             throw error;
         }
     }
@@ -222,30 +209,24 @@ export class MeepleManager {
         
         // Si pas encore chargé, attendre qu'il soit en cours de chargement
         if (!baseModel && this.loadPromises.has(type)) {
-            console.log(`⏳ Attente du chargement du modèle ${type}...`);
             try {
                 baseModel = await this.loadPromises.get(type);
-                console.log(`✅ Modèle ${type} chargé avec succès`);
             } catch (error) {
-                console.error(`❌ Erreur lors du chargement du modèle ${type}:`, error);
                 return null;
             }
         }
         
         // Si toujours pas de modèle, essayer de le précharger
         if (!baseModel) {
-            console.log(`🔄 Préchargement du modèle ${type}...`);
             try {
                 baseModel = await this.preloadMeepleModel(type);
             } catch (error) {
-                console.error(`❌ Impossible de précharger le modèle ${type}:`, error);
                 return null;
             }
         }
 
         const meepleInfo = this.meepleTypes[type];
         if (!meepleInfo) {
-            console.error(`❌ Type de meeple ${type} non reconnu`);
             return null;
         }
         
@@ -283,7 +264,6 @@ export class MeepleManager {
             ...userData
         };
 
-        console.log(`🎭 Instance de ${type} créée${colorHex ? ` avec couleur ${colorHex}` : ''}`);
         return instance;
     }
 
@@ -294,30 +274,24 @@ export class MeepleManager {
         
         // Si pas encore chargé, attendre qu'il soit en cours de chargement
         if (!baseModel && this.loadPromises.has(`circle_${type}`)) {
-            console.log(`⏳ Attente du chargement du cercle ${type}...`);
             try {
                 baseModel = await this.loadPromises.get(`circle_${type}`);
-                console.log(`✅ Cercle ${type} chargé avec succès`);
             } catch (error) {
-                console.error(`❌ Erreur lors du chargement du cercle ${type}:`, error);
                 return null;
             }
         }
         
         // Si toujours pas de modèle, essayer de le précharger
         if (!baseModel) {
-            console.log(`🔄 Préchargement du cercle ${type}...`);
             try {
                 baseModel = await this.preloadCircle(type);
             } catch (error) {
-                console.error(`❌ Impossible de précharger le cercle ${type}:`, error);
                 return null;
             }
         }
 
         const circleInfo = this.circleTypes[type];
         if (!circleInfo) {
-            console.error(`❌ Type de cercle ${type} non reconnu`);
             return null;
         }
         
@@ -374,14 +348,12 @@ export class MeepleManager {
             ...userData
         };
 
-        console.log(`🔵 Instance de cercle ${type} créée à (${position.q}, ${position.r}) avec scale ${scale}`);
         return instance;
     }
 
     // Créer plusieurs instances d'un même type avec différentes couleurs
     createColoredMeepleSet(type, colors = []) {
         if (!this.meepleTypes[type]?.colorable) {
-            console.warn(`⚠️ Le meeple ${type} n'est pas colorable`);
             return [];
         }
 
@@ -389,7 +361,6 @@ export class MeepleManager {
             this.createMeepleInstance(type, colorHex, { setColor: colorHex })
         );
 
-        console.log(`🎨 Set de ${instances.length} instances ${type} créé avec ${colors.length} couleurs`);
         return instances;
     }
 
@@ -402,7 +373,6 @@ export class MeepleManager {
             })
         );
 
-        console.log(`🏰 ${instances.length} instances de ${type} créées pour les clans`);
         return instances;
     }
 
@@ -423,8 +393,6 @@ export class MeepleManager {
 
     // Nettoyer le cache (pour économiser la mémoire si nécessaire)
     clearCache() {
-        console.log('🧹 Nettoyage du cache des meeples...');
-        
         // Disposer des ressources Three.js
         this.loadedModels.forEach((model, type) => {
             model.traverse((child) => {
@@ -443,7 +411,6 @@ export class MeepleManager {
 
         this.loadedModels.clear();
         this.loadPromises.clear();
-        console.log('✅ Cache des meeples nettoyé');
     }
     
     // Supprimer les méthodes liées à l'eau

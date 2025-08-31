@@ -105,6 +105,7 @@ export const gameApi = {
 
             // exécuter la phasse de simultaneous_play
             if (gameState.game.game_status === 'simultaneous_play' && window.gameBoard) {
+                console.log('🎯🎯🎯 ');
                 // Nettoyer la phase précédente si elle existe
                 if (this.currentPhaseInstance) {
                     console.log('🧹 Nettoyage de la phase précédente...');

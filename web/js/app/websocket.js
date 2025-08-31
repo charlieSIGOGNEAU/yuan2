@@ -83,13 +83,7 @@ export const WebSocketClient = {
 
     // S'abonner au channel personel
     subscribeToChannel() {
-        const subscribeMessage = {
-            command: 'subscribe',
-            identifier: JSON.stringify({ channel: 'GameChannel' })
-        };
-        this.send(subscribeMessage);
-        
-        // S'abonner au canal utilisateur personnel
+        // S'abonner seulement au canal utilisateur personnel (évite la duplication)
         if (Auth.currentUser && Auth.currentUser.id) {
             this.subscribeToUserChannel(Auth.currentUser.id);
         }

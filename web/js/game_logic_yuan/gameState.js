@@ -26,6 +26,10 @@ class Clan {
         this.start_q = data.start_q || 0;
         this.start_r = data.start_r || 0;
         this.available_chao = 6;
+        this.numForests = 0;
+        this.numRices = 0;
+        this.numMines = 0;
+        this.numTemples = 0;
         
         // Convertir le code hexadécimal en nom de couleur
         this.color_name = this.getColorName(this.color);
@@ -238,8 +242,11 @@ class Territory {
         this.clan_id = data.clan_id || null; // Référence au clan au lieu de color
         this.hasTemple = false; // Variable booléenne pour indiquer si un temple est présent
         
-        // Cache pour les territoires adjacents
+        // Cache pour les territoires et provinces adjacents ou connecte
         this.adjacentTerritories = null;
+        this.connectedTerritories = null;
+        this.adjacentProvinces = []; //seulement mine foret plaine ou riziere
+        this.connectedProvinces = []; //seulement mine foret plaine ou riziere
         
         // Références aux mesh 3D
         this.construction_mesh = null; // Mesh de la construction (village, ville, 2villes)
@@ -296,12 +303,7 @@ class Territory {
             const clan = gameState.game.clans.find(c => c.id === this.clan_id);
             if (clan) {
                 colorHex = clan.color;
-                console.log(`🏗️ Création de ${this.construction_type} (${clan.name} - ${colorHex}) sur territoire (${this.position.q}, ${this.position.r})`);
-            } else {
-                console.warn(`⚠️ Clan non trouvé pour clan_id=${this.clan_id}`);
             }
-        } else {
-            console.log(`🏗️ Création de ${this.construction_type} (sans couleur) sur territoire (${this.position.q}, ${this.position.r})`);
         }
         
         // Créer l'instance du meeple (version asynchrone)
@@ -325,8 +327,6 @@ class Territory {
             // Ajouter au workplane
             gameBoard.workplane.add(mesh);
             this.construction_mesh = mesh;
-            
-            console.log(`✅ Construction ${this.construction_type} créée à`, pos);
         }
     }
 
@@ -336,8 +336,6 @@ class Territory {
             return; // Pas de rempart à créer ou déjà créé
         }
 
-        console.log(`🛡️ Création de ${this.rempart} sur territoire (${this.position.q}, ${this.position.r})`);
-        
         // Utiliser le type 'fortification' du MeepleManager (non colorable)
         const mesh = await meepleManager.createMeepleInstance('fortification', null, {
             territory: this,
@@ -354,7 +352,6 @@ class Territory {
                 // Indestructible : rotation 180° et surélevé
                 mesh.position.set(pos.x, pos.y + 0.02, pos.z);
                 mesh.rotation.y = Math.PI; // 180 degrés
-                console.log(`🔄 Rempart indestructible : rotation 180° et +0.02 en hauteur`);
             } else {
                 // Fortifiée : position normale
                 mesh.position.set(pos.x, pos.y, pos.z);
@@ -370,8 +367,6 @@ class Territory {
             // Ajouter au workplane
             gameBoard.workplane.add(mesh);
             this.rempart_mesh = mesh;
-            
-            console.log(`✅ Rempart ${this.rempart} créé à`, pos);
         }
     }
 
@@ -419,7 +414,7 @@ class Territory {
             return;
         }
 
-        console.log(`⚔️ Création de ${count} guerriers (${clan.name} - ${clan.color}) sur territoire (${this.position.q}, ${this.position.r})`);
+
         
         // Supprimer les anciens guerriers d'abord
         this.removeWarriors(gameBoard);
@@ -449,8 +444,6 @@ class Territory {
                 // Ajouter au workplane et stocker
                 gameBoard.workplane.add(mesh);
                 this.warriors.push(mesh);
-                
-                console.log(`✅ Guerrier ${i+1} créé à`, pos);
             }
         }
     }
@@ -458,7 +451,6 @@ class Territory {
     // Supprimer la construction
     removeConstruction(gameBoard) {
         if (this.construction_mesh) {
-            console.log(`🗑️ Suppression de la construction sur territoire (${this.position.q}, ${this.position.r})`);
             gameBoard.workplane.remove(this.construction_mesh);
             this.construction_mesh = null;
         }
@@ -467,7 +459,6 @@ class Territory {
     // Supprimer le rempart
     removeRempart(gameBoard) {
         if (this.rempart_mesh) {
-            console.log(`🗑️ Suppression du rempart sur territoire (${this.position.q}, ${this.position.r})`);
             gameBoard.workplane.remove(this.rempart_mesh);
             this.rempart_mesh = null;
         }
@@ -476,7 +467,6 @@ class Territory {
     // Supprimer tous les guerriers
     removeWarriors(gameBoard) {
         if (this.warriors.length > 0) {
-            console.log(`🗑️ Suppression de ${this.warriors.length} guerriers sur territoire (${this.position.q}, ${this.position.r})`);
             this.warriors.forEach(warrior => {
                 gameBoard.workplane.remove(warrior);
             });
@@ -489,12 +479,9 @@ class Territory {
         this.removeConstruction(gameBoard);
         this.removeRempart(gameBoard);
         this.removeWarriors(gameBoard);
-        console.log(`🧹 Toutes les mesh supprimées du territoire (${this.position.q}, ${this.position.r})`);
     }
 
     async updateMeshes(gameBoard, meepleManager) {
-        console.log(`🔄 Mise à jour des mesh pour territoire (${this.position.q}, ${this.position.r})`);
-        
         // Créer/mettre à jour la construction
         if (this.construction_type && !this.construction_mesh) {
             await this.createConstruction(gameBoard, meepleManager);
@@ -548,6 +535,53 @@ class Territory {
         return adjacentTerritories.some(territory => 
             territory.position.q === territory2.position.q && 
             territory.position.r === territory2.position.r
+        );
+    }
+
+    // Fonction pour filtrer et stocker les provinces adjacentes (plain, forest, rice, mine)
+    updateProvinceTerritories() {
+        const adjacentTerritories = this.getAdjacentTerritories();
+        this.adjacentProvinces = adjacentTerritories.filter(territory => 
+            ['plain', 'forest', 'rice', 'mine'].includes(territory.type)
+        );
+    }
+
+    // Fonction pour calculer tous les territoires connectés (via lacs + adjacents)
+    getConnectedTerritories() {
+        if (this.connectedTerritories !== null) {
+            return this.connectedTerritories;
+        }
+
+        const connectedTerritories = new Set();
+        
+        // Ajouter d'abord les territoires adjacents
+        const adjacentTerritories = this.getAdjacentTerritories();
+        adjacentTerritories.forEach(territory => connectedTerritories.add(territory));
+        
+        // Parcourir tous les lacs pour trouver ceux qui contiennent ce territoire
+        for (const lake of gameState.game.lakes.values()) {
+            // Vérifier si ce territoire est dans ce lac
+            if (lake.connectedTerritories.has(this)) {
+                // Ajouter tous les autres territoires connectés à ce lac
+                for (const territory of lake.connectedTerritories) {
+                    if (territory !== this) { // Ne pas s'ajouter soi-même
+                        connectedTerritories.add(territory);
+                    }
+                }
+            }
+        }
+        
+        // Convertir le Set en Array et stocker dans le cache
+        this.connectedTerritories = Array.from(connectedTerritories);
+        
+        return this.connectedTerritories;
+    }
+
+    // Fonction pour filtrer et stocker les provinces connectées (plain, forest, rice, mine)
+    updateConnectedProvinces() {
+        const connectedTerritories = this.getConnectedTerritories();
+        this.connectedProvinces = connectedTerritories.filter(territory => 
+            ['plain', 'forest', 'rice', 'mine'].includes(territory.type)
         );
     }
 }
@@ -634,7 +668,7 @@ class Game {
         this.clan_names = data.clan_names || '';
         this.biddings_turn = data.biddings_turn || 0;
         this.simultaneous_play_turn = data.simultaneous_play_turn || 0;
-        this.processedTurns = 0;
+
         
         // Relations
         this.game_users = data.game_users ? data.game_users.map(gu => new GameUser(gu)) : [];
@@ -674,7 +708,6 @@ class Game {
         
         // Stocker le clan du joueur actuel
         this.myClan = clan;
-        console.log(`🎯 Clan du joueur actuel défini: ${clan.name} (${clan.color}) - available_chao: ${clan.available_chao}`);
     }
 
     update(data) {
@@ -812,6 +845,18 @@ class GameState {
         
         const lowestId = Math.min(...this.game.game_users.map(gu => gu.id));
         return this.myGameUserId === lowestId;
+    }
+
+    // Méthode pour trouver un territoire par ses coordonnées
+    getTerritoryByPosition(q, r) {
+        return this.game.territories.find(territory => 
+            territory.position.q === q && territory.position.r === r
+        );
+    }
+
+    // Méthode pour trouver un clan par son ID
+    getClanById(clanId) {
+        return this.game.clans.find(clan => clan.id === clanId);
     }
 }
 

@@ -7,7 +7,7 @@ import { meepleManager } from '../pieces/MeepleManager.js';
 export class GameBoard3D {
     constructor(containerId) {
         
-        console.log('GameBoard3D constructor');
+
         this.container = document.getElementById(containerId);
         // Désactiver les comportements tactiles par défaut
         this.container.style.touchAction = 'none';
@@ -62,7 +62,6 @@ export class GameBoard3D {
 
         // Démarrer l'initialisation asynchrone
         this.initAsync().catch(error => {
-            console.error('❌ Erreur lors de l\'initialisation:', error);
         });
     }
     
@@ -90,13 +89,12 @@ export class GameBoard3D {
         directionalLight.castShadow = true;
         this.scene.add(directionalLight);
         
-        console.log('💡 Éclairage ajouté à la scène');
+
         
         this.workplane = new THREE.Group();
         this.scene.add(this.workplane);
         
         // Maintenant précharger les modèles
-        console.log('📦 Préchargement des modèles...');
         // Charger l'eau via le MeepleManager
         this.loadWaterMesh();
         await this.meepleManager.preloadMeepleModel('ville');
@@ -107,7 +105,6 @@ export class GameBoard3D {
         
         // Précharger les cercles
         await this.meepleManager.preloadCircle('selection');
-        console.log('✅ Modèles et cercles préchargés');
         
         // Continuer avec l'initialisation normale
         this.init();
@@ -121,13 +118,11 @@ export class GameBoard3D {
 
     // Remettre les méthodes liées à l'eau
     loadWaterMesh() {
-        console.log('🌊 Chargement de la mesh eau...');
         
         this.waterLoadPromise = new Promise((resolve, reject) => {
             this.gltfLoader.load(
                 './glb/tiles/eau.glb',
                 (gltf) => {
-                    console.log('✅ Mesh eau chargée avec succès', gltf);
                     
                     // Stocker la mesh de référence
                     this.waterMesh = gltf.scene;
@@ -153,14 +148,11 @@ export class GameBoard3D {
                     });
                     
                     this.waterLoaded = true;
-                    console.log('🌊 Mesh eau prête pour l\'instanciation');
                     resolve(this.waterMesh);
                 },
                 (progress) => {
-                    console.log('📊 Progression chargement eau:', progress);
                 },
                 (error) => {
-                    console.error('❌ Erreur lors du chargement de la mesh eau:', error);
                     reject(error);
                 }
             );
@@ -169,7 +161,6 @@ export class GameBoard3D {
     
     createWaterInstance() {
         if (!this.waterLoaded || !this.waterMesh) {
-            console.warn('⚠️ Mesh eau pas encore chargée');
             return null;
         }
         
@@ -186,18 +177,15 @@ export class GameBoard3D {
         // L'eau est positionnée relativement à la tuile, donc position (0,0,0) par rapport à son parent
         waterInstance.position.set(0, 0, 0);
         
-        console.log('🌊 Instance d\'eau créée');
         return waterInstance;
     }
     
     async createWaterInstanceAsync() {
         // Attendre que l'eau soit chargée si ce n'est pas déjà fait
         if (!this.waterLoaded && this.waterLoadPromise) {
-            console.log('⏳ Attente du chargement de la mesh eau...');
             try {
                 await this.waterLoadPromise;
             } catch (error) {
-                console.error('❌ Erreur lors de l\'attente du chargement de l\'eau:', error);
                 return null;
             }
         }
@@ -253,7 +241,6 @@ export class GameBoard3D {
     detectCityAtPosition(point) {
         // Convertir en coordonnées hexagonales
         const hexCoords = this.cartesianToHex(point);
-        console.log(`📍 Coordonnées hexagonales: q=${hexCoords.q}, r=${hexCoords.r}`);
         
         // Chercher s'il y a une ville à ces coordonnées
         let cityFound = null;
@@ -266,12 +253,6 @@ export class GameBoard3D {
                 cityFound = child;
             }
         });
-        
-        if (cityFound) {
-            console.log(`🏘️ Ville trouvée: ${cityFound.userData.clanName} (${cityFound.userData.color}) à (${hexCoords.q}, ${hexCoords.r})`);
-        } else {
-            console.log(`❌ Aucune ville trouvée à (${hexCoords.q}, ${hexCoords.r})`);
-        }
         
         return cityFound;
     }
@@ -289,7 +270,6 @@ export class GameBoard3D {
 
     // Méthode pour ajouter une tuile
     addTile(modelUrl, position = { q: 0, r: 0, z: 0}, rotation = 0) {
-        console.log(`🔄 Chargement du modèle: ${modelUrl} à la position:`, position);
         return new Promise((resolve, reject) => {
             this.gltfLoader.load(
                 modelUrl,
@@ -328,7 +308,6 @@ export class GameBoard3D {
         tile.position.set(pos.x, pos.y, pos.z);
                     tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
                     // Les modèles sont déjà à la bonne taille (3 unités)
-                    console.log(`📍 Position calculée:`, pos, `Rotation: ${rotation}`);
                     
                     // Utiliser le MeepleManager pour l'eau
                     this.createWaterInstanceAsync().then(waterInstance => {
@@ -337,7 +316,6 @@ export class GameBoard3D {
                             tile.add(waterInstance);
                         }
                     }).catch(error => {
-                        console.warn('⚠️ Impossible d\'ajouter l\'eau à la tuile:', error);
                     });
                     
                             // Désactiver les collisions pour cette tuile
@@ -349,13 +327,11 @@ export class GameBoard3D {
                     
         this.workplane.add(tile);
         this.tiles.push(tile); // Stocke la référence de la tuile
-                    console.log(`🎯 Tuile ajoutée au workplane. Total tuiles:`, this.tiles.length);
                     resolve(tile);
                 },
                 (progress) => {
                 },
                 (error) => {
-                    console.error(`❌ Erreur lors du chargement du modèle ${modelUrl}:`, error);
                     reject(error);
                 }
             );
@@ -365,11 +341,8 @@ export class GameBoard3D {
     addTileTemp(modelUrl, position = { q: 0, r: 0}, rotation = 0) {
         // Nettoyer toute tuile temporaire existante avant d'en créer une nouvelle
         if (this.tempTile) {
-            console.log('🧹 Nettoyage de la tuile temporaire existante avant création d\'une nouvelle');
             this.removeTempTile();
         }
-        
-        console.log(`🔄 Chargement de la tuile temporaire: ${modelUrl} à la position:`, position);
         this.tempTilePosition = position;
         this.tempTileRotation = rotation;
         
@@ -377,7 +350,6 @@ export class GameBoard3D {
             this.gltfLoader.load(
                 modelUrl,
                 (gltf) => {
-                    console.log(`✅ Tuile temporaire chargée avec succès: ${modelUrl}`, gltf);
                     const tile = gltf.scene;
                     
                     // Corriger l'espace colorimétrique des textures pour éviter la saturation
@@ -412,17 +384,15 @@ export class GameBoard3D {
         tile.position.set(pos.x, 0.2, pos.z); // Hauteur fixée à 0.2
                     tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
                     // Le modèle est déjà à la bonne taille
-                    console.log(`📍 Position tuile temporaire:`, pos, `Rotation: ${rotation}`);
                     
                     // Utiliser le MeepleManager pour l'eau
                     this.createWaterInstanceAsync().then(waterInstance => {
                         if (waterInstance) {
                             // Attacher l'eau comme enfant de la tuile temporaire
                             tile.add(waterInstance);
-                            console.log('🌊 Mesh eau attachée à la tuile temporaire');
+
                         }
                     }).catch(error => {
-                        console.warn('⚠️ Impossible d\'ajouter l\'eau à la tuile temporaire:', error);
                     });
                     
                             // Désactiver les collisions pour cette tuile temporaire
@@ -460,7 +430,7 @@ export class GameBoard3D {
                 leftMaterial.needsUpdate = true;
             },
             undefined,
-            (error) => console.warn('⚠️ Erreur chargement texture rotation:', error)
+            (error) => {}
         );
                     rightSprite.position.set(pos.x + 0.5, 0.4, pos.z); // Position relative à la tuile principale
         rightSprite.rotation.x = -Math.PI / 2;
@@ -502,7 +472,7 @@ export class GameBoard3D {
                 okMaterial.needsUpdate = true;
             },
             undefined,
-            (error) => console.warn('⚠️ Erreur chargement texture buttonOk:', error)
+            (error) => {}
         );
         okSprite.position.set(pos.x + 1, 0.6, pos.z - 1); // Position relative à la tuile principale
         okSprite.scale.set(1, 1, 1); // Taille du sprite
@@ -514,14 +484,12 @@ export class GameBoard3D {
         this.tempTileRotation = rotation;
         this.tempTileSprites = [leftSprite, rightSprite, okSprite];
 
-                    console.log(`🎯 Tuile temporaire et sprites créés avec succès !`);
                     resolve(tile);
                 },
                 (progress) => {
                     // Optionnel: callback de progression
                 },
                 (error) => {
-                    console.error('Erreur lors du chargement du modèle temporaire:', error);
                     reject(error);
                 }
             );
@@ -532,7 +500,6 @@ export class GameBoard3D {
     moveTileTemp(position = { q: 0, r: 0 }) {
         if (this.tempTile) {
             this.tempTilePosition = position;
-            console.log(this.tempTilePosition);
             const pos = this.hexToCartesian(position);
             
             // Déplacer la tuile principale
@@ -549,13 +516,11 @@ export class GameBoard3D {
 
     // Méthode pour ajouter une ville de clan
     addClanCity(position = { q: 0, r: 0 }, colorHex = '#FFFFFF', clanName = 'Unknown', isInitialPlacement = false) {
-        console.log(`🏘️ Chargement de la ville pour le clan ${clanName} (${colorHex}) à la position:`, position);
         
         return new Promise((resolve, reject) => {
             this.gltfLoader.load(
                 './glb/meeple/ville.glb',
                 (gltf) => {
-                    console.log(`✅ Ville chargée avec succès pour le clan ${clanName}`, gltf);
                     const cityMesh = gltf.scene;
                     
                     // Corriger l'espace colorimétrique des textures
@@ -599,17 +564,13 @@ export class GameBoard3D {
                     // Stocker la référence si c'est pour l'initial placement
                     if (isInitialPlacement) {
                         this.initialPlacementCities.push(cityMesh);
-                        console.log(`📝 Ville du clan ${clanName} stockée pour suppression ultérieure (total: ${this.initialPlacementCities.length})`);
                     }
                     
-                    console.log(`🏘️ Ville du clan ${clanName} ajoutée au workplane à la position`, pos);
                     resolve(cityMesh);
                 },
                 (progress) => {
-                    console.log(`📊 Progression du chargement de la ville ${clanName}:`, progress);
                 },
                 (error) => {
-                    console.error(`❌ Erreur lors du chargement de la ville pour le clan ${clanName}:`, error);
                     reject(error);
                 }
             );
@@ -618,8 +579,6 @@ export class GameBoard3D {
 
     // Initialiser les meeples avec les couleurs des clans
     async initializeMeeplesWithClans(clansData = []) {
-        console.log('🎭 Initialisation des meeples avec les couleurs des clans...');
-        
         try {
             // Précharger tous les types de meeples
             await this.meepleManager.preloadAllMeeples();
@@ -629,26 +588,20 @@ export class GameBoard3D {
             
             for (const meepleType of colorableMeeples) {
                 const instances = this.meepleManager.createMeeplesByClans(meepleType, clansData);
-                console.log(`🎨 ${instances.length} instances de ${meepleType} créées pour les clans`);
             }
             
-            console.log('✅ Meeples initialisés avec succès pour tous les clans');
-            
         } catch (error) {
-            console.error('❌ Erreur lors de l\'initialisation des meeples:', error);
             throw error;
         }
     }
 
     // Ajouter un meeple au plateau (version optimisée)
     addMeeple(type, position = { q: 0, r: 0, z: 0 }, colorHex = null, userData = {}) {
-        console.log(`🎭 Ajout du meeple ${type} à la position:`, position);
         
         // Créer une instance du meeple
         const meepleInstance = this.meepleManager.createMeepleInstance(type, colorHex, userData);
         
         if (!meepleInstance) {
-            console.error(`❌ Impossible de créer l'instance du meeple ${type}`);
             return null;
         }
         
@@ -666,14 +619,11 @@ export class GameBoard3D {
         // Ajouter au workplane
         this.workplane.add(meepleInstance);
         
-        console.log(`🎭 Meeple ${type} ajouté au plateau à la position`, pos);
         return meepleInstance;
     }
 
     // Méthode pour créer une ville de clan (optimisée avec le MeepleManager)
     addClanCityOptimized(position = { q: 0, r: 0 }, colorHex = '#FFFFFF', clanName = 'Unknown', isInitialPlacement = false) {
-        console.log(`🏘️ Ajout de la ville optimisée pour le clan ${clanName} (${colorHex}) à la position:`, position);
-        
         // Utiliser le nouveau système de meeples
         const cityMesh = this.addMeeple('ville', position, colorHex, {
             type: 'clan_city',
@@ -683,14 +633,12 @@ export class GameBoard3D {
         });
         
         if (!cityMesh) {
-            console.error(`❌ Impossible de créer la ville pour le clan ${clanName}`);
             return null;
         }
         
         // Stocker la référence si c'est pour l'initial placement
         if (isInitialPlacement) {
             this.initialPlacementCities.push(cityMesh);
-            console.log(`📝 Ville du clan ${clanName} stockée pour suppression ultérieure (total: ${this.initialPlacementCities.length})`);
         }
         
         return Promise.resolve(cityMesh);
@@ -698,12 +646,9 @@ export class GameBoard3D {
 
     // Méthode de test pour le système de meeples
     async testMeepleSystem() {
-        console.log('🧪 Test du système de meeples...');
-        
         try {
             // Test 1: Préchargement
             await this.meepleManager.preloadMeepleModel('ville');
-            console.log('✅ Test 1: Préchargement réussi');
             
             // Test 2: Création d'instance colorée
             const redCity = this.meepleManager.createMeepleInstance('ville', '#FF0000', {
@@ -711,29 +656,18 @@ export class GameBoard3D {
             });
             
             if (redCity) {
-                console.log('✅ Test 2: Instance colorée créée');
-                
                 // Test 3: Ajout au plateau
                 const pos = this.hexToCartesian({ q: 0, r: 0 });
                 redCity.position.set(pos.x, pos.y, pos.z);
                 this.workplane.add(redCity);
-                console.log('✅ Test 3: Meeple ajouté au plateau');
                 
                 // Nettoyer après test
                 setTimeout(() => {
                     this.workplane.remove(redCity);
-                    console.log('🧹 Test: Meeple de test supprimé');
                 }, 3000);
             }
             
-            // Test 4: Informations du système
-            console.log('📊 Types disponibles:', this.meepleManager.getAvailableMeepleTypes());
-            console.log('📊 Ville préchargée:', this.meepleManager.isMeepleLoaded('ville'));
-            
-            console.log('✅ Tous les tests du système de meeples réussis !');
-            
         } catch (error) {
-            console.error('❌ Erreur lors des tests:', error);
         }
     }
 
@@ -752,7 +686,6 @@ export class GameBoard3D {
     // Fonction pour activer le drag & drop des villes (phase initial_placement)
     enableCityDrag() {
         this.cityDragEnabled = true;
-        console.log('🔓 Drag & drop des villes activé');
     }
 
     // Fonction pour désactiver le drag & drop des villes
@@ -763,17 +696,15 @@ export class GameBoard3D {
             this.isDraggingCity = false;
             this.draggedCity = null;
         }
-        console.log('🔒 Drag & drop des villes désactivé');
     }
 
     // Fonction pour supprimer les villes du placement initial uniquement
     removeInitialPlacementCities() {
-        console.log('🗑️ Suppression des villes du placement initial...');
-        console.log(`🏘️ ${this.initialPlacementCities.length} villes du placement initial à supprimer`);
+
+
         
         // Supprimer chaque ville stockée
         this.initialPlacementCities.forEach((city, index) => {
-            console.log(`🗑️ Suppression de la ville ${city.userData.clanName} (${city.userData.color})`);
             
             // Supprimer du workplane
             this.workplane.remove(city);
@@ -811,7 +742,6 @@ export class GameBoard3D {
         // Vider le tableau après suppression
         this.initialPlacementCities = [];
         
-        console.log(`✅ ${removedCount} villes du placement initial supprimées avec succès`);
         return removedCount;
     }
 
@@ -875,7 +805,6 @@ export class GameBoard3D {
 
         // Si on a cliqué sur une ville et que le drag est activé, commencer le drag de la ville
         if (cityFound && this.cityDragEnabled) {
-            console.log(`🖱️ Début du drag de la ville ${cityFound.userData.clanName}`);
             this.isDraggingCity = true;
             this.draggedCity = cityFound;
             this.activePointerId = e.pointerId;
@@ -950,11 +879,9 @@ export class GameBoard3D {
             if (result.point) {
                 // Convertir la position en coordonnées hexagonales sans arrondir
                 const floatCoords = this.#cartesianToHexFloat(result.point);
-                console.log(`🎯 Position de relâchement: q=${floatCoords.q.toFixed(3)}, r=${floatCoords.r.toFixed(3)}`);
                 
                 // Position d'origine de la ville qu'on déplace
                 const originalPos = this.draggedCity.userData.position;
-                console.log(`📍 Position d'origine de la ville: q=${originalPos.q}, r=${originalPos.r}`);
                 
                 // Récupérer tous les territoires occupés par des villes (sauf la ville actuelle)
                 const occupiedTerritories = new Set();
@@ -1004,20 +931,13 @@ export class GameBoard3D {
                     }
                     
                     if (closestTerrain) {
-                        console.log(`🎯 Terrain choisi: ${closestTerrain.type} à (${closestTerrain.position.q}, ${closestTerrain.position.r})`);
-                        
                         // Placer la ville sur le terrain choisi
                         const exactPos = this.hexToCartesian({ q: closestTerrain.position.q, r: closestTerrain.position.r, z: 0 });
                         this.draggedCity.position.set(exactPos.x, this.draggedCity.position.y, exactPos.z);
                         
                         // Mettre à jour les userData
                         this.draggedCity.userData.position = { q: closestTerrain.position.q, r: closestTerrain.position.r };
-                        console.log(`✅ Ville ${this.draggedCity.userData.clanName} placée sur ${closestTerrain.type} à (${closestTerrain.position.q}, ${closestTerrain.position.r})`);
-                    } else {
-                        console.error(`❌ Aucun terrain valide disponible pour la ville ${this.draggedCity.userData.clanName}`);
                     }
-                } else {
-                    console.error('❌ gameState non disponible');
                 }
             }
             
@@ -1075,7 +995,6 @@ export class GameBoard3D {
     }
 
     handleObjectClick(object) {
-        console.log('Objet cliqué:', object);
     }
 
     handleCircleClick(circle) {
@@ -1109,10 +1028,8 @@ export class GameBoard3D {
 
     handleRotationSpriteClick(sprite) {
         if (sprite === this.tempTileSprites[0]) {
-            console.log('Sprite de rotation gauche cliqué');
             this.tempTileRotation += 1;
         } else if (sprite === this.tempTileSprites[1]) {
-            console.log('Sprite de rotation droite cliqué');
             this.tempTileRotation -= 1;
         } else if (sprite === this.tempTileSprites[2]) {
             // Émettre un événement avec les informations de la tile
@@ -1127,7 +1044,6 @@ export class GameBoard3D {
             return;
         }
         this.tempTileRotation = (this.tempTileRotation + 6) % 6;
-        console.log(this.tempTileRotation);
         // Appelle l'animation au lieu de changer directement la rotation
         this.animateTileTempRotation(this.tempTileRotation * Math.PI / 3);
     }
@@ -1147,7 +1063,6 @@ export class GameBoard3D {
         
         // Vérifier les limites de zoom
         if (newScale < this.minScale || newScale > this.maxScale) {
-            // console.log(`🚫 Zoom limité: échelle ${newScale.toFixed(2)} hors limites [${this.minScale}, ${this.maxScale}]`);
             return; // Ne pas appliquer le zoom
         }
         
@@ -1161,8 +1076,6 @@ export class GameBoard3D {
         
         // Contraindre la position après le zoom
         this.constrainPosition(this.workplane.position);
-        
-        // console.log(`🔍 Zoom appliqué: échelle ${newScale.toFixed(2)}`);
     }
 
     onResize() {
@@ -1226,7 +1139,6 @@ export class GameBoard3D {
                     }
                 }
             });
-            console.log('🗑️ Tuile temporaire (avec eau) supprimée');
             this.tileTemp = null;
         }
 
@@ -1247,57 +1159,46 @@ export class GameBoard3D {
         this.tempTileRotation = null;
     }
 
-// Méthode de démonstration pour le nouveau système Territory
-async testTerritorySystem() {
-    console.log('🧪 Test du nouveau système Territory...');
-    
-    try {
-        // Vérifier qu'on a des territoires
-        if (!window.gameState?.game?.territories?.length) {
-            console.warn('⚠️ Aucun territoire disponible pour le test');
-            return;
-        }
-        
-        // Prendre le premier territoire disponible
-        const territory = window.gameState.game.territories[0];
-        console.log(`🎯 Test sur territoire (${territory.position.q}, ${territory.position.r}) de type ${territory.type}`);
-        
-        // Configurer le territoire pour le test
-        territory.color = '#FF0000'; // Rouge pour test
-        territory.construction_type = 'ville';
-        territory.rempart = 'fortifiee';
-        
-        // Test 1: Créer une construction
-        console.log('📦 Test 1: Création de construction...');
-        territory.createConstruction(this, this.meepleManager);
-        
-        // Test 2: Créer des guerriers (3 pour tester le positionnement)
-        setTimeout(() => {
-            console.log('⚔️ Test 2: Création de 3 guerriers...');
-            territory.createWarriors(this, this.meepleManager, 3);
+    // Méthode de démonstration pour le nouveau système Territory
+    async testTerritorySystem() {
+        try {
+            // Vérifier qu'on a des territoires
+            if (!window.gameState?.game?.territories?.length) {
+                return;
+            }
             
-            // Test 3: Mettre à jour le nombre de guerriers après 2 secondes
+            // Prendre le premier territoire disponible
+            const territory = window.gameState.game.territories[0];
+            
+            // Configurer le territoire pour le test
+            territory.color = '#FF0000'; // Rouge pour test
+            territory.construction_type = 'ville';
+            territory.rempart = 'fortifiee';
+            
+            // Test 1: Créer une construction
+            territory.createConstruction(this, this.meepleManager);
+            
+            // Test 2: Créer des guerriers (3 pour tester le positionnement)
             setTimeout(() => {
-                console.log('🔄 Test 3: Mise à jour vers 5 guerriers...');
-                territory.createWarriors(this, this.meepleManager, 5);
+                territory.createWarriors(this, this.meepleManager, 3);
                 
-                // Test 4: Nettoyage après 3 secondes
+                // Test 3: Mettre à jour le nombre de guerriers après 2 secondes
                 setTimeout(() => {
-                    console.log('🧹 Test 4: Nettoyage complet...');
-                    territory.removeAllMeshes(this);
+                    territory.createWarriors(this, this.meepleManager, 5);
                     
-                    // Réinitialiser le territoire
-                    territory.color = null;
-                    territory.construction_type = null;
-                    territory.rempart = null;
-                    
-                    console.log('✅ Test du système Territory terminé !');
-                }, 3000);
-            }, 2000);
-        }, 1000);
-        
-    } catch (error) {
-        console.error('❌ Erreur lors du test Territory:', error);
-    }
-    }
+                    // Test 4: Nettoyage après 3 secondes
+                    setTimeout(() => {
+                        territory.removeAllMeshes(this);
+                        
+                        // Réinitialiser le territoire
+                        territory.color = null;
+                        territory.construction_type = null;
+                        territory.rempart = null;
+                    }, 3000);
+                }, 2000);
+            }, 1000);
+            
+        } catch (error) {
+        }
+        }
 } 
