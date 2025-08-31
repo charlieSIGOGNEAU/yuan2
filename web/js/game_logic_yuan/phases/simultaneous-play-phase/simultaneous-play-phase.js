@@ -9,9 +9,45 @@ export const simultaneousPlayPhase = {
     // Stockage du cercle actuel (un seul à la fois)
     currentCircle: null, // { circle: THREE.Mesh, territory: Territory }
     processedTurns: 1,
+
+    // Fonction de test pour findShortestPathTo
+    // testShortestPath(q1, r1, q2, r2) {
+    //     console.log(`🧪 Test du chemin le plus court de (${q1}, ${r1}) vers (${q2}, ${r2})`);
+        
+    //     // Trouver les territoires par coordonnées
+    //     const territory1 = gameState.getTerritoryByPosition(q1, r1);
+    //     const territory2 = gameState.getTerritoryByPosition(q2, r2);
+        
+    //     if (!territory1) {
+    //         console.error(`❌ Territoire non trouvé aux coordonnées (${q1}, ${r1})`);
+    //         return;
+    //     }
+        
+    //     if (!territory2) {
+    //         console.error(`❌ Territoire non trouvé aux coordonnées (${q2}, ${r2})`);
+    //         return;
+    //     }
+        
+    //     console.log(`📍 Départ: ${territory1.type} (${q1}, ${r1})`);
+    //     console.log(`📍 Arrivée: ${territory2.type} (${q2}, ${r2})`);
+        
+    //     // Tester la fonction
+    //     const path = territory1.findShortestPathTo(territory2);
+        
+    //     if (path) {
+    //         console.log(`✅ Chemin trouvé en ${path.length} étapes :`);
+    //         path.forEach((territory, index) => {
+    //             console.log(`   ${index + 1}. ${territory.type} (${territory.position.q}, ${territory.position.r})`);
+    //         });
+    //     } else {
+    //         console.log('❌ Aucun chemin trouvé');
+    //     }
+        
+    //     return path;
+    // },
     
     // nom temporaire
-    simultaneousPlayPhase(gameBoard) {
+    async simultaneousPlayPhase(gameBoard) {
         if (this.processedTurns === 1) {
             // Exécuter getAdjacentTerritories pour tous les territoires
             console.log('🔄 Initialisation des territoires adjacents...');
@@ -46,7 +82,7 @@ export const simultaneousPlayPhase = {
                 uiManager.setupResponsiveDimensions();
             }, 1000);
 
-            this.processVictoryBiddings(gameBoard);
+            await this.processVictoryBiddings(gameBoard);
             // Mettre à jour les compteurs de ressources de tous les clans
             this.updateAllClansResources();
             setTimeout(() => {

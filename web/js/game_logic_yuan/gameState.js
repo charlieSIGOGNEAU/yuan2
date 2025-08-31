@@ -179,11 +179,12 @@ class Action {
         this.game_user_id = data.game_user_id || null;
         this.game_id = data.game_id || null;
         this.turn = data.turn || 0;
-        this.position_q = data.position_q || null;
-        this.position_r = data.position_r || null;
+        this.position_q = data.position_q !== undefined ? data.position_q : null;
+        this.position_r = data.position_r !== undefined ? data.position_r : null;
         this.developpement_level = data.developpement_level || 0;
         this.fortification_level = data.fortification_level || 0;
         this.militarisation_level = data.militarisation_level || 0;
+        this.development_type = null;
     }
 
     update(data) {
@@ -577,6 +578,86 @@ class Territory {
             ['plain', 'forest', 'rice', 'mine'].includes(territory.type)
         );
     }
+
+    // Fonction pour trouver le chemin le plus court vers un territoire cible via les lacs ou adjacence
+    findShortestPathTo(targetTerritory) {
+        // Vérifier si les territoires sont adjacents directs
+        const adjacentTerritories = this.getAdjacentTerritories();
+        const isAdjacent = adjacentTerritories.some(territory => 
+            territory.position.q === targetTerritory.position.q && 
+            territory.position.r === targetTerritory.position.r
+        );
+        
+        if (isAdjacent) {
+            return [this, targetTerritory]; // Chemin direct avec 2 éléments
+        }
+        
+        // Vérifier si les territoires sont connectés via les lacs
+        const connectedTerritories = this.getConnectedTerritories();
+        const isConnected = connectedTerritories.some(territory => 
+            territory.position.q === targetTerritory.position.q && 
+            territory.position.r === targetTerritory.position.r
+        );
+        
+        if (!isConnected) {
+            console.warn('❌ Territoires non connectés via les lacs ou adjacence');
+            return null; // Pas de chemin possible
+        }
+        
+        // Si c'est le même territoire, retourner juste ce territoire
+        if (this.position.q === targetTerritory.position.q && 
+            this.position.r === targetTerritory.position.r) {
+            return [this];
+        }
+        
+        // BFS (Breadth-First Search) pour trouver le chemin le plus court
+        const queue = [{ territory: this, path: [this] }];
+        const visited = new Set();
+        visited.add(`${this.position.q},${this.position.r}`);
+        
+        while (queue.length > 0) {
+            const { territory: currentTerritory, path } = queue.shift();
+            
+            // Explorer les territoires adjacents
+            const adjacentTerritories = currentTerritory.getAdjacentTerritories();
+            
+            for (const adjacent of adjacentTerritories) {
+                const posKey = `${adjacent.position.q},${adjacent.position.r}`;
+                
+                if (visited.has(posKey)) {
+                    continue; // Déjà visité
+                }
+                
+                visited.add(posKey);
+                const newPath = [...path, adjacent];
+                
+                // Si on a atteint la cible
+                if (adjacent.position.q === targetTerritory.position.q && 
+                    adjacent.position.r === targetTerritory.position.r) {
+                    return newPath;
+                }
+                
+                // Continuer seulement si c'est un territoire water ou si c'est connecté via les lacs
+                if (adjacent.type === 'water') {
+                    queue.push({ territory: adjacent, path: newPath });
+                } else {
+                    // Vérifier si ce territoire non-water est connecté via les lacs
+                    const adjacentConnectedTerritories = adjacent.getConnectedTerritories();
+                    const isAdjacentConnected = adjacentConnectedTerritories.some(territory => 
+                        territory.position.q === targetTerritory.position.q && 
+                        territory.position.r === targetTerritory.position.r
+                    );
+                    
+                    if (isAdjacentConnected) {
+                        queue.push({ territory: adjacent, path: newPath });
+                    }
+                }
+            }
+        }
+        
+        console.warn('❌ Aucun chemin trouvé vers le territoire cible');
+        return null; // Aucun chemin trouvé
+    }
 }
 
 class Lake {
@@ -586,51 +667,6 @@ class Lake {
         this.id = Math.random().toString(36).substr(2, 9);
     }
 
-    // static createOrUpdateLake(waterTerrain) {
-    //     // Trouver les terrains water adjacents qui sont déjà dans des lacs
-    //     const adjacentWaterTerrains = waterTerrain.getAdjacentTerritories().filter(t => t.type === 'water');
-    //     const adjacentLakes = new Set();
-        
-    //     // Pour chaque terrain water adjacent, trouver son lac
-    //     for (const adjacentWater of adjacentWaterTerrains) {
-    //         for (const lake of gameState.game.lakes.values()) {
-    //             if (lake.waterTiles.has(adjacentWater)) {
-    //                 adjacentLakes.add(lake);
-    //                 break;
-    //             }
-    //         }
-    //     }
-
-    //     // Cas 1: Pas de lac adjacent -> créer un nouveau lac
-    //     if (adjacentLakes.size === 0) {
-    //         const newLake = new Lake();
-    //         newLake.waterTiles.add(waterTerrain);
-    //         gameState.game.lakes.set(newLake.id, newLake);
-    //     }
-    //     // Cas 2: Un seul lac adjacent -> ajouter à ce lac
-    //     else if (adjacentLakes.size === 1) {
-    //         const lake = Array.from(adjacentLakes)[0];
-    //         lake.waterTiles.add(waterTerrain);
-    //     }
-    //     // Cas 3: Plusieurs lacs adjacents -> fusionner les lacs
-    //     else {
-    //         const lakes = Array.from(adjacentLakes);
-    //         const mainLake = lakes[0];
-            
-            
-    //         // Ajouter le nouveau terrain au lac principal
-    //         mainLake.waterTiles.add(waterTerrain);
-            
-    //         // Fusionner tous les autres lacs dans le premier
-    //         for (let i = 1; i < lakes.length; i++) {
-    //             const lakeToMerge = lakes[i];
-    //             for (const tile of lakeToMerge.waterTiles) {
-    //                 mainLake.waterTiles.add(tile);
-    //             }
-    //             gameState.game.lakes.delete(lakeToMerge.id);
-    //         }
-    //     }
-    // }
 
     static updateConnectedTerritories() {
         // Parcourir tous les lacs
@@ -911,6 +947,12 @@ class GameState {
     // Méthode pour trouver un clan par son ID
     getClanById(clanId) {
         return this.game.clans.find(clan => clan.id === clanId);
+    }
+
+    // Méthode pour récupérer le clan_id d'un game_user_id
+    getClanIdByGameUserId(gameUserId) {
+        const gameUser = this.game.game_users.find(gu => gu.id === gameUserId);
+        return gameUser ? gameUser.clan_id : null;
     }
 }
 

@@ -1,5 +1,5 @@
 // Gestion des distances entre territoires et calcul des positions de départ
-import { gameState, Lake } from '../../gameState.js';
+import { gameState, Lake } from './gameState.js';
 
 class StartingPositions {
     constructor() {
