@@ -103,6 +103,9 @@ export class GameBoard3D {
         await this.meepleManager.preloadMeepleModel('temple');
         await this.meepleManager.preloadMeepleModel('2villes');
         
+        // Précharger les sprites
+        await this.meepleManager.preloadSpriteTexture('pathDisc');
+        
         // Précharger les cercles
         await this.meepleManager.preloadCircle('selection');
         

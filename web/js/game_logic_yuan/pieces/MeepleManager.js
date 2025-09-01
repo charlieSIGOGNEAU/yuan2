@@ -59,6 +59,20 @@ export class MeepleManager {
                 defaultColor: 0xffffff
             }
         };
+
+        // Types de sprites 2D et leurs caractéristiques
+        this.spriteTypes = {
+            pathDisc: {
+                path: './images/disqueAlpha.png',
+                size: 0.5, // Taille 0.5 x 0.5
+                colorable: true,
+                defaultColor: 0xff0000, // Rouge
+                useAsAlphaMap: true // Utiliser comme canal alpha
+            }
+        };
+
+        // Cache des textures préchargées
+        this.loadedTextures = new Map();
     }
 
     // Précharger un modèle de meeple
@@ -126,6 +140,52 @@ export class MeepleManager {
 
         // Stocker la promise pour éviter les chargements multiples
         this.loadPromises.set(type, loadPromise);
+        return loadPromise;
+    }
+
+    // Précharger une texture de sprite
+    async preloadSpriteTexture(type) {
+        if (!this.spriteTypes[type]) {
+            throw new Error(`Type de sprite inconnu: ${type}`);
+        }
+
+        // Si déjà chargé, retourner la texture
+        if (this.loadedTextures.has(type)) {
+            return this.loadedTextures.get(type);
+        }
+
+        // Si en cours de chargement, retourner la promise existante
+        const loadKey = `sprite_${type}`;
+        if (this.loadPromises.has(loadKey)) {
+            return this.loadPromises.get(loadKey);
+        }
+
+        // Créer une nouvelle promise de chargement
+        const loadPromise = new Promise((resolve, reject) => {
+            const spriteInfo = this.spriteTypes[type];
+            const textureLoader = new THREE.TextureLoader();
+
+            textureLoader.load(
+                spriteInfo.path,
+                (texture) => {
+                    // Ne pas définir l'espace colorimétrique pour les masques alpha
+                    if (!spriteInfo.useAsAlphaMap) {
+                        texture.colorSpace = THREE.SRGBColorSpace;
+                    }
+                    
+                    this.loadedTextures.set(type, texture);
+                    this.loadPromises.delete(loadKey);
+                    resolve(texture);
+                },
+                undefined,
+                (error) => {
+                    this.loadPromises.delete(loadKey);
+                    reject(error);
+                }
+            );
+        });
+
+        this.loadPromises.set(loadKey, loadPromise);
         return loadPromise;
     }
 
@@ -265,6 +325,60 @@ export class MeepleManager {
         };
 
         return instance;
+    }
+
+    // Créer une instance de sprite 2D
+    async createSpriteInstance(type, position = { x: 0, y: 0, z: 0 }, colorHex = null, userData = {}) {
+        if (!this.spriteTypes[type]) {
+            throw new Error(`Type de sprite inconnu: ${type}`);
+        }
+
+        const spriteInfo = this.spriteTypes[type];
+        
+        // S'assurer que la texture est préchargée
+        const texture = await this.preloadSpriteTexture(type);
+        
+        // Créer la géométrie du plan
+        const geometry = new THREE.PlaneGeometry(spriteInfo.size, spriteInfo.size);
+        
+        // Créer le matériau
+        const material = new THREE.MeshBasicMaterial({
+            transparent: true,
+            alphaTest: 0.1,
+            toneMapped: false,
+            color: colorHex ? colorHex : spriteInfo.defaultColor,
+            side: THREE.DoubleSide
+        });
+
+        // Appliquer la texture selon son type
+        if (spriteInfo.useAsAlphaMap) {
+            material.alphaMap = texture.clone();
+        } else {
+            material.map = texture.clone();
+        }
+
+        // Créer le mesh
+        const sprite = new THREE.Mesh(geometry, material);
+        
+        // Positionner le sprite
+        sprite.position.set(position.x, position.y, position.z);
+        
+        // Orienter vers le haut (horizontal)
+        sprite.rotation.x = -Math.PI / 2;
+        
+        // Ajouter les userData
+        sprite.userData = {
+            type: 'sprite',
+            spriteType: type,
+            spriteInfo: spriteInfo,
+            originalColor: colorHex ? colorHex : spriteInfo.defaultColor,
+            ...userData
+        };
+
+        // Ajouter à la liste des instances
+        this.instances.push(sprite);
+
+        return sprite;
     }
 
     // Créer une instance d'un cercle avec position et animation

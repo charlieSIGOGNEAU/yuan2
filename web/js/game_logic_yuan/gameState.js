@@ -579,7 +579,9 @@ class Territory {
         );
     }
 
-    // Fonction pour trouver le chemin le plus court vers un territoire cible via les lacs ou adjacence
+    // Fonction pour trouver le chemin le plus court vers un territoire cible
+    // Le chemin doit passer exclusivement par des territoires 'water' entre le départ et l'arrivée
+    // Seuls le premier et dernier territoire peuvent être non-water
     findShortestPathTo(targetTerritory) {
         // Vérifier si les territoires sont adjacents directs
         const adjacentTerritories = this.getAdjacentTerritories();
@@ -637,21 +639,16 @@ class Territory {
                     return newPath;
                 }
                 
-                // Continuer seulement si c'est un territoire water ou si c'est connecté via les lacs
+                // Continuer seulement si c'est un territoire water (pour les intermédiaires)
+                // Ou si c'est le territoire cible final (même s'il n'est pas water)
                 if (adjacent.type === 'water') {
                     queue.push({ territory: adjacent, path: newPath });
-                } else {
-                    // Vérifier si ce territoire non-water est connecté via les lacs
-                    const adjacentConnectedTerritories = adjacent.getConnectedTerritories();
-                    const isAdjacentConnected = adjacentConnectedTerritories.some(territory => 
-                        territory.position.q === targetTerritory.position.q && 
-                        territory.position.r === targetTerritory.position.r
-                    );
-                    
-                    if (isAdjacentConnected) {
-                        queue.push({ territory: adjacent, path: newPath });
-                    }
+                } else if (adjacent.position.q === targetTerritory.position.q && 
+                          adjacent.position.r === targetTerritory.position.r) {
+                    // Si c'est le territoire cible, on peut l'atteindre même s'il n'est pas water
+                    queue.push({ territory: adjacent, path: newPath });
                 }
+                // Ne pas ajouter les territoires non-water intermédiaires
             }
         }
         
