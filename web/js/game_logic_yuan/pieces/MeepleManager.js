@@ -64,10 +64,19 @@ export class MeepleManager {
         this.spriteTypes = {
             pathDisc: {
                 path: './images/disqueAlpha.png',
-                size: 0.5, // Taille 0.5 x 0.5
+                size: 0.1, // Taille 0.1 x 0.1
                 colorable: true,
                 defaultColor: 0xff0000, // Rouge
                 useAsAlphaMap: true // Utiliser comme canal alpha
+            },
+            pathSquare: {
+                path: null, // Pas de texture - carré plein
+                size: 0.15, // Légèrement plus grand pour couvrir plus d'espace
+                colorable: true,
+                defaultColor: 0xff0000, // Rouge
+                useAsAlphaMap: false, // Pas de canal alpha
+                oriented: true, // Indique que ce sprite doit être orienté selon la direction
+                solidColor: true // Carré plein sans texture
             }
         };
 
@@ -328,33 +337,45 @@ export class MeepleManager {
     }
 
     // Créer une instance de sprite 2D
-    async createSpriteInstance(type, position = { x: 0, y: 0, z: 0 }, colorHex = null, userData = {}) {
+    async createSpriteInstance(type, position = { x: 0, y: 0, z: 0 }, colorHex = null, userData = {}, rotationY = 0) {
         if (!this.spriteTypes[type]) {
             throw new Error(`Type de sprite inconnu: ${type}`);
         }
 
         const spriteInfo = this.spriteTypes[type];
         
-        // S'assurer que la texture est préchargée
-        const texture = await this.preloadSpriteTexture(type);
-        
         // Créer la géométrie du plan
         const geometry = new THREE.PlaneGeometry(spriteInfo.size, spriteInfo.size);
         
-        // Créer le matériau
-        const material = new THREE.MeshBasicMaterial({
-            transparent: true,
-            alphaTest: 0.1,
-            toneMapped: false,
-            color: colorHex ? colorHex : spriteInfo.defaultColor,
-            side: THREE.DoubleSide
-        });
-
-        // Appliquer la texture selon son type
-        if (spriteInfo.useAsAlphaMap) {
-            material.alphaMap = texture.clone();
+        // Créer le matériau selon le type de sprite
+        let material;
+        
+        if (spriteInfo.solidColor) {
+            // Matériau simple sans texture pour carré plein
+            material = new THREE.MeshBasicMaterial({
+                transparent: false, // Pas de transparence
+                toneMapped: false,
+                color: colorHex ? colorHex : spriteInfo.defaultColor,
+                side: THREE.DoubleSide
+            });
         } else {
-            material.map = texture.clone();
+            // Matériau avec texture (pour les autres sprites)
+            const texture = await this.preloadSpriteTexture(type);
+            
+            material = new THREE.MeshBasicMaterial({
+                transparent: true,
+                alphaTest: 0.5,
+                toneMapped: false,
+                color: colorHex ? colorHex : spriteInfo.defaultColor,
+                side: THREE.DoubleSide
+            });
+
+            // Appliquer la texture selon son type
+            if (spriteInfo.useAsAlphaMap) {
+                material.alphaMap = texture.clone();
+            } else {
+                material.map = texture.clone();
+            }
         }
 
         // Créer le mesh
@@ -363,8 +384,15 @@ export class MeepleManager {
         // Positionner le sprite
         sprite.position.set(position.x, position.y, position.z);
         
-        // Orienter vers le haut (horizontal)
-        sprite.rotation.x = -Math.PI / 2;
+        // Calculer l'orientation finale directement
+        if (spriteInfo.oriented && rotationY !== 0) {
+            // Définir l'ordre d'Euler pour des rotations correctes
+            sprite.rotation.order = 'YXZ';
+            sprite.rotation.set(-Math.PI / 2, rotationY, 0); // X pour horizontal, Y pour direction
+        } else {
+            // Orientation standard (horizontal seulement)
+            sprite.rotation.x = -Math.PI / 2;
+        }
         
         // Ajouter les userData
         sprite.userData = {

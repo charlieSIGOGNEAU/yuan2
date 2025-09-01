@@ -152,27 +152,50 @@ export const developpementAndMore = {
             adjustedPositions.push(adjustedPosition);
         }
 
-        // Créer les disques de façon asynchrone pour optimiser les performances
-        for (let i = 0; i < adjustedPositions.length; i++) {
-            const position = adjustedPositions[i];
-            const originalTerritory = territoryPath[i];
+        // Créer une courbe lissée avec un nombre de points 
+        const curvePointsCount = Math.round(10 * (adjustedPositions.length - 1) ); 
+        const smoothCurvePositions = this.createSmoothCurve(adjustedPositions, curvePointsCount);
+
+        console.log(`🌊 Courbe lissée créée avec ${smoothCurvePositions.length} points (${adjustedPositions.length} points originaux)`);
+
+        // Afficher les points un par un avec animation
+        this.animatePathDisplay(smoothCurvePositions);
+    },
+
+    /**
+     * Anime l'affichage des points un par un pour créer l'effet de flèche qui grandit
+     * @param {Array} smoothCurvePositions - Points de la courbe lissée
+     */
+    async animatePathDisplay(smoothCurvePositions) {
+        console.log(`🎬 Début de l'animation: ${smoothCurvePositions.length} points à afficher`);
+        
+        for (let i = 0; i < smoothCurvePositions.length; i++) {
+            const position = smoothCurvePositions[i];
+            // Pour les points interpolés, on utilise des données génériques
+            const isOriginalPoint = position.isOriginal || false;
+            const originalIndex = position.originalIndex || -1;
             
-            // Convertir les coordonnées hexagonales en cartésiennes
-            const cartesianPos = this.gameBoard.hexToCartesian(position);
+            // Utiliser les coordonnées cartésiennes directement si disponibles
+            const cartesianPos = position.cartesianX !== undefined ? 
+                { x: position.cartesianX, y: 0.1, z: position.cartesianZ } :
+                this.gameBoard.hexToCartesian(position);
             
             try {
-                // Créer une instance de sprite via le MeepleManager (optimisé)
+                // Créer une instance de sprite carré orienté via le MeepleManager (optimisé)
                 const discSprite = await this.gameBoard.meepleManager.createSpriteInstance(
-                    'pathDisc',
-                    { x: cartesianPos.x, y: 0.1, z: cartesianPos.z },
+                    'pathSquare', // Utiliser les carrés pleins
+                    { x: cartesianPos.x, y: 0.05, z: cartesianPos.z },
                     0xff0000, // Rouge
                     { 
-                        territoryQ: originalTerritory.position.q,
-                        territoryR: originalTerritory.position.r,
-                        adjustedQ: position.q,
-                        adjustedR: position.r,
-                        pathIndex: i
-                    }
+                        isOriginalPoint: isOriginalPoint,
+                        originalIndex: originalIndex,
+                        interpolatedQ: position.q,
+                        interpolatedR: position.r,
+                        curveIndex: i,
+                        rotationY: position.rotationY || 0,
+                        tangent: position.direction
+                    },
+                    position.rotationY || 0 // Rotation selon la direction de la courbe
                 );
 
                 // Ajouter le sprite au workplane
@@ -181,13 +204,21 @@ export const developpementAndMore = {
                 // Stocker la référence pour pouvoir le supprimer plus tard
                 this.pathSprites.push(discSprite);
 
-                console.log(`✅ Disque ${i + 1}/${adjustedPositions.length} ajouté à la position (${position.q.toFixed(2)}, ${position.r.toFixed(2)}) -> cartésien (${cartesianPos.x.toFixed(2)}, 0.5, ${cartesianPos.z.toFixed(2)})`);
+                const pointType = isOriginalPoint ? '🎯 ORIGINAL' : '🔗 INTERPOLÉ';
+                const rotationDeg = ((position.rotationY || 0) * 180 / Math.PI).toFixed(1);
+                console.log(`✅ Carré ${i + 1}/${smoothCurvePositions.length} ${pointType} ajouté à (${position.q.toFixed(2)}, ${position.r.toFixed(2)}) rotation: ${rotationDeg}°`);
+                
+                // Attendre 50ms avant d'afficher le prochain point
+                if (i < smoothCurvePositions.length - 1) { // Pas d'attente après le dernier point
+                    await new Promise(resolve => setTimeout(resolve, 20));
+                }
+                
             } catch (error) {
                 console.warn(`⚠️ Erreur lors de la création du disque ${i + 1}:`, error);
             }
         }
-
-        console.log(`🎯 ${this.pathSprites.length} disques rouges affichés sur le chemin`);
+        
+        console.log(`🎯 Animation terminée: ${this.pathSprites.length} carrés rouges orientés affichés sur le chemin lissé`);
     },
 
     /**
@@ -219,6 +250,144 @@ export const developpementAndMore = {
         // Vider le tableau
         this.pathSprites = [];
         console.log('✅ Tous les disques de chemin ont été supprimés');
+    },
+
+    /**
+     * Crée une courbe lissée entre les points avec THREE.CatmullRomCurve3
+     * @param {Array} positions - Liste des positions originales
+     * @param {number} totalPoints - Nombre total de points sur la courbe
+     * @returns {Array} Liste étendue avec points interpolés
+     */
+    createSmoothCurve(positions, totalPoints = 50) {
+        if (positions.length < 2) {
+            return positions.map((pos, index) => ({
+                ...pos,
+                isOriginal: true,
+                originalIndex: index
+            }));
+        }
+
+        // Convertir les positions hexagonales en coordonnées cartésiennes Three.js
+        const cartesianPoints = positions.map(pos => {
+            const cartesian = this.gameBoard.hexToCartesian(pos);
+            return new THREE.Vector3(cartesian.x, 0.1, cartesian.z);
+        });
+
+        // Lisser les points intermédiaires (moyenne pondérée avec les voisins) pour éviter les angles
+        const smoothedPoints = this.smoothControlPoints(cartesianPoints);
+
+        // Créer une courbe Catmull-Rom qui passe par tous les points
+        const curve = new THREE.CatmullRomCurve3(smoothedPoints, false); // false = courbe ouverte
+        
+        // Obtenir des points uniformément répartis sur la courbe
+        const curvePoints = curve.getPoints(totalPoints);
+        
+        // Convertir les points Three.js en coordonnées avec direction calculée entre points
+        const smoothPositions = curvePoints.map((point, index) => {
+            // Conversion inverse approximative des coordonnées cartésiennes vers hexagonales
+            const hexPos = this.cartesianToHex(point.x, point.z);
+            
+            // Calculer l'orientation basée sur les points précédent et suivant
+            let directionX, directionZ;
+            
+            if (index === 0) {
+                // Premier point : utiliser la direction vers le point suivant
+                const nextPoint = curvePoints[1] || point;
+                directionX = nextPoint.x - point.x;
+                directionZ = nextPoint.z - point.z;
+            } else if (index === curvePoints.length - 1) {
+                // Dernier point : utiliser la direction depuis le point précédent
+                const prevPoint = curvePoints[index - 1];
+                directionX = point.x - prevPoint.x;
+                directionZ = point.z - prevPoint.z;
+            } else {
+                // Points intermédiaires : moyenne entre précédent et suivant
+                const prevPoint = curvePoints[index - 1];
+                const nextPoint = curvePoints[index + 1];
+                directionX = nextPoint.x - prevPoint.x;
+                directionZ = nextPoint.z - prevPoint.z;
+            }
+            
+            // Normaliser et calculer l'angle
+            const length = Math.sqrt(directionX * directionX + directionZ * directionZ);
+            if (length > 0) {
+                directionX /= length;
+                directionZ /= length;
+            }
+            
+            const rotationY = Math.atan2(directionX, directionZ); // Angle en radians autour de l'axe Y
+            
+            return {
+                q: hexPos.q,
+                r: hexPos.r,
+                z: 0,
+                isOriginal: false,
+                curveIndex: index,
+                cartesianX: point.x,
+                cartesianZ: point.z,
+                // Direction du tracé calculée entre points
+                directionX: directionX,
+                directionZ: directionZ,
+                rotationY: rotationY, // Rotation pour aligner avec la direction
+                direction: {
+                    x: directionX,
+                    y: 0,
+                    z: directionZ
+                }
+            };
+        });
+
+        console.log(`🌊 Courbe Catmull-Rom créée: ${positions.length} points originaux → ${smoothPositions.length} points lissés`);
+        return smoothPositions;
+    },
+
+    /**
+     * Conversion approximative des coordonnées cartésiennes vers hexagonales
+     * @param {number} x - Coordonnée cartésienne X
+     * @param {number} z - Coordonnée cartésienne Z
+     * @returns {Object} Coordonnées hexagonales approximatives
+     */
+    cartesianToHex(x, z) {
+        // Inverse de hexToCartesian: {x: q+r/2, z: -r/2*sqrt(3)}
+        // Résolution du système d'équations:
+        // x = q + r/2  =>  q = x - r/2
+        // z = -r/2*sqrt(3)  =>  r = -2*z/sqrt(3)
+        
+        const r = -2 * z / Math.sqrt(3);
+        const q = x - r / 2;
+        
+        return { q: q, r: r };
+    },
+
+    /**
+     * Lisse les points de contrôle en remplaçant chaque point intermédiaire 
+     * par une moyenne pondérée de ses voisins (garde le premier et dernier point)
+     * @param {Array} points - Points Three.js Vector3
+     * @returns {Array} Points lissés
+     */
+    smoothControlPoints(points) {
+        if (points.length <= 2) {
+            return points; // Pas assez de points pour lisser
+        }
+
+        const smoothedPoints = [...points]; // Copie du tableau
+
+        // Remplacer chaque point intermédiaire par une moyenne pondérée
+        for (let i = 1; i < points.length - 1; i++) {
+            const prevPoint = points[i - 1];
+            const currentPoint = points[i];
+            const nextPoint = points[i + 1];
+            
+            // Moyenne pondérée : 1×précédent + 3×original + 1×suivant / 5
+            smoothedPoints[i] = new THREE.Vector3(
+                (prevPoint.x + 3 * currentPoint.x + nextPoint.x) / 5,
+                (prevPoint.y + 3 * currentPoint.y + nextPoint.y) / 5,
+                (prevPoint.z + 3 * currentPoint.z + nextPoint.z) / 5
+            );
+        }
+
+        console.log(`🌊 Lissage des points de contrôle: ${points.length} points → courbe plus smooth`);
+        return smoothedPoints;
     },
 }
 // pour le debug
