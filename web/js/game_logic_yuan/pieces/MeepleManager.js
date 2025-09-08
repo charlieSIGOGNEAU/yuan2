@@ -8,14 +8,7 @@ export class MeepleManager {
         this.loadPromises = new Map(); // Promises de chargement pour éviter les doublons
         this.instances = [];
         this.modelPreloader = null;
-        
-        // Supprimer les propriétés liées à l'eau
-        // this.waterMesh = null;
-        // this.waterGeometry = null;
-        // this.waterMaterial = null;
-        // this.waterLoaded = false;
-        // this.waterLoadPromise = null;
-        
+                
         // Types de meeples et leurs caractéristiques
         this.meepleTypes = {
             ville: { 
@@ -62,21 +55,32 @@ export class MeepleManager {
 
         // Types de sprites 2D et leurs caractéristiques
         this.spriteTypes = {
-            pathDisc: {
-                path: './images/disqueAlpha.png',
-                size: 0.1, // Taille 0.1 x 0.1
-                colorable: true,
-                defaultColor: 0xff0000, // Rouge
-                useAsAlphaMap: true // Utiliser comme canal alpha
-            },
             pathSquare: {
                 path: null, // Pas de texture - carré plein
-                size: 0.15, // Légèrement plus grand pour couvrir plus d'espace
+                size: 0.1, // Légèrement plus grand pour couvrir plus d'espace
                 colorable: true,
                 defaultColor: 0xff0000, // Rouge
                 useAsAlphaMap: false, // Pas de canal alpha
                 oriented: true, // Indique que ce sprite doit être orienté selon la direction
                 solidColor: true // Carré plein sans texture
+            },
+            pathDisc: {
+                path: './images/disqueAlpha.png',
+                size: 0.1,
+                colorable: true,
+                defaultColor: 0xff0000,
+                useAsAlphaMap: true,
+                oriented: true,
+                solidColor: false
+            },
+            pathArrow: {
+                path: './images/arow.png', // Flèche avec canal alpha
+                size: 0.3, // Plus grande que les carrés pour être visible
+                colorable: true,
+                defaultColor: 0xff0000, // Rouge
+                useAsAlphaMap: true, // Utiliser comme canal alpha
+                oriented: true, // S'oriente selon la direction
+                solidColor: false // Avec texture
             }
         };
 

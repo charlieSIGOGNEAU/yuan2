@@ -103,9 +103,10 @@ export class GameBoard3D {
         await this.meepleManager.preloadMeepleModel('temple');
         await this.meepleManager.preloadMeepleModel('2villes');
         
+
         // Précharger les sprites
+        await this.meepleManager.preloadSpriteTexture('pathArrow');
         await this.meepleManager.preloadSpriteTexture('pathDisc');
-        // pathSquare n'a pas besoin de préchargement (carré plein sans texture)
         
         // Précharger les cercles
         await this.meepleManager.preloadCircle('selection');

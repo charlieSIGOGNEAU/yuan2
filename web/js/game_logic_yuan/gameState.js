@@ -22,6 +22,8 @@ class Clan {
         this.id = data.id || null;
         this.game_id = data.game_id || null;
         this.color = data.color || '';
+        this.honneur = this.getHonneur(data.name);
+        this.verticalOffset = this.getVerticalOffset(data.name);
         this.name = data.name || '';
         this.start_q = data.start_q || 0;
         this.start_r = data.start_r || 0;
@@ -33,6 +35,16 @@ class Clan {
         
         // Convertir le code hexadécimal en nom de couleur
         this.color_name = this.getColorName(this.color);
+    }
+
+    getHonneur(name) {
+        const clan = ALL_CLANS.find(clan => clan.name === name);
+        return clan ? clan.honneur : 0;
+    }
+
+    getVerticalOffset(name) {
+        const clan = ALL_CLANS.find(clan => clan.name === name);
+        return clan ? clan.verticalOffset : 0;
     }
 
     // Méthode pour convertir le code hexadécimal en nom de couleur
@@ -184,7 +196,8 @@ class Action {
         this.developpement_level = data.developpement_level || 0;
         this.fortification_level = data.fortification_level || 0;
         this.militarisation_level = data.militarisation_level || 0;
-        this.development_type = null;
+        this.development_type = null; //expantion ou colonisation
+        this.chao = 0;
     }
 
     update(data) {
@@ -197,6 +210,30 @@ class Action {
         this.developpement_level = data.developpement_level !== undefined ? data.developpement_level : this.developpement_level;
         this.fortification_level = data.fortification_level !== undefined ? data.fortification_level : this.fortification_level;
         this.militarisation_level = data.militarisation_level !== undefined ? data.militarisation_level : this.militarisation_level;
+    }
+
+    // Méthode pour récupérer le territoire concerné par l'action
+    getTerritory() {
+        if (this.position_q === null || this.position_r === null) {
+            return null;
+        }
+        return gameState.getTerritoryByPosition(this.position_q, this.position_r);
+    }
+
+    // Méthode pour récupérer le clan concerné par l'action
+    getClan() {
+        if (!this.game_user_id) {
+            return null;
+        }
+        
+        // Récupérer le game_user
+        const gameUser = gameState.game.game_users.find(gu => gu.id === this.game_user_id);
+        if (!gameUser || !gameUser.clan_id) {
+            return null;
+        }
+        
+        // Récupérer le clan
+        return gameState.getClanById(gameUser.clan_id);
     }
 }   
 
@@ -280,7 +317,8 @@ class Territory {
             { q: basePos.q + 0.25, r: basePos.r + 0 },    // 2ème warrior  
             { q: basePos.q + 0,    r: basePos.r - 0.35 }, // 3ème warrior
             { q: basePos.q + 0,    r: basePos.r + 0.35 }, // 4ème warrior
-            { q: basePos.q - 0.25, r: basePos.r + 0 }     // 5ème warrior
+            { q: basePos.q - 0.25, r: basePos.r + 0 },     // 5ème warrior
+            { q: basePos.q - 0.25, r: basePos.r - 0.35 }    // 6ème warrior
         ];
         return positions.slice(0, count);
     }
@@ -686,14 +724,12 @@ class Lake {
 
     // Fonction d'initialisation complète des lacs
     static initializeAllLakes() {
-        console.log('🔄 Initialisation complète des lacs...');
         
         // Vider tous les lacs existants
         gameState.game.lakes.clear();
         
         // Récupérer tous les territoires water
         const waterTerritories = gameState.game.territories.filter(t => t.type === 'water');
-        console.log(`Traitement de ${waterTerritories.length} territoires d'eau`);
         
         // Marquer tous les territoires water comme non traités
         const processedTerritories = new Set();
@@ -736,13 +772,6 @@ class Lake {
         
         // Calculer les territoires connectés pour chaque lac
         Lake.updateConnectedTerritories();
-        
-        console.log(`✅ ${gameState.game.lakes.size} lacs initialisés`);
-        
-        // Afficher un résumé des lacs
-        for (const [lakeId, lake] of gameState.game.lakes.entries()) {
-            console.log(`Lac ${lakeId}: ${lake.waterTiles.size} territoires water, ${lake.connectedTerritories.size} territoires connectés`);
-        }
     }
 }
 
@@ -944,6 +973,12 @@ class GameState {
     // Méthode pour trouver un clan par son ID
     getClanById(clanId) {
         return this.game.clans.find(clan => clan.id === clanId);
+    }
+
+    // Méthode pour récupérer la couleur d'un clan
+    getClanColor(clanId) {
+        const clan = this.game.clans.find(clan => clan.id === clanId);
+        return clan ? clan.color : null;
     }
 
     // Méthode pour récupérer le clan_id d'un game_user_id

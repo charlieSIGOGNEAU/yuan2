@@ -10,6 +10,7 @@ export class UIManager {
         this.validationBar = null;
         this.biddingBar = null;
         this.menuOnlyBar = null; // Nouvelle barre avec seulement le menu
+        this.nextBar = null; // Nouvelle barre avec bouton next
         this.currentActionBar = null; // Référence vers la barre actuellement affichée
         
         // Variables pour le bidding
@@ -229,6 +230,7 @@ export class UIManager {
             this.validationBar = document.getElementById('validation-bar');
             this.biddingBar = document.getElementById('rectangle-action-bar');
             this.menuOnlyBar = document.getElementById('menu-only-bar');
+            this.nextBar = document.getElementById('next-bar');
             this.gameBoardContainer = document.getElementById('game-board-container');
             
             // Configuration des event listeners
@@ -285,6 +287,12 @@ export class UIManager {
         const validateButtons = document.querySelectorAll('.action-validate');
         validateButtons.forEach(button => {
             button.addEventListener('click', this.handleValidateClick.bind(this));
+        });
+
+        // Tous les boutons next dans toutes les interfaces
+        const nextButtons = document.querySelectorAll('.action-next');
+        nextButtons.forEach(button => {
+            button.addEventListener('click', this.handleNextClick.bind(this));
         });
 
         // Boutons bidding (moins et plus)
@@ -575,6 +583,21 @@ export class UIManager {
             }
         }
 
+        // Action du bouton next (partagée par toutes les interfaces)
+        handleNextClick() {
+            // Émettre un événement personnalisé que l'utilisateur pourra écouter
+            const nextEvent = new CustomEvent('nextButtonClicked', {
+                detail: {
+                    currentActionBar: this.currentActionBar?.id || null,
+                    timestamp: Date.now()
+                }
+            });
+            document.dispatchEvent(nextEvent);
+            
+            // Log pour debug
+            console.log('Bouton Next cliqué', nextEvent.detail);
+        }
+
     // Validation spécifique pour la phase de placement initial
     handleInitialPlacementValidation() {
         // Importer dynamiquement pour éviter les dépendances circulaires
@@ -668,6 +691,7 @@ export class UIManager {
         if (this.validationBar) this.validationBar.style.display = 'none';
         if (this.biddingBar) this.biddingBar.style.display = 'none';
         if (this.menuOnlyBar) this.menuOnlyBar.style.display = 'none';
+        if (this.nextBar) this.nextBar.style.display = 'none';
         
         this.currentActionBar = null;
     }
@@ -725,6 +749,25 @@ export class UIManager {
                 // Désactiver la sélection de texte
                 this.disableTextSelection();
             }
+        }
+
+        // Fonction pour afficher la barre de navigation avec next (settings + next)
+        showNextBar() {
+            this.hideAllActionBars();
+            if (this.nextBar) {
+                this.nextBar.style.display = 'flex';
+                this.currentActionBar = this.nextBar;
+                
+                // Désactiver la sélection de texte
+                this.disableTextSelection();
+            }
+        }
+
+        // Configuration des event listeners spécifiques à la barre next
+        setupNextBarEventListeners() {
+            // Les event listeners sont déjà configurés dans setupSharedActionListeners()
+            // Cette méthode peut être utilisée pour des configurations supplémentaires si nécessaire
+            console.log('Event listeners configurés pour la barre next');
         }
 
     // Configuration des event listeners pour les cases de la barre d'information
