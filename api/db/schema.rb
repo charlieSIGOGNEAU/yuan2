@@ -19,7 +19,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_27_170338) do
     t.datetime "updated_at", null: false
     t.integer "position_q"
     t.integer "position_r"
-    t.integer "developpement_level"
+    t.integer "development_level"
     t.integer "fortification_level"
     t.integer "militarisation_level"
     t.index ["game_id"], name: "index_actions_on_game_id"

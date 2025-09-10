@@ -37,7 +37,7 @@ class Api::V1::ActionsController < ApplicationController
       puts "🔄 Mise à jour de l'action existante pour ce joueur à ce tour"
       existing_action.position_q = action_params[:position_q].to_i
       existing_action.position_r = action_params[:position_r].to_i
-      existing_action.developpement_level = action_params[:developpement_level].to_i
+      existing_action.development_level = action_params[:development_level].to_i
       existing_action.fortification_level = action_params[:fortification_level].to_i
       existing_action.militarisation_level = action_params[:militarisation_level].to_i
       
@@ -65,7 +65,7 @@ class Api::V1::ActionsController < ApplicationController
       turn: current_turn,
       position_q: action_params[:position_q].to_i,
       position_r: action_params[:position_r].to_i,
-      developpement_level: action_params[:developpement_level].to_i,
+      development_level: action_params[:development_level].to_i,
       fortification_level: action_params[:fortification_level].to_i,
       militarisation_level: action_params[:militarisation_level].to_i
     )
@@ -92,7 +92,7 @@ class Api::V1::ActionsController < ApplicationController
   # Méthode pour autoriser les paramètres
   def action_params
     params.permit(:game_user_id, :game_id, :turn, :position_q, :position_r, 
-                  :developpement_level, :fortification_level, :militarisation_level)
+                  :development_level, :fortification_level, :militarisation_level)
   end
 
   def find_game
@@ -200,7 +200,7 @@ class Api::V1::ActionsController < ApplicationController
       turn: action.turn,
       position_q: action.position_q,
       position_r: action.position_r,
-      developpement_level: action.developpement_level,
+      development_level: action.development_level,
       fortification_level: action.fortification_level,
       militarisation_level: action.militarisation_level,
       created_at: action.created_at

@@ -11,7 +11,7 @@ export const simultaneousPlayPhase = {
     processedTurns: 1,
 
     
-    // nom temporaire
+
     async simultaneousPlayPhase(gameBoard) {
         if (this.processedTurns === 1) {
             // Exécuter getAdjacentTerritories pour tous les territoires
@@ -50,40 +50,54 @@ export const simultaneousPlayPhase = {
             await this.processVictoryBiddings(gameBoard);
             // Mettre à jour les compteurs de ressources de tous les clans
             this.updateAllClansResources();
-            setTimeout(() => {
-                this.updateAllClansResources();
-                uiManager.updateSimultaneousPlayInfoBar();
-              }, 5000);
-
+            uiManager.updateSimultaneousPlayInfoBar();
         }
         else {
-            // a faire : fonction qui mes a jour available_chao  de chaque clan, updatAvailableChaos(this.processedTurns)
+            
         }
 
         if (this.processedTurns + 1 === gameState.game.simultaneous_play_turn) {
-            developpementAndMore.annimation = true;
+            developpementAndMore.animation = true;
         }
         else {
-            developpementAndMore.annimation = false;
+            developpementAndMore.animation = false;
         }
 
         if (this.processedTurns === gameState.game.simultaneous_play_turn) {
 
-            // afichee la barre d'action a 6 cases
+            // affiche la barre d'action a 6 cases
+            uiManager.showPlayerActionBar();
+
             // Activer la détection de clic sur les territoires
             this.setupTerritoryClickDetection(gameBoard);
         }
         else {
-            // enleve la barre d'action a 6 cases et la remplacer par la barre avec seulement option et suivant
-            developpementAndMore.developpement(gameBoard, this.processedTurns);
-            // pluis les autres actions
-            // Mettre à jour les compteurs de ressources de tous les clans
-            this.updateAllClansResources();
             // a faire : fonction qui verifi si un joueur et victorieux
 
+            this.removeCurrentCircle(gameBoard) ;
+
+            // Mettre à jour les chaos disponibles avec le coût des actions
+            this.updateAvailableChao(this.processedTurns);
+            uiManager.updateSimultaneousPlayInfoBar();
+
+            console.log('🔄 debut developpement');
+            await developpementAndMore.developpement(gameBoard, this.processedTurns);
+            console.log('🔄 fin developpement');
+
+            // Mettre à jour les compteurs de ressources de tous les clans
+            this.updateAllClansResources();
+            uiManager.updateSimultaneousPlayInfoBar();
+
+
+
+            console.log('🔄 processedTurns:', this.processedTurns);
+
+            // a faire : pluis les autres actions
 
             this.processedTurns +=1;
-            this.simultaneousPlayPhase(gameBoard);
+            console.log('🔄 processedTurns:', this.processedTurns);
+            console.log('🔄 gameState.game.simultaneous_play_turn:', gameState.game.simultaneous_play_turn);
+            await this.simultaneousPlayPhase(gameBoard);
         }
     },
 
@@ -260,7 +274,7 @@ export const simultaneousPlayPhase = {
         const actionData = {
             position_q: territory.position.q,
             position_r: territory.position.r,
-            developpement_level: developpementLevel,
+            development_level: developpementLevel,
             fortification_level: fortificationLevel,
             militarisation_level: militarisationLevel
         };
@@ -294,19 +308,19 @@ export const simultaneousPlayPhase = {
             
             // Compter les forêts
             if (territory.type === 'forest' && 
-                (territory.construction_type === 'ville' || territory.construction_type === '2villes')) {
+                (territory.construction_type === 'ville' || territory.construction_type === '2villes' || territory.construction_type === 'village')) {
                 clan.numForests += territory.construction_type === '2villes' ? 2 : 1;
             }
             
             // Compter les riz
             if (territory.type === 'rice' && 
-                (territory.construction_type === 'ville' || territory.construction_type === '2villes')) {
+                (territory.construction_type === 'ville' || territory.construction_type === '2villes'|| territory.construction_type === 'village')) {
                 clan.numRices += territory.construction_type === '2villes' ? 2 : 1;
             }
             
             // Compter les mines
             if (territory.type === 'mine' && 
-                (territory.construction_type === 'ville' || territory.construction_type === '2villes')) {
+                (territory.construction_type === 'ville' || territory.construction_type === '2villes'|| territory.construction_type === 'village')) {
                 clan.numMines += territory.construction_type === '2villes' ? 2 : 1;
             }
             
@@ -320,6 +334,67 @@ export const simultaneousPlayPhase = {
         gameState.game.clans.forEach(clan => {
             console.log(`📊 Clan ${clan.name}: Forêts=${clan.numForests}, Riz=${clan.numRices}, Mines=${clan.numMines}, Temples=${clan.numTemples}`);
         });
+    },
+
+    // Mettre à jour les chaos disponibles en fonction des coûts des actions
+    updateAvailableChao(processedTurns) {
+        console.log(`💰 Mise à jour des chaos disponibles pour le tour ${processedTurns}`);
+        
+        // Récupérer toutes les actions pour le tour traité
+        const actionsForTurn = gameState.game.actions.filter(action => action.turn === processedTurns);
+        console.log(`📋 ${actionsForTurn.length} actions trouvées pour le tour ${processedTurns}`);
+        
+        // Traiter chaque action
+        actionsForTurn.forEach(action => {
+            // Récupérer le clan associé à l'action
+            const clan = action.getClan();
+            
+            if (!clan) {
+                console.warn(`⚠️ Aucun clan trouvé pour l'action ID ${action.id}`);
+                return;
+            }
+            
+            // Calculer le coût de l'action
+            const actionCost = this.calculateActionCost(action, clan);
+            console.log(`💰 Action ID ${action.id} - Clan ${clan.name}: coût calculé = ${actionCost}`);
+            
+            // Soustraire le coût du chao disponible
+            clan.available_chao = clan.available_chao - actionCost;
+            console.log(`💰 Clan ${clan.name}: available_chao mis à jour à ${clan.available_chao}`);
+        });
+        
+        console.log('✅ Mise à jour des chaos disponibles terminée');
+    },
+
+    // Calculer le coût d'une action en fonction des niveaux et des ressources du clan
+    calculateActionCost(action, clan) {
+        let totalCost = 0;
+        
+        // Coût du développement
+        if (action.development_level === 2) {
+            totalCost += Math.max(0, 4 - clan.numRices);
+        } else if (action.development_level === 3) {
+            totalCost += Math.max(0, 7 - clan.numRices);
+        }
+        // Niveaux 0 et 1 ne coûtent rien
+        
+        // Coût de la fortification (utilise numForests)
+        if (action.fortification_level === 2) {
+            totalCost += Math.max(0, 4 - clan.numForests);
+        } else if (action.fortification_level === 3) {
+            totalCost += Math.max(0, 7 - clan.numForests);
+        }
+        // Niveaux 0 et 1 ne coûtent rien
+        
+        // Coût de la militarisation (utilise numRices)
+        if (action.militarisation_level === 2) {
+            totalCost += Math.max(0, 4 - clan.numRices);
+        } else if (action.militarisation_level === 3) {
+            totalCost += Math.max(0, 7 - clan.numRices);
+        }
+        // Niveaux 0 et 1 ne coûtent rien
+        
+        return totalCost;
     },
 
     // Nettoyer les ressources de la phase

@@ -6,7 +6,7 @@ class ModifyActionsTable < ActiveRecord::Migration[7.2]
     # Ajouter les 5 nouvelles colonnes integer
     add_column :actions, :position_q, :integer
     add_column :actions, :position_r, :integer
-    add_column :actions, :developpement_level, :integer
+    add_column :actions, :development_level, :integer
     add_column :actions, :fortification_level, :integer
     add_column :actions, :militarisation_level, :integer
   end

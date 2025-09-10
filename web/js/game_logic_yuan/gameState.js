@@ -193,7 +193,7 @@ class Action {
         this.turn = data.turn || 0;
         this.position_q = data.position_q !== undefined ? data.position_q : null;
         this.position_r = data.position_r !== undefined ? data.position_r : null;
-        this.developpement_level = data.developpement_level || 0;
+        this.development_level = data.development_level || 0;
         this.fortification_level = data.fortification_level || 0;
         this.militarisation_level = data.militarisation_level || 0;
         this.development_type = null; //expantion ou colonisation
@@ -207,7 +207,7 @@ class Action {
         this.turn = data.turn || this.turn;
         this.position_q = data.position_q !== undefined ? data.position_q : this.position_q;
         this.position_r = data.position_r !== undefined ? data.position_r : this.position_r;
-        this.developpement_level = data.developpement_level !== undefined ? data.developpement_level : this.developpement_level;
+        this.development_level = data.development_level !== undefined ? data.development_level : this.development_level;
         this.fortification_level = data.fortification_level !== undefined ? data.fortification_level : this.fortification_level;
         this.militarisation_level = data.militarisation_level !== undefined ? data.militarisation_level : this.militarisation_level;
     }

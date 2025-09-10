@@ -81,6 +81,24 @@ export class MeepleManager {
                 useAsAlphaMap: true, // Utiliser comme canal alpha
                 oriented: true, // S'oriente selon la direction
                 solidColor: false // Avec texture
+            },
+            tax1Chao: {
+                path: './images/1chao.webp',
+                size: 0.5,
+                colorable: false,
+                defaultColor: 0xffffff,
+                useAsAlphaMap: false, // L'image a déjà sa propre texture alpha
+                oriented: false, // Face caméra
+                solidColor: false
+            },
+            tax2Chao: {
+                path: './images/2chao.webp',
+                size: 0.5,
+                colorable: false,
+                defaultColor: 0xffffff,
+                useAsAlphaMap: false, // L'image a déjà sa propre texture alpha
+                oriented: false, // Face caméra
+                solidColor: false
             }
         };
 
@@ -308,13 +326,23 @@ export class MeepleManager {
         
         // Appliquer la couleur si le meeple est colorable et une couleur est fournie
         if (meepleInfo.colorable && colorHex) {
+            console.log(`🎨 Application couleur ${colorHex} sur meeple type ${type}`);
             instance.traverse((child) => {
                 if (child.isMesh && child.material) {
+                    console.log(`🎨 Mesh trouvé, type matériau:`, child.material.type || 'unknown');
                     // Cloner le matériau pour éviter d'affecter les autres instances
                     const materials = Array.isArray(child.material) ? child.material : [child.material];
                     const clonedMaterials = materials.map(material => {
                         const clonedMaterial = material.clone();
                         clonedMaterial.color = new THREE.Color(colorHex);
+                        
+                        // Pour les matériaux PBR, s'assurer que la couleur n'est pas assombrie
+                        if (clonedMaterial.isMeshStandardMaterial || clonedMaterial.isMeshPhysicalMaterial) {
+                            clonedMaterial.metalness = 0; // Pas de métallicité (assombrit)
+                            clonedMaterial.roughness = 0.5; // Rugosité modérée
+                            clonedMaterial.emissive = new THREE.Color(0x000000); // Pas d'émission
+                        }
+                        
                         clonedMaterial.needsUpdate = true;
                         return clonedMaterial;
                     });

@@ -93,6 +93,36 @@ export class GameBoard3D {
         
         this.workplane = new THREE.Group();
         this.scene.add(this.workplane);
+
+
+        // Après avoir créé la scène et le workplane
+
+
+// Patch pour activer automatiquement les ombres sur tous les Mesh ajoutés dans la scène
+const enableShadowsOnAdd = (parent) => {
+    const originalAdd = parent.add;
+    parent.add = (...objects) => {
+        objects.forEach(obj => {
+            if (obj.isMesh) {
+                obj.castShadow = true;
+                obj.receiveShadow = true;
+            }
+            // Si le mesh contient des enfants
+            obj.traverse(child => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+        });
+        originalAdd.apply(parent, objects);
+    };
+};
+
+// Appliquer sur la scène et le workplane
+enableShadowsOnAdd(this.scene);
+enableShadowsOnAdd(this.workplane);
+
         
         // Maintenant précharger les modèles
         // Charger l'eau via le MeepleManager
@@ -107,6 +137,8 @@ export class GameBoard3D {
         // Précharger les sprites
         await this.meepleManager.preloadSpriteTexture('pathArrow');
         await this.meepleManager.preloadSpriteTexture('pathDisc');
+        await this.meepleManager.preloadSpriteTexture('tax1Chao');
+        await this.meepleManager.preloadSpriteTexture('tax2Chao');
         
         // Précharger les cercles
         await this.meepleManager.preloadCircle('selection');

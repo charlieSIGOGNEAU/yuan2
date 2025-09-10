@@ -252,7 +252,7 @@ export const gameApi = {
                     turn: turn,
                     position_q: actionData.position_q,
                     position_r: actionData.position_r,
-                    developpement_level: actionData.developpement_level,
+                    development_level: actionData.development_level,
                     fortification_level: actionData.fortification_level,
                     militarisation_level: actionData.militarisation_level
                 })

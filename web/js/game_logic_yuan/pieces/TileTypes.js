@@ -6,7 +6,7 @@ export const TILE_CONFIGS = {
     },
     "Bm": {
         model: './glb/tiles/Bm.glb',
-        terrains: ["forest","mountain","mine","water","forest","water","plain"],
+        terrains: ["forest","mountain","mine","water","forest","water","rice"],
         names: ["JU","","LI","","HUO","","MAND"]
     },
     "Cm": {
@@ -31,7 +31,7 @@ export const TILE_CONFIGS = {
     },
     "Gm": {
         model: './glb/tiles/Gm.glb',
-        terrains: ["plain","rice","mine","rice","forest","mountain","mountain"],
+        terrains: ["plain","rice","mine","plain","forest","mountain","mountain"],
         names: ["XIA","TANG","SONG","NIE","ULAN","",""]
     },
     "Hm": {

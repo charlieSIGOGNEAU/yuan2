@@ -8,12 +8,16 @@ class Arrow {
     constructor(action, territoryPath, arrowType) {
         this.action = action;
         this.territoryPath = territoryPath;
-        this.arrowType = arrowType; // 'devellopementConnecte', 'devellopementAdjacent', 'Attaque'
+        this.arrowType = arrowType; // 'devellopementConnecte', 'devellopementAdjacent', 'Attaque', 'telepartation'
         this.pathSprites = [];
         this.currentArrow = null;
         this.offset = { q: 0, r: 0, y: 0 };
         this.isRewinding = false; // Flag pour éviter les opérations simultanées
         this.smoothCurvePositions = []; // Stocker les positions pour le rewind
+        
+        // Promesse qui se résout quand l'animation est terminée
+        this.animationPromise = null;
+        this.resolveAnimation = null;
         
         // Récupérer les infos du clan
         const clanId = gameState.getClanIdByGameUserId(action.game_user_id);
@@ -23,6 +27,11 @@ class Arrow {
         
         // Calculer les décalages automatiques
         this.calculateOffsets();
+        
+        // Créer la promesse d'animation
+        this.animationPromise = new Promise((resolve) => {
+            this.resolveAnimation = resolve;
+        });
         
         // Créer la flèche
         this.createArrow();
@@ -101,19 +110,33 @@ class Arrow {
     }
     
     async createArrow() {
-        // Déléguer à displayPathDiscs avec les paramètres calculés
-        const pathInstance = await arrowManager.displayPathDiscs(
-            this.territoryPath, 
-            this.color, 
-            this.offset,
-            this.arrowType
-        );
-        
-        // Stocker les références des mesh créés
-        if (pathInstance) {
-            this.pathSprites = pathInstance.pathSprites || [];
-            this.currentArrow = pathInstance.currentArrow;
-            this.smoothCurvePositions = pathInstance.smoothCurvePositions || [];
+        try {
+            // Déléguer à displayPathDiscs avec les paramètres calculés
+            const pathInstance = await arrowManager.displayPathDiscs(
+                this.territoryPath, 
+                this.color, 
+                this.offset,
+                this.arrowType
+            );
+            
+            // Stocker les références des mesh créés
+            if (pathInstance) {
+                this.pathSprites = pathInstance.pathSprites || [];
+                this.currentArrow = pathInstance.currentArrow;
+                this.smoothCurvePositions = pathInstance.smoothCurvePositions || [];
+            }
+            
+            // Résoudre la promesse d'animation
+            console.log(`✅ Animation terminée pour flèche ${this.arrowType}`);
+            if (this.resolveAnimation) {
+                this.resolveAnimation();
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors de la création de la flèche:', error);
+            // Résoudre quand même la promesse pour ne pas bloquer
+            if (this.resolveAnimation) {
+                this.resolveAnimation();
+            }
         }
     }
     
@@ -246,11 +269,14 @@ export const arrowManager = {
      * Crée une nouvelle Arrow avec gestion automatique des décalages
      * @param {Object} action - L'action contenant game_user_id
      * @param {Array} territoryPath - Tableau des territoires
-     * @param {string} arrowType - Type: 'devellopementConnecte', 'devellopementAdjacent', 'Attaque'
-     * @returns {Arrow} Instance Arrow créée
+     * @param {string} arrowType - Type: 'devellopementConnecte', 'devellopementAdjacent', 'Attaque', 'telepartation'
+     * @returns {Promise<Arrow>} Promise qui se résout avec l'instance Arrow créée après animation
      */
-    createArrow(action, territoryPath, arrowType = 'devellopementConnecte') {
-        return new Arrow(action, territoryPath, arrowType);
+    async createArrow(action, territoryPath, arrowType = 'devellopementConnecte') {
+        const arrow = new Arrow(action, territoryPath, arrowType);
+        // Attendre que l'animation de la flèche soit terminée
+        await arrow.animationPromise;
+        return arrow;
     },
     
     /**
@@ -314,30 +340,64 @@ export const arrowManager = {
             let adjustedPosition;
             
             if (i === 0 && territoryPath.length > 1) {
-                // Premier élément : barycentre (1, 3) entre le 1er et 2ème territoire
                 const pos1 = territoryPath[0].position;
                 const pos2 = territoryPath[1].position;
                 
-                // Barycentre avec poids 3 pour pos1 et 1 pour pos2 : (1*pos1 + 3*pos2) / 4
-                adjustedPosition = {
-                    q: (3 * pos1.q + 1 * pos2.q) / 4 + offset.q,
-                    r: (3 * pos1.r + 1 * pos2.r) / 4 + offset.r,
-                    z: pos1.z || 0
-                };
-                
+                if (arrowType === 'telepartation') {
+                    // Pour téléportation : calcul de la distance euclidienne et poids inversés
+                    const dx = pos1.q - territoryPath[territoryPath.length - 1].position.q;
+                    const dy = pos1.r - territoryPath[territoryPath.length - 1].position.r;
+                    const euclideanDistance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    const weight1 = euclideanDistance * 4 - 2;
+                    const weight2 = 1;
+                    const totalWeight = weight1 + weight2;
+                    
+                    console.log(`🌀 Premier élément téléportation: poids1=${weight1.toFixed(2)}, poids2=${weight2}`);
+                    
+                    adjustedPosition = {
+                        q: (weight1 * pos1.q + weight2 * pos2.q) / totalWeight + offset.q,
+                        r: (weight1 * pos1.r + weight2 * pos2.r) / totalWeight + offset.r,
+                        z: pos1.z || 0
+                    };
+                } else {
+                    // Premier élément : barycentre (3, 1) entre le 1er et 2ème territoire
+                    adjustedPosition = {
+                        q: (3 * pos1.q + 1 * pos2.q) / 4 + offset.q,
+                        r: (3 * pos1.r + 1 * pos2.r) / 4 + offset.r,
+                        z: pos1.z || 0
+                    };
+                }
                 
             } else if (i === territoryPath.length - 1 && territoryPath.length > 1) {
-                // Dernier élément : barycentre (3, 1) entre l'avant-dernier et dernier territoire
                 const pos1 = territoryPath[territoryPath.length - 2].position;
                 const pos2 = territoryPath[territoryPath.length - 1].position;
                 
-                // Barycentre avec poids 1 pour pos1 et 3 pour pos2 : (3*pos1 + 1*pos2) / 4
-                adjustedPosition = {
-                    q: (1 * pos1.q + 3 * pos2.q) / 4 + offset.q,
-                    r: (1 * pos1.r + 3 * pos2.r) / 4 + offset.r,
-                    z: pos2.z || 0
-                };
-                
+                if (arrowType === 'telepartation') {
+                    // Pour téléportation : calcul de la distance euclidienne et poids inversés
+                    const dx = territoryPath[0].position.q - pos2.q;
+                    const dy = territoryPath[0].position.r - pos2.r;
+                    const euclideanDistance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    const weight1 = 1;
+                    const weight2 = euclideanDistance * 4 - 2;
+                    const totalWeight = weight1 + weight2;
+                    
+                    console.log(`🌀 Dernier élément téléportation: poids1=${weight1}, poids2=${weight2.toFixed(2)}`);
+                    
+                    adjustedPosition = {
+                        q: (weight1 * pos1.q + weight2 * pos2.q) / totalWeight + offset.q,
+                        r: (weight1 * pos1.r + weight2 * pos2.r) / totalWeight + offset.r,
+                        z: pos2.z || 0
+                    };
+                } else {
+                    // Dernier élément : barycentre (1, 3) entre l'avant-dernier et dernier territoire
+                    adjustedPosition = {
+                        q: (1 * pos1.q + 3 * pos2.q) / 4 + offset.q,
+                        r: (1 * pos1.r + 3 * pos2.r) / 4 + offset.r,
+                        z: pos2.z || 0
+                    };
+                }
                 
             } else {
                 // Éléments intermédiaires : position normale avec décalage
@@ -353,7 +413,21 @@ export const arrowManager = {
         }
 
         // Créer une courbe lissée avec un nombre de points 
-        const multiplier = arrowType === 'Attaque' ? 7 : 10;
+        let multiplier;
+        if (arrowType === 'Attaque') {
+            multiplier = 7;
+        } else if (arrowType === 'telepartation') {
+            // Calculer la distance euclidienne entre le premier et dernier territoire
+            const firstTerritory = territoryPath[0];
+            const lastTerritory = territoryPath[territoryPath.length - 1];
+            const dx = firstTerritory.position.q - lastTerritory.position.q;
+            const dy = firstTerritory.position.r - lastTerritory.position.r;
+            const euclideanDistance = Math.sqrt(dx * dx + dy * dy);
+            multiplier = (euclideanDistance + 0.5)*20;
+            console.log(`🌀 Téléportation: distance=${euclideanDistance.toFixed(2)}, multiplier=${multiplier.toFixed(2)}`);
+        } else {
+            multiplier = 11; // Par défaut pour devellopementConnecte, devellopementAdjacent, etc.
+        }
         const curvePointsCount = Math.round(multiplier * (adjustedPositions.length - 1.3)); 
         const smoothCurvePositions = this.createSmoothCurve(adjustedPositions, curvePointsCount);
 
