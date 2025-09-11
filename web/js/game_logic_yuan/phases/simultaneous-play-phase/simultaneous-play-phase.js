@@ -6,8 +6,9 @@ import * as THREE from 'three';
 import { developpementAndMore } from './developpement.js';
 
 export const simultaneousPlayPhase = {
-    // Stockage du cercle actuel (un seul à la fois)
-    currentCircle: null, // { circle: THREE.Mesh, territory: Territory }
+    // Stockage des cercles actuels (plusieurs cercles pour les actions)
+    currentCircle: null, // { circle: THREE.Mesh, territory: Territory } - pour la sélection
+    currentCircles: [], // [{ circle: THREE.Mesh, action: Action, territory: Territory }] - pour les actions
     processedTurns: 1,
 
     
@@ -40,12 +41,12 @@ export const simultaneousPlayPhase = {
             uiManager.showSimultaneousPlayInfoBar();
 
             // Afficher la barre d'action à 6 cases
-            uiManager.showPlayerActionBar();
+            // uiManager.showPlayerActionBar();
             
             // Appliquer les dimensions responsives avec un délai pour s'assurer que les barres sont affichées avant de les modifier.
-            setTimeout(() => {
-                uiManager.setupResponsiveDimensions();
-            }, 1000);
+            // setTimeout(() => {
+            //     uiManager.setupResponsiveDimensions();
+            // }, 1000);
 
             await this.processVictoryBiddings(gameBoard);
             // Mettre à jour les compteurs de ressources de tous les clans
@@ -79,6 +80,9 @@ export const simultaneousPlayPhase = {
             // Mettre à jour les chaos disponibles avec le coût des actions
             this.updateAvailableChao(this.processedTurns);
             uiManager.updateSimultaneousPlayInfoBar();
+            
+            // Créer des cercles pour toutes les actions du tour actuel
+            await this.createActionCircles(gameBoard);
 
             console.log('🔄 debut developpement');
             await developpementAndMore.developpement(gameBoard, this.processedTurns);
@@ -94,6 +98,8 @@ export const simultaneousPlayPhase = {
 
             // a faire : pluis les autres actions
 
+
+            this.removeAllActionCircles(gameBoard);
             this.processedTurns +=1;
             console.log('🔄 processedTurns:', this.processedTurns);
             console.log('🔄 gameState.game.simultaneous_play_turn:', gameState.game.simultaneous_play_turn);
@@ -200,21 +206,125 @@ export const simultaneousPlayPhase = {
         return circle;
     },
 
-    // Supprimer le cercle actuel
+    // Supprimer le cercle actuel (et tous les cercles d'actions)
     removeCurrentCircle(gameBoard) {
-        if (!gameBoard || !this.currentCircle) return;
+        if (!gameBoard) return;
         
-        gameBoard.workplane.remove(this.currentCircle.circle);
-        
-        // Supprimer aussi du tableau circles de GameBoard3D si présent
-        const index = gameBoard.circles.indexOf(this.currentCircle.circle);
-        if (index > -1) {
-            gameBoard.circles.splice(index, 1);
+        // Supprimer le cercle de sélection s'il existe
+        if (this.currentCircle) {
+            gameBoard.workplane.remove(this.currentCircle.circle);
+            
+            // Supprimer aussi du tableau circles de GameBoard3D si présent
+            const index = gameBoard.circles.indexOf(this.currentCircle.circle);
+            if (index > -1) {
+                gameBoard.circles.splice(index, 1);
+            }
+            
+            console.log(`🗑️ Cercle de sélection supprimé pour le territoire ${this.currentCircle.territory.type}`);
+            this.currentCircle = null;
         }
         
-        console.log(`🗑️ Cercle supprimé pour le territoire ${this.currentCircle.territory.type}`);
+        // Supprimer tous les cercles d'actions
+        this.removeAllActionCircles(gameBoard);
+    },
+
+    // Créer des cercles pour toutes les actions du tour actuel
+    async createActionCircles(gameBoard) {
+        if (!gameBoard) {
+            console.error('❌ gameBoard non disponible pour créer les cercles d\'actions');
+            return;
+        }
+
+        console.log(`🔵 Création des cercles pour les actions du tour ${this.processedTurns}`);
         
-        this.currentCircle = null;
+        // Récupérer toutes les actions du tour actuel
+        const actions = gameState.game.actions.filter(action => action.turn === this.processedTurns);
+        console.log(`📋 ${actions.length} actions trouvées pour le tour ${this.processedTurns}`);
+
+        // Supprimer les anciens cercles d'actions s'ils existent
+        this.removeAllActionCircles(gameBoard);
+
+        // Créer un cercle pour chaque action
+        for (const action of actions) {
+            try {
+                const territory = action.getTerritory();
+                const clan = action.getClan();
+                
+                if (!territory || !clan) {
+                    console.warn(`⚠️ Territoire ou clan non trouvé pour l'action ID ${action.id}`);
+                    continue;
+                }
+
+                // Obtenir la position cartésienne du territoire
+                const cartesianPos = territory.getCartesianPosition(gameBoard);
+                
+                // Créer le cercle avec la couleur du clan
+                const circle = await this.createActionCircle(gameBoard, cartesianPos, clan.color);
+                
+                if (circle) {
+                    // Stocker le cercle avec ses informations
+                    this.currentCircles.push({
+                        circle: circle,
+                        action: action,
+                        territory: territory,
+                        clan: clan
+                    });
+                    
+                    console.log(`🔵 Cercle créé pour l'action du clan ${clan.name} (${clan.color}) sur territoire (${territory.position.q}, ${territory.position.r})`);
+                }
+            } catch (error) {
+                console.error(`❌ Erreur lors de la création du cercle pour l'action ID ${action.id}:`, error);
+            }
+        }
+
+        console.log(`✅ ${this.currentCircles.length} cercles d'actions créés`);
+    },
+
+    // Créer un cercle pour une action spécifique
+    async createActionCircle(gameBoard, position, color) {
+        try {
+            // Utiliser le MeepleManager pour créer l'instance de cercle
+            const circle = await gameBoard.meepleManager.createCircleInstance('selection', position, 1.0, 0.1, color, {
+                position: position
+            });
+            
+            if (!circle) {
+                console.error('❌ Impossible de créer l\'instance de cercle d\'action');
+                return null;
+            }
+            
+            // Positionner le cercle
+            circle.position.set(position.x, 0.1, position.z);
+            
+            // Ajouter au workplane et au tableau des cercles de GameBoard3D
+            gameBoard.workplane.add(circle);
+            gameBoard.circles.push(circle);
+            
+            return circle;
+        } catch (error) {
+            console.error('❌ Erreur lors de la création du cercle d\'action:', error);
+            return null;
+        }
+    },
+
+    // Supprimer tous les cercles d'actions
+    removeAllActionCircles(gameBoard) {
+        if (!gameBoard || this.currentCircles.length === 0) return;
+        
+        console.log(`🗑️ Suppression de ${this.currentCircles.length} cercles d'actions`);
+        
+        for (const circleData of this.currentCircles) {
+            gameBoard.workplane.remove(circleData.circle);
+            
+            // Supprimer aussi du tableau circles de GameBoard3D si présent
+            const index = gameBoard.circles.indexOf(circleData.circle);
+            if (index > -1) {
+                gameBoard.circles.splice(index, 1);
+            }
+        }
+        
+        this.currentCircles = [];
+        console.log(`✅ Tous les cercles d'actions supprimés`);
     },
 
     // Obtenir le territoire du cercle actuel
@@ -405,8 +515,8 @@ export const simultaneousPlayPhase = {
         }
         this.clickHandler = null;
         
-        // Supprimer le cercle actuel
-        if (this.currentCircle) {
+        // Supprimer tous les cercles (sélection et actions)
+        if (this.currentCircle || this.currentCircles.length > 0) {
             this.removeCurrentCircle(this.currentGameBoard);
         }
     },

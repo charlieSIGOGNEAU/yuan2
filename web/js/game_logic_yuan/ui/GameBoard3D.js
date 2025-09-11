@@ -384,66 +384,66 @@ enableShadowsOnAdd(this.workplane);
         this.tempTileRotation = rotation;
         
         return new Promise((resolve, reject) => {
-            this.gltfLoader.load(
-                modelUrl,
-                (gltf) => {
-                    const tile = gltf.scene;
-                    
-                    // Corriger l'espace colorimétrique des textures pour éviter la saturation
-                    tile.traverse((child) => {
-                        if (child.isMesh && child.material) {
-                            const materials = Array.isArray(child.material) ? child.material : [child.material];
-                            materials.forEach(material => {
-                                // Corriger les textures principales
-                                if (material.map) {
-                                    material.map.colorSpace = THREE.SRGBColorSpace;
-                                    material.map.needsUpdate = true;
-                                }
-                                // Corriger les autres types de textures si présentes
-                                if (material.normalMap) {
-                                    material.normalMap.colorSpace = THREE.LinearSRGBColorSpace;
-                                    material.normalMap.needsUpdate = true;
-                                }
-                                if (material.roughnessMap) {
-                                    material.roughnessMap.colorSpace = THREE.LinearSRGBColorSpace;
-                                    material.roughnessMap.needsUpdate = true;
-                                }
-                                if (material.metalnessMap) {
-                                    material.metalnessMap.colorSpace = THREE.LinearSRGBColorSpace;
-                                    material.metalnessMap.needsUpdate = true;
-                                }
-                                material.needsUpdate = true;
-                            });
-                        }
-                    });
+        this.gltfLoader.load(
+        modelUrl,
+        (gltf) => {
+            const tile = gltf.scene;
+            
+        // Corriger l'espace colorimétrique des textures pour éviter la saturation
+        tile.traverse((child) => {
+            if (child.isMesh && child.material) {
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
+                materials.forEach(material => {
+                    // Corriger les textures principales
+                    if (material.map) {
+                        material.map.colorSpace = THREE.SRGBColorSpace;
+                        material.map.needsUpdate = true;
+                    }
+                    // Corriger les autres types de textures si présentes
+                    if (material.normalMap) {
+                        material.normalMap.colorSpace = THREE.LinearSRGBColorSpace;
+                        material.normalMap.needsUpdate = true;
+                    }
+                    if (material.roughnessMap) {
+                        material.roughnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+                        material.roughnessMap.needsUpdate = true;
+                    }
+                    if (material.metalnessMap) {
+                        material.metalnessMap.colorSpace = THREE.LinearSRGBColorSpace;
+                        material.metalnessMap.needsUpdate = true;
+                    }
+                    material.needsUpdate = true;
+                });
+            }
+        });
                     
         const pos = this.hexToCartesian(position);
         tile.position.set(pos.x, 0.2, pos.z); // Hauteur fixée à 0.2
-                    tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
-                    // Le modèle est déjà à la bonne taille
-                    
-                    // Utiliser le MeepleManager pour l'eau
-                    this.createWaterInstanceAsync().then(waterInstance => {
-                        if (waterInstance) {
-                            // Attacher l'eau comme enfant de la tuile temporaire
-                            tile.add(waterInstance);
+        tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
+        // Le modèle est déjà à la bonne taille
+        
+        // Utiliser le MeepleManager pour l'eau
+        this.createWaterInstanceAsync().then(waterInstance => {
+            if (waterInstance) {
+                // Attacher l'eau comme enfant de la tuile temporaire
+                tile.add(waterInstance);
 
-                        }
-                    }).catch(error => {
-                    });
-                    
-                            // Désactiver les collisions pour cette tuile temporaire
-                    tile.traverse((child) => {
-                        if (child.isMesh) {
-                            child.raycast = function() {}; // Désactive le raycast
-                        }
-                    });
+            }
+        }).catch(error => {
+        });
+        
+        // Désactiver les collisions pour cette tuile temporaire
+        tile.traverse((child) => {
+            if (child.isMesh) {
+                child.raycast = function() {}; // Désactive le raycast
+            }
+        });
                     
         this.workplane.add(tile);
         this.tileTemp = tile;
 
-                    // Création des sprites rotation et OK (restent en 2D pour l'interface)
-                    const textureLoader = new THREE.TextureLoader();
+        // Création des sprites rotation et OK (restent en 2D pour l'interface)
+        const textureLoader = new THREE.TextureLoader();
         const spriteGeometry = new THREE.PlaneGeometry(1, 1);
 
         // Premier sprite rotation à droite - créer d'abord le matériau sans texture
@@ -457,19 +457,19 @@ enableShadowsOnAdd(this.workplane);
         
         // Charger la texture de rotation avec callback
         const rotationTexture = textureLoader.load(
-            './images/rotation.webp',
-            (loadedTexture) => {
-                loadedTexture.colorSpace = THREE.SRGBColorSpace;
-                // Appliquer la texture aux deux matériaux
-                rightMaterial.map = loadedTexture;
-                rightMaterial.needsUpdate = true;
-                leftMaterial.map = loadedTexture;
-                leftMaterial.needsUpdate = true;
-            },
-            undefined,
-            (error) => {}
+        './images/rotation.webp',
+        (loadedTexture) => {
+            loadedTexture.colorSpace = THREE.SRGBColorSpace;
+            // Appliquer la texture aux deux matériaux
+            rightMaterial.map = loadedTexture;
+            rightMaterial.needsUpdate = true;
+            leftMaterial.map = loadedTexture;
+            leftMaterial.needsUpdate = true;
+        },
+        undefined,
+        (error) => {}
         );
-                    rightSprite.position.set(pos.x + 0.5, 0.4, pos.z); // Position relative à la tuile principale
+        rightSprite.position.set(pos.x + 0.5, 0.4, pos.z); // Position relative à la tuile principale
         rightSprite.rotation.x = -Math.PI / 2;
         rightSprite.rotation.z = 0;
         this.workplane.add(rightSprite);

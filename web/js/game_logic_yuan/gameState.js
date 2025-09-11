@@ -347,7 +347,6 @@ class Territory {
         if (mesh) {
             // Positionner à la position exacte du territoire
             const pos = this.getCartesianPosition(gameBoard);
-            mesh.position.set(pos.x, pos.y, pos.z);
             
             // Désactiver les collisions
             mesh.traverse((child) => {
@@ -359,6 +358,14 @@ class Territory {
             // Ajouter au workplane
             gameBoard.workplane.add(mesh);
             this.construction_mesh = mesh;
+            
+            // Créer l'animation de roulement pour les villages
+            if (this.construction_type === 'village') {
+                this.animateVillageRoll(mesh, pos);
+            } else {
+                // Positionner directement pour les autres constructions
+                mesh.position.set(pos.x, pos.y, pos.z);
+            }
         }
     }
 
@@ -416,7 +423,6 @@ class Territory {
         if (mesh) {
             // Positionner à la position exacte du territoire
             const pos = this.getCartesianPosition(gameBoard);
-            mesh.position.set(pos.x, pos.y, pos.z);
             
             // Désactiver les collisions
             mesh.traverse((child) => {
@@ -430,7 +436,118 @@ class Territory {
             this.temple_mesh = mesh;
             this.hasTemple = true;
             
+            // Créer l'animation de chute
+            this.animateTempleFall(mesh, pos);
         }
+    }
+
+    // Animer la chute du temple avec un effet d'écrasement esthétique
+    animateTempleFall(mesh, targetPosition) {
+        const startY = 5; // Position de départ en hauteur
+        const targetY = targetPosition.y; // Position finale
+        const duration = 1000; // Durée en ms
+        const startTime = Date.now();
+        
+        // Positionner le temple en hauteur au début
+        mesh.position.set(targetPosition.x, startY, targetPosition.z);
+        
+        // Fonction d'easing pour un effet d'écrasement (ease-out avec rebond)
+        const easeOutBounce = (t) => {
+            if (t < 1 / 2.75) {
+                return 7.5625 * t * t;
+            } else if (t < 2 / 2.75) {
+                return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+            } else if (t < 2.5 / 2.75) {
+                return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+            } else {
+                return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+            }
+        };
+        
+        // Fonction d'animation
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1); // De 0 à 1
+            
+            // Appliquer l'easing pour un effet de chute avec rebond
+            const easedProgress = easeOutBounce(progress);
+            
+            // Calculer la position Y avec l'easing
+            const currentY = startY + (targetY - startY) * easedProgress;
+            mesh.position.y = currentY;
+            
+            // Ajouter une légère rotation pendant la chute pour plus de réalisme
+            const rotationAmount = Math.sin(progress * Math.PI * 3) * 0.1; // Rotation oscillante
+            mesh.rotation.y = rotationAmount;
+            
+            // Continuer l'animation si pas terminée
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                // Finaliser la position et rotation
+                mesh.position.y = targetY;
+                mesh.rotation.y = 0;
+                console.log(`🏛️ Temple tombé et positionné à (${targetPosition.x}, ${targetY}, ${targetPosition.z})`);
+            }
+        };
+        
+        // Démarrer l'animation
+        requestAnimationFrame(animate);
+        console.log(`🏛️ Animation de chute du temple démarrée (${duration}ms)`);
+    }
+
+    // Animer le roulement du village avec un effet de pion de go
+    animateVillageRoll(mesh, targetPosition) {
+        const startY = 0.3; // Position de départ en hauteur (légèrement plus bas que le temple)
+        const targetY = targetPosition.y; // Position finale
+        const duration = 1500; // Durée en ms (plus rapide que le temple)
+        const startTime = Date.now();
+        
+        // Positionner le village en hauteur au début
+        mesh.position.set(targetPosition.x, startY, targetPosition.z);
+        
+        // Fonction d'easing pour un effet de roulement (ease-out avec légère oscillation)
+        const easeOutElastic = (t) => {
+            const c4 = (2 * Math.PI) / 3;
+            return t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
+        };
+        
+        // Fonction d'animation
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1); // De 0 à 1
+            
+            // Appliquer l'easing pour un effet de roulement avec rebond léger
+            const easedProgress = easeOutElastic(progress);
+            
+            // Calculer la position Y avec l'easing
+            const currentY = startY + (targetY - startY) * easedProgress;
+            mesh.position.y = currentY;
+            
+            // Ajouter une rotation continue pour simuler le roulement
+            const rotationSpeed = 4; // Vitesse de rotation
+            const rotationAmount = progress * rotationSpeed * Math.PI * 2; // Rotation complète
+            mesh.rotation.y = rotationAmount;
+            
+            // Ajouter une légère oscillation sur l'axe X pour simuler le roulement
+            const rollAmount = Math.sin(progress * Math.PI * 4) * 0.2; // Oscillation rapide
+            mesh.rotation.x = rollAmount;
+            
+            // Continuer l'animation si pas terminée
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                // Finaliser la position et rotation
+                mesh.position.y = targetY;
+                mesh.rotation.y = 0;
+                mesh.rotation.x = 0;
+                console.log(`🏘️ Village roulé et positionné à (${targetPosition.x}, ${targetY}, ${targetPosition.z})`);
+            }
+        };
+        
+        // Démarrer l'animation
+        requestAnimationFrame(animate);
+        console.log(`🏘️ Animation de roulement du village démarrée (${duration}ms)`);
     }
 
     // Créer les mesh de guerriers

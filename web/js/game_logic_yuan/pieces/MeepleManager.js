@@ -99,6 +99,15 @@ export class MeepleManager {
                 useAsAlphaMap: false, // L'image a déjà sa propre texture alpha
                 oriented: false, // Face caméra
                 solidColor: false
+            },
+            echao: {
+                path: './images/echao.webp',
+                size: 0.5,
+                colorable: false,
+                defaultColor: 0xffffff,
+                useAsAlphaMap: false, // L'image a déjà sa propre texture alpha
+                oriented: false, // Face caméra
+                solidColor: false
             }
         };
 

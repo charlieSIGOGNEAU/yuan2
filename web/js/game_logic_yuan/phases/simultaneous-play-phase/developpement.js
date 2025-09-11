@@ -20,6 +20,7 @@ export const developpementAndMore = {
     // === FONCTIONS PRINCIPALES ===
     animation: true,
     gameBoard: null,
+    echaoSprites: [], // Stockage des sprites echao créés
 
     async developpement(gameBoard, processedTurns) {
         this.gameBoard = gameBoard;
@@ -64,7 +65,9 @@ export const developpementAndMore = {
         console.log(`\n🏛️ === ÉTAPE 4: EXPANSIONS NIVEAU 3 (TEMPLES) ===`);
         await this.handleColonisation3(processedTurns);
 
-
+        // etape 6: les revenu de colonisation 2 et 3 et expention 2
+        console.log(`\n💰 === ÉTAPE 5: REVENUS DE COLONISATION 2 ET 3 ET EXPANSION 2 ===`);
+        await this.handleRevenusColonisation23EtExpansion2(processedTurns);
         
         console.log(`\n✅ === FIN LOGIQUE DÉVELOPPEMENT TOUR ${processedTurns} ===`);
     },
@@ -176,6 +179,8 @@ export const developpementAndMore = {
             await this.waitForNextButton();
             uiManager.showMenuOnlyBar();
             
+            // Effacer le message affiché
+            uiManager.updateInfoPanel('');
 
         } catch (error) {
             console.error('Erreur lors de l\'affichage du message:', error);
@@ -183,6 +188,9 @@ export const developpementAndMore = {
             uiManager.showNextBar();
             await this.waitForNextButton();
             uiManager.showMenuOnlyBar();
+            
+            // Effacer le message affiché même en cas d'erreur
+            uiManager.updateInfoPanel('');
         }
     },
 
@@ -898,10 +906,181 @@ export const developpementAndMore = {
         arrowManager.clearAllArrows();
         console.log(`✅ Toutes les flèches supprimées`);
         
+        // Supprimer tous les sprites tax2Chao
+        console.log(`🧹 Suppression des sprites tax2Chao...`);
+        this.removeAllTax2ChaoSprites();
+        console.log(`✅ Tous les sprites tax2Chao supprimés`);
+        
         // Afficher la barre avec seulement le menu
         console.log(`🎛️ Affichage barre menu seulement`);
         uiManager.showMenuOnlyBar();
-    }
+    },
+
+    async handleRevenusColonisation23EtExpansion2(processedTurns) {
+        console.log(`💰 Gestion des revenus de colonisation 2 et 3 et expention 2`);
+        
+        const actions = gameState.game.actions.filter(action => 
+            action.turn === processedTurns && 
+            ((action.development_type === "colonisation" && (action.development_level === 2 || action.development_level === 3)) ||
+            (action.development_type === "expantion" && action.development_level === 2))
+        );
+
+        if (actions.length === 0) {
+            console.log(`💰 Aucune action de colonisation 2 ou 3 ou expention 2 trouvée`);
+            return;
+        }
+
+        for (const action of actions) {
+            const clan = action.getClan();
+            const territory = action.getTerritory();
+            clan.available_chao += 2;
+
+            if (actions.length > 0 && this.animation) {
+                // Créer le sprite tax2Chao sur le territoire
+                this.createTax2ChaoSprite(territory);
+            }
+        }   
+        if (actions.length > 0 && this.animation) {
+            await this.showMessageAndWaitNext('revenue_collected');
+            this.removeAllTax2ChaoSprites();
+        }
+    },
+
+    // Créer un sprite tax2Chao sur un territoire avec animation
+    async createTax2ChaoSprite(territory) {
+        if (!this.gameBoard || !this.gameBoard.meepleManager) {
+            console.warn(`⚠️ gameBoard ou meepleManager non disponible pour créer le sprite tax2Chao`);
+            return;
+        }
+
+        try {
+            // Obtenir la position cartésienne du territoire
+            const cartesianPos = territory.getCartesianPosition(this.gameBoard);
+            
+            // Créer le sprite tax2Chao à une hauteur de base de 0.5
+            const spritePosition = {
+                x: cartesianPos.x,
+                y: 0.5,
+                z: cartesianPos.z
+            };
+
+            const tax2ChaoSprite = await this.gameBoard.meepleManager.createSpriteInstance(
+                'tax2Chao',
+                spritePosition,
+                null, // Pas de couleur personnalisée
+                { territory: territory }
+            );
+
+            if (tax2ChaoSprite) {
+                // Supprimer le sprite original du workplane
+                this.gameBoard.workplane.remove(tax2ChaoSprite);
+                
+                // Créer un vrai THREE.Sprite qui reste face à la caméra
+                const verticalSprite = await this.createVerticalSprite(territory, cartesianPos);
+                
+                // Stocker la référence pour pouvoir la supprimer plus tard
+                this.echaoSprites.push(verticalSprite);
+                
+                // Démarrer l'animation d'oscillation en boucle
+                this.startTax2ChaoAnimation(verticalSprite, 0.5);
+                
+                console.log(`💰 Sprite tax2Chao vertical créé sur territoire (${territory.position.q}, ${territory.position.r}) avec animation`);
+            }
+        } catch (error) {
+            console.error(`❌ Erreur lors de la création du sprite tax2Chao:`, error);
+        }
+    },
+
+    // Créer un vrai THREE.Sprite vertical qui reste face à la caméra
+    async createVerticalSprite(territory, position) {
+        try {
+            // Charger la texture 2chao.webp
+            const textureLoader = new THREE.TextureLoader();
+            const texture = await new Promise((resolve, reject) => {
+                textureLoader.load(
+                    './images/2chao.webp',
+                    (loadedTexture) => {
+                        loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                        resolve(loadedTexture);
+                    },
+                    undefined,
+                    reject
+                );
+            });
+
+            // Créer le matériau du sprite
+            const spriteMaterial = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                alphaTest: 0.5,
+                toneMapped: false,
+                fog: false,
+                color: 0xffffff
+            });
+
+            // Créer le sprite
+            const sprite = new THREE.Sprite(spriteMaterial);
+            
+            // Définir la taille du sprite (carré)
+            sprite.scale.set(0.5, 0.5, 1); // Largeur, hauteur (la profondeur n'a pas de sens pour un sprite)
+            
+            // Positionner le sprite
+            sprite.position.set(position.x, 0.7, position.z);
+            
+            // Ajouter au workplane
+            this.gameBoard.workplane.add(sprite);
+            
+            // Ajouter les données utilisateur
+            sprite.userData = { territory: territory };
+            
+            return sprite;
+        } catch (error) {
+            console.error(`❌ Erreur lors de la création du sprite vertical:`, error);
+            return null;
+        }
+    },
+
+    // Animer le sprite tax2Chao avec une oscillation verticale fluide en boucle
+    startTax2ChaoAnimation(sprite, baseHeight) {
+        const amplitude = 0.3; // Amplitude de l'oscillation (0.3 unités au-dessus et en-dessous)
+        const duration = 2000; // Durée d'un cycle complet en ms
+        const startTime = Date.now();
+        
+        // Fonction d'animation utilisant une courbe cosinus pour un mouvement fluide
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = (elapsed % duration) / duration; // Utiliser modulo pour la boucle
+            
+            // Utiliser une courbe cosinus pour un mouvement fluide avec ralentissement aux extrémités
+            // La fonction cosinus va de 1 à -1, on la normalise pour aller de 0 à 1
+            const cosineValue = (Math.cos(progress * Math.PI * 2) + 1) / 2;
+            
+            // Appliquer l'oscillation verticale
+            const newY = baseHeight + (cosineValue * amplitude);
+            sprite.position.y = newY;
+            
+            // Continuer l'animation en boucle
+            requestAnimationFrame(animate);
+        };
+        
+        // Démarrer l'animation
+        requestAnimationFrame(animate);
+        console.log(`🎬 Animation tax2Chao démarrée en boucle (${duration}ms par cycle, amplitude: ${amplitude})`);
+    },
+
+    // Supprimer tous les sprites tax2Chao
+    removeAllTax2ChaoSprites() {
+        if (!this.gameBoard || this.echaoSprites.length === 0) return;
+        
+        console.log(`🗑️ Suppression de ${this.echaoSprites.length} sprites tax2Chao`);
+        
+        for (const sprite of this.echaoSprites) {
+            this.gameBoard.workplane.remove(sprite);
+        }
+        
+        this.echaoSprites = [];
+        console.log(`✅ Tous les sprites tax2Chao supprimés`);
+    },
 }
 // pour le debug
 window.developpementAndMore = developpementAndMore;
