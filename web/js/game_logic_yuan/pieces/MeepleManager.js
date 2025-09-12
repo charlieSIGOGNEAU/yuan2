@@ -361,6 +361,49 @@ export class MeepleManager {
             });
         }
 
+        // Gestion spéciale pour les fortifications selon le type de rempart
+        if (type === 'fortification' && userData.rempartType) {
+            console.log(`🏰 Application texture spéciale pour rempart type: ${userData.rempartType}`);
+            
+            if (userData.rempartType === 'indestruible') {
+                // Charger la texture gravier pour les remparts indestructibles
+                try {
+                    const textureLoader = new THREE.TextureLoader();
+                    const gravierTexture = await new Promise((resolve, reject) => {
+                        textureLoader.load(
+                            './images/texture/textureGravier.jpg',
+                            (texture) => {
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                resolve(texture);
+                            },
+                            undefined,
+                            reject
+                        );
+                    });
+
+                    // Appliquer la texture gravier à tous les meshes
+                    instance.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            const clonedMaterials = materials.map(material => {
+                                const clonedMaterial = material.clone();
+                                clonedMaterial.map = gravierTexture.clone();
+                                clonedMaterial.needsUpdate = true;
+                                return clonedMaterial;
+                            });
+                            
+                            child.material = Array.isArray(child.material) ? clonedMaterials : clonedMaterials[0];
+                        }
+                    });
+                    
+                    console.log(`🏰 Texture gravier appliquée pour rempart indestructible`);
+                } catch (error) {
+                    console.warn(`⚠️ Impossible de charger la texture gravier:`, error);
+                }
+            }
+            // Pour 'fortifiee', on garde la texture par défaut du GLB
+        }
+
         // Appliquer la taille par défaut
         const scale = meepleInfo.scale;
         instance.scale.set(scale.x, scale.y, scale.z);

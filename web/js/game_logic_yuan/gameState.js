@@ -196,7 +196,9 @@ class Action {
         this.development_level = data.development_level || 0;
         this.fortification_level = data.fortification_level || 0;
         this.militarisation_level = data.militarisation_level || 0;
-        this.development_type = null; //expantion ou colonisation
+        this.development_type = ""; //expantion ou colonisation
+        this.fortification_type = ""; //urbanisation ou renforcement
+        this.militarisation_type = ""; //recrutement ou attaque
         this.chao = 0;
     }
 
@@ -234,6 +236,10 @@ class Action {
         
         // Récupérer le clan
         return gameState.getClanById(gameUser.clan_id);
+    }
+
+    isMyAction() {
+        return this.game_user_id === gameState.game.myGameUserId;
     }
 }   
 
@@ -325,8 +331,8 @@ class Territory {
 
     // Créer la mesh de construction
     async createConstruction(gameBoard, meepleManager) {
-        if (!this.construction_type || this.construction_mesh) {
-            return; // Pas de construction à créer ou déjà créé
+        if (this.construction_mesh) {
+            this.removeConstruction(gameBoard); 
         }
 
         // Récupérer la couleur via la référence au clan
@@ -371,9 +377,17 @@ class Territory {
 
     // Créer la mesh de rempart
     async createRempart(gameBoard, meepleManager) {
-        if (!this.rempart || this.rempart_mesh) {
-            return; // Pas de rempart à créer ou déjà créé
+        // Supprimer l'ancienne mesh si présente
+        if (this.rempart_mesh) {
+            this.removeRempart(gameBoard);
         }
+
+        if (!this.rempart) {
+            console.warn('⚠️ Aucun type de rempart défini');
+            return;
+        }
+
+        console.log(`🏰 Création du rempart de type: ${this.rempart}`);
 
         // Utiliser le type 'fortification' du MeepleManager (non colorable)
         const mesh = await meepleManager.createMeepleInstance('fortification', null, {
@@ -382,31 +396,89 @@ class Territory {
             rempartType: this.rempart
         });
 
-        if (mesh) {
-            // Positionner à la position exacte du territoire
-            const pos = this.getCartesianPosition(gameBoard);
-            
-            // Gérer les différences selon le type de rempart
-            if (this.rempart === 'indestruible') {
-                // Indestructible : rotation 180° et surélevé
-                mesh.position.set(pos.x, pos.y + 0.02, pos.z);
-                mesh.rotation.y = Math.PI; // 180 degrés
-            } else {
-                // Fortifiée : position normale
-                mesh.position.set(pos.x, pos.y, pos.z);
-            }
-            
-            // Désactiver les collisions
-            mesh.traverse((child) => {
-                if (child.isMesh) {
-                    child.raycast = function() {};
-                }
-            });
-
-            // Ajouter au workplane
-            gameBoard.workplane.add(mesh);
-            this.rempart_mesh = mesh;
+        if (!mesh) {
+            console.error('❌ Impossible de créer la mesh de rempart');
+            return;
         }
+
+        // Positionner à la position exacte du territoire
+        const pos = this.getCartesianPosition(gameBoard);
+        
+        // Désactiver les collisions
+        mesh.traverse((child) => {
+            if (child.isMesh) {
+                child.raycast = function() {};
+            }
+        });
+
+        // Ajouter au workplane
+        gameBoard.workplane.add(mesh);
+        this.rempart_mesh = mesh;
+        
+        // Créer l'animation selon le type de rempart
+        if (this.rempart === 'indestruible') {
+            // Animation dramatique pour les remparts indestructibles
+            this.animateRempartFall(mesh, pos, 4.0, 1200); // Plus haut et plus long
+        } else {
+            // Animation plus douce pour les remparts fortifiés
+            this.animateRempartFall(mesh, pos, 2.0, 800); // Plus bas et plus court
+        }
+        
+        console.log(`✅ Rempart ${this.rempart} créé et animation démarrée`);
+    }
+
+    // Animer la chute du rempart avec un effet d'écrasement
+    animateRempartFall(mesh, targetPosition, startHeight, duration) {
+        const startY = startHeight; // Position de départ en hauteur
+        const targetY = targetPosition.y; // Position finale
+        const startTime = Date.now();
+        
+        // Positionner le rempart en hauteur au début
+        mesh.position.set(targetPosition.x, startY, targetPosition.z);
+        
+        // Fonction d'easing pour un effet d'écrasement (ease-out avec rebond)
+        const easeOutBounce = (t) => {
+            if (t < 1 / 2.75) {
+                return 7.5625 * t * t;
+            } else if (t < 2 / 2.75) {
+                return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+            } else if (t < 2.5 / 2.75) {
+                return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+            } else {
+                return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+            }
+        };
+        
+        // Fonction d'animation
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1); // De 0 à 1
+            
+            // Appliquer l'easing pour un effet de chute avec rebond
+            const easedProgress = easeOutBounce(progress);
+            
+            // Calculer la position Y avec l'easing
+            const currentY = startY + (targetY - startY) * easedProgress;
+            mesh.position.y = currentY;
+            
+            // Ajouter une légère rotation pendant la chute pour plus de réalisme
+            const rotationAmount = Math.sin(progress * Math.PI * 3) * 0.05; // Rotation plus subtile que le temple
+            mesh.rotation.y = rotationAmount;
+            
+            // Continuer l'animation si pas terminée
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                // Finaliser la position et rotation
+                mesh.position.y = targetY;
+                mesh.rotation.y = 0;
+                console.log(`🏰 Rempart ${this.rempart} tombé et positionné à (${targetPosition.x}, ${targetY}, ${targetPosition.z})`);
+            }
+        };
+        
+        // Démarrer l'animation
+        requestAnimationFrame(animate);
+        console.log(`🏰 Animation de chute du rempart ${this.rempart} démarrée (${duration}ms, hauteur: ${startHeight})`);
     }
 
     // Créer la mesh de temple
@@ -562,9 +634,6 @@ class Territory {
             console.warn(`⚠️ Clan non trouvé pour clan_id=${this.clan_id}`);
             return;
         }
-
-
-        
         // Supprimer les anciens guerriers d'abord
         this.removeWarriors(gameBoard);
         
@@ -621,13 +690,6 @@ class Territory {
             });
             this.warriors = [];
         }
-    }
-
-    // Supprimer toutes les mesh de ce territoire
-    removeAllMeshes(gameBoard) {
-        this.removeConstruction(gameBoard);
-        this.removeRempart(gameBoard);
-        this.removeWarriors(gameBoard);
     }
 
     async updateMeshes(gameBoard, meepleManager) {

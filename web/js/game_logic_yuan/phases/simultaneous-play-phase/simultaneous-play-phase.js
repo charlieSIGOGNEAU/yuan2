@@ -4,6 +4,7 @@ import { biddingPhase } from '../biddingPhase.js';
 import { i18n } from '../../../core/i18n.js';
 import * as THREE from 'three';
 import { developpementAndMore } from './developpement.js';
+import { fortification } from './fortification.js';
 
 export const simultaneousPlayPhase = {
     // Stockage des cercles actuels (plusieurs cercles pour les actions)
@@ -40,13 +41,6 @@ export const simultaneousPlayPhase = {
             // Afficher la barre d'information spécifique à cette phase
             uiManager.showSimultaneousPlayInfoBar();
 
-            // Afficher la barre d'action à 6 cases
-            // uiManager.showPlayerActionBar();
-            
-            // Appliquer les dimensions responsives avec un délai pour s'assurer que les barres sont affichées avant de les modifier.
-            // setTimeout(() => {
-            //     uiManager.setupResponsiveDimensions();
-            // }, 1000);
 
             await this.processVictoryBiddings(gameBoard);
             // Mettre à jour les compteurs de ressources de tous les clans
@@ -59,9 +53,11 @@ export const simultaneousPlayPhase = {
 
         if (this.processedTurns + 1 === gameState.game.simultaneous_play_turn) {
             developpementAndMore.animation = true;
+            fortification.animation = true;
         }
         else {
             developpementAndMore.animation = false;
+            fortification.animation = false;
         }
 
         if (this.processedTurns === gameState.game.simultaneous_play_turn) {
@@ -73,6 +69,9 @@ export const simultaneousPlayPhase = {
             this.setupTerritoryClickDetection(gameBoard);
         }
         else {
+            // Désactiver la détection des clics sur les territoires
+            this.disableTerritoryClickDetection(gameBoard);
+            
             // a faire : fonction qui verifi si un joueur et victorieux
 
             this.removeCurrentCircle(gameBoard) ;
@@ -87,6 +86,9 @@ export const simultaneousPlayPhase = {
             console.log('🔄 debut developpement');
             await developpementAndMore.developpement(gameBoard, this.processedTurns);
             console.log('🔄 fin developpement');
+            console.log('🔄 debut fortification');
+            await fortification.setupFortification(gameBoard, this.processedTurns, true);
+            console.log('🔄 fin fortification');
 
             // Mettre à jour les compteurs de ressources de tous les clans
             this.updateAllClansResources();
@@ -160,13 +162,30 @@ export const simultaneousPlayPhase = {
         console.log('✅ Détection de clic sur les territoires activée');
     },
 
+    // Désactiver la détection de clic sur les territoires
+    disableTerritoryClickDetection(gameBoard) {
+        gameBoard.disableClickCallback();
+        
+        // Nettoyer les références
+        this.clickHandler = null;
+        this.currentGameBoard = null;
+        
+        console.log('✅ Détection de clic sur les territoires désactivée');
+    },
+
     // Créer un cercle sur un territoire
     async createTerritoryCircle(gameBoard, territory) {
         if (!gameBoard) return;
         
         console.log(`🔵 Création d'un cercle pour le territoire ${territory.type} à (${territory.position.q}, ${territory.position.r})`);
         
-        const circle = await this.createCircle(gameBoard, territory.position, 1.0, 0.1);
+        // Récupérer la couleur du clan du joueur
+        const playerClan = gameState.game.myClan;
+        const clanColor = playerClan ? playerClan.color : 0xffffff; // Blanc par défaut si pas de clan
+        
+        console.log(`🎨 Couleur du clan du joueur: ${clanColor} (${playerClan ? playerClan.name : 'aucun clan'})`);
+        
+        const circle = await this.createCircle(gameBoard, territory.position, 1.0, 0.1, clanColor);
         
         if (!circle) {
             console.error('❌ Impossible de créer le cercle pour le territoire');
@@ -179,13 +198,13 @@ export const simultaneousPlayPhase = {
             territory: territory
         };
         
-        console.log(`✅ Cercle créé pour le territoire ${territory.type}`);
+        console.log(`✅ Cercle créé pour le territoire ${territory.type} avec la couleur du clan`);
     },
 
     // Créer un cercle sur une position donnée (utilisant le MeepleManager)
-    async createCircle(gameBoard, position, scale = 1.0, height = 0) {
+    async createCircle(gameBoard, position, scale = 1.0, height = 0, color = 0xffffff) {
         // Utiliser le MeepleManager pour créer l'instance de cercle
-        const circle = await gameBoard.meepleManager.createCircleInstance('selection', position, scale, height, 0xffffff, {
+        const circle = await gameBoard.meepleManager.createCircleInstance('selection', position, scale, height, color, {
             position: position
         });
         
@@ -202,7 +221,7 @@ export const simultaneousPlayPhase = {
         gameBoard.workplane.add(circle);
         gameBoard.circles.push(circle);
         
-        console.log(`🔵 Cercle créé via MeepleManager à (${position.q}, ${position.r}) avec scale ${scale}`);
+        console.log(`🔵 Cercle créé via MeepleManager à (${position.q}, ${position.r}) avec scale ${scale} et couleur ${color}`);
         return circle;
     },
 
@@ -244,7 +263,9 @@ export const simultaneousPlayPhase = {
         // Supprimer les anciens cercles d'actions s'ils existent
         this.removeAllActionCircles(gameBoard);
 
-        // Créer un cercle pour chaque action
+        // Grouper les actions par position pour gérer les cercles multiples
+        const actionsByPosition = new Map();
+        
         for (const action of actions) {
             try {
                 const territory = action.getTerritory();
@@ -255,36 +276,89 @@ export const simultaneousPlayPhase = {
                     continue;
                 }
 
-                // Obtenir la position cartésienne du territoire
-                const cartesianPos = territory.getCartesianPosition(gameBoard);
+                // Créer une clé unique pour la position
+                const positionKey = `${territory.position.q},${territory.position.r}`;
                 
-                // Créer le cercle avec la couleur du clan
-                const circle = await this.createActionCircle(gameBoard, cartesianPos, clan.color);
-                
-                if (circle) {
-                    // Stocker le cercle avec ses informations
-                    this.currentCircles.push({
-                        circle: circle,
-                        action: action,
-                        territory: territory,
-                        clan: clan
-                    });
-                    
-                    console.log(`🔵 Cercle créé pour l'action du clan ${clan.name} (${clan.color}) sur territoire (${territory.position.q}, ${territory.position.r})`);
+                if (!actionsByPosition.has(positionKey)) {
+                    actionsByPosition.set(positionKey, []);
                 }
+                
+                actionsByPosition.get(positionKey).push({
+                    action: action,
+                    territory: territory,
+                    clan: clan
+                });
+                
             } catch (error) {
-                console.error(`❌ Erreur lors de la création du cercle pour l'action ID ${action.id}:`, error);
+                console.error(`❌ Erreur lors du traitement de l'action ID ${action.id}:`, error);
+            }
+        }
+
+        // Créer les cercles pour chaque position
+        for (const [positionKey, actionGroup] of actionsByPosition) {
+            const firstAction = actionGroup[0];
+            const territory = firstAction.territory;
+            const cartesianPos = territory.getCartesianPosition(gameBoard);
+            
+            console.log(`📍 Position (${territory.position.q}, ${territory.position.r}): ${actionGroup.length} action(s)`);
+            
+            // Créer un cercle pour chaque action à cette position, avec des tailles croissantes
+            for (let i = 0; i < actionGroup.length; i++) {
+                const actionData = actionGroup[i];
+                const scale = 1.0 + (i * 0.15); // Premier cercle: 1.0, puis 1.15, 1.30, etc.
+                const height = 0.1; // Hauteur fixe pour tous les cercles
+                const isMultiple = actionGroup.length > 1; // Vérifier s'il y a plusieurs cercles
+                
+                try {
+                    const circle = await this.createActionCircle(gameBoard, cartesianPos, actionData.clan.color, scale, height, isMultiple);
+                    
+                    if (circle) {
+                        // Configurer le rendu pour éviter les problèmes de transparence
+                        circle.frustumCulled = false; // Désactiver le culling
+                        
+                        // Stocker le cercle avec ses informations
+                        this.currentCircles.push({
+                            circle: circle,
+                            action: actionData.action,
+                            territory: actionData.territory,
+                            clan: actionData.clan,
+                            scale: scale,
+                            height: height
+                        });
+                        
+                        console.log(`🔵 Cercle créé pour l'action du clan ${actionData.clan.name} (${actionData.clan.color}) sur territoire (${territory.position.q}, ${territory.position.r}) avec scale ${scale} (multiple: ${isMultiple})`);
+                    }
+                } catch (error) {
+                    console.error(`❌ Erreur lors de la création du cercle pour l'action ID ${actionData.action.id}:`, error);
+                }
             }
         }
 
         console.log(`✅ ${this.currentCircles.length} cercles d'actions créés`);
+        
+        // Trier les cercles par profondeur pour un rendu correct
+        this.sortCirclesByDepth();
+    },
+
+    // Trier les cercles par profondeur pour éviter les problèmes de transparence
+    sortCirclesByDepth() {
+        // Trier par scale décroissant (plus petit = rendu en dernier = au-dessus)
+        this.currentCircles.sort((a, b) => {
+            return b.scale - a.scale; // Plus grand scale = rendu en premier (en dessous)
+        });
+        
+        // Mettre à jour les renderOrder selon le tri
+        this.currentCircles.forEach((circleData, index) => {
+            circleData.circle.renderOrder = 1000 + index;
+            console.log(`🔄 Cercle ${index}: scale=${circleData.scale}, renderOrder=${1000 + index} (plus petit = plus haut renderOrder)`);
+        });
     },
 
     // Créer un cercle pour une action spécifique
-    async createActionCircle(gameBoard, position, color) {
+    async createActionCircle(gameBoard, position, color, scale = 1.0, height = 0.1, isMultiple = false) {
         try {
             // Utiliser le MeepleManager pour créer l'instance de cercle
-            const circle = await gameBoard.meepleManager.createCircleInstance('selection', position, 1.0, 0.1, color, {
+            const circle = await gameBoard.meepleManager.createCircleInstance('selection', position, scale, height, color, {
                 position: position
             });
             
@@ -293,8 +367,35 @@ export const simultaneousPlayPhase = {
                 return null;
             }
             
-            // Positionner le cercle
-            circle.position.set(position.x, 0.1, position.z);
+            // Positionner le cercle à la hauteur spécifiée
+            circle.position.set(position.x, height, position.z);
+            
+            // Configurer le matériau pour éviter les problèmes de transparence
+            circle.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    // Cloner le matériau pour éviter les conflits
+                    const material = child.material.clone();
+                    
+                    // Configuration pour éviter les problèmes de transparence
+                    material.transparent = true;
+                    material.alphaTest = 0.1; // Seuil d'alpha test pour éviter les artefacts
+                    material.depthWrite = false; // Important pour la transparence
+                    material.depthTest = true;
+                    material.side = THREE.DoubleSide;
+                    
+                    // Ajuster l'opacité selon le contexte
+                    if (isMultiple) {
+                        material.opacity = 1.0; // Opacité complète pour les cercles multiples
+                    } else {
+                        material.opacity = 0.8; // Opacité normale pour les cercles simples
+                    }
+                    
+                    // Configuration du blending pour éviter les artefacts
+                    material.blending = THREE.NormalBlending;
+                    
+                    child.material = material;
+                }
+            });
             
             // Ajouter au workplane et au tableau des cercles de GameBoard3D
             gameBoard.workplane.add(circle);
