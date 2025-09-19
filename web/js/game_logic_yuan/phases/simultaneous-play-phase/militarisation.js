@@ -259,13 +259,16 @@ export const militarisation = {
         // tableau de bi objet : territory, clan
         let contestingTerritories = [];
         for (const conflict of finalLocalConflicts) {
-            contestingTerritories.push({territory: conflict.territory, clan: conflict.attacker})
-            const territoriesClan = gameState.game.territories.filter(territory => territory.clan_id === conflict.territory.clan_id && territory !== conflict.territory);
+            contestingTerritories.push({territory: conflict.territory, conflict: conflict}) // on ajoute les territory cible directement
+            const territoriesZone = finalLocalConflicts.filter(conflict2 => conflict2.territory.clan === conflict.territory.clan).map(conflict3 => conflict3.territory);
+            console.log("voila les territoires zone", territoriesZone);
+            const territoriesClan = gameState.game.territories.filter(territory => territory.clan_id === conflict.territory.clan_id && !territoriesZone.includes(territory));
+            console.log("voila les territoires clan", territoriesClan);
             const groupConnectedTerritories = this.groupConnectedTerritories(territoriesClan);
             for (const group of groupConnectedTerritories) {        
                 if (group.filter(territory => territory.construction_type === 'ville' || territory.construction_type === '2villes').length === 0) {
                     for (const territory of group) {
-                        const contestingTerritory = {territory: territory, clan: conflict.attacker};
+                        const contestingTerritory = {territory: territory, conflict: conflict};
                         contestingTerritories.push(contestingTerritory);
                     }
                 }
@@ -273,22 +276,22 @@ export const militarisation = {
         }
         console.log("voila les territoires contestes", contestingTerritories);
 
-        // on compte le nombre de territoires contestes par clan
+        // on compte le nombre de territoires contestes par conflict
         const clanContestedCount = new Map();
         for (const ct of contestingTerritories) {
-            const key = ct.clan; // ton objet clan
+            const key = ct.conflict; 
             clanContestedCount.set(key, (clanContestedCount.get(key) || 0) + 1);
         }
         console.log("voila le nombre de territoires contestes par clan", clanContestedCount);
 
         // on groupe les territoires contestes par territoire
         const contestingTerritoriesGroup = new Map();
-        for (const territoryClan of contestingTerritories) {
-            const territory = territoryClan.territory;
+        for (const territoryConflict of contestingTerritories) {
+            const territory = territoryConflict.territory;
             if (!contestingTerritoriesGroup.has(territory)) {
                 contestingTerritoriesGroup.set(territory, []);
             }
-            contestingTerritoriesGroup.get(territory).push(territoryClan.clan);
+            contestingTerritoriesGroup.get(territory).push(territoryConflict.conflict);
         }
         console.log("voila les territoires contestes par territoire", contestingTerritoriesGroup);
 
@@ -301,7 +304,7 @@ export const militarisation = {
             let minCount = Infinity;
 
             for (const conflict of conflicts) {
-                const count = clanContestedCount.get(conflict.clan) || 0;
+                const count = clanContestedCount.get(conflict.conflict) || 0;
 
                 if (count < minCount) {
                     minCount = count;
@@ -332,8 +335,8 @@ export const militarisation = {
         }
 
         // on change le clan, enleve les constructions et les guerriers, on passe tout en village du nouveau proprietaire
-        for (const [territory, clan] of filteredConflicts) {
-            territory.clan_id = clan.id;
+        for (const [territory, conflict] of filteredConflicts) {
+            territory.clan_id = conflict.attacker.id;
             territory.warriors = 0;
             territory.removeWarriors(this.gameBoard);
             territory.construction_type = 'village';
@@ -357,22 +360,17 @@ export const militarisation = {
             arrowManager.clearAllArrows();
         }
 
-        // ici gerer les attaque de zone
-
-
-
         // on attribue les urbanisation gratuite
         for (const action of actions) {
             const territory = action.getTerritory();
             if (territory.getConnectedClanTerritories().filter(territory => territory.construction_type === 'ville' || territory.construction_type === '2villes').length === 0) {
                 territory.construction_type = 'ville';
+                territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);
             }
         }
+        await uiManager.waitForNext();
 
-        // on cree les constructions
-        for (const [territory, conflict] of filteredConflicts) {
-            territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);
-        }
+        // ici gerer les attaque de zone
 
     },
             
