@@ -275,9 +275,13 @@ class Territory {
         this.user_id = data.user_id || null; //probablement a supprimer
         this.construction_type = data.construction_type || null; // village, ville, 2villes
         this.rempart = data.protection_type || null; // fortifiee, indestruible
-        this.warriors = []; // Tableau des mesh de guerriers (remplace armee)
+
+
         this.clan_id = data.clan_id || null; // Référence au clan au lieu de color
         this.hasTemple = false; // Variable booléenne pour indiquer si un temple est présent
+
+        this.warriors = 0; // nombre de guerriers (remplace armee)
+        this.warriors_mesh = []; // Tableau des mesh de guerriers (remplace armee)
         
         // Cache pour les territoires et provinces adjacents ou connecte
         this.adjacentTerritories = null;
@@ -315,19 +319,33 @@ class Territory {
         return gameBoard.hexToCartesian(this.position);
     }
 
-    // Positions décalées pour les guerriers (selon les spécifications)
-    getWarriorPositions(count) {
-        const basePos = this.position;
-        const positions = [
-            { q: basePos.q + 0.25, r: basePos.r - 0.35 }, // 1er warrior
-            { q: basePos.q + 0.25, r: basePos.r + 0 },    // 2ème warrior  
-            { q: basePos.q + 0,    r: basePos.r - 0.35 }, // 3ème warrior
-            { q: basePos.q + 0,    r: basePos.r + 0.35 }, // 4ème warrior
-            { q: basePos.q - 0.25, r: basePos.r + 0 },     // 5ème warrior
-            { q: basePos.q - 0.25, r: basePos.r - 0.35 }    // 6ème warrior
-        ];
-        return positions.slice(0, count);
+    // Obtenir tous les territoires connectés du même clan
+    getConnectedClanTerritories() {
+        const clanId = this.clan_id;
+        const visited = new Set();
+        const stack = [this];
+        const group = [];
+    
+        while (stack.length > 0) {
+            const territory = stack.pop();
+    
+            if (visited.has(territory)) continue;
+            visited.add(territory);
+    
+            if (territory.clan_id === clanId) {
+                group.push(territory);
+    
+                for (const neighbor of territory.adjacentProvinces) {
+                    if (!visited.has(neighbor)) {
+                        stack.push(neighbor);
+                    }
+                }
+            }
+        }
+        return group;
     }
+    
+
 
     // Créer la mesh de construction
     async createConstruction(gameBoard, meepleManager) {
@@ -472,13 +490,11 @@ class Territory {
                 // Finaliser la position et rotation
                 mesh.position.y = targetY;
                 mesh.rotation.y = 0;
-                console.log(`🏰 Rempart ${this.rempart} tombé et positionné à (${targetPosition.x}, ${targetY}, ${targetPosition.z})`);
             }
         };
         
         // Démarrer l'animation
         requestAnimationFrame(animate);
-        console.log(`🏰 Animation de chute du rempart ${this.rempart} démarrée (${duration}ms, hauteur: ${startHeight})`);
     }
 
     // Créer la mesh de temple
@@ -559,13 +575,11 @@ class Territory {
                 // Finaliser la position et rotation
                 mesh.position.y = targetY;
                 mesh.rotation.y = 0;
-                console.log(`🏛️ Temple tombé et positionné à (${targetPosition.x}, ${targetY}, ${targetPosition.z})`);
             }
         };
         
         // Démarrer l'animation
         requestAnimationFrame(animate);
-        console.log(`🏛️ Animation de chute du temple démarrée (${duration}ms)`);
     }
 
     // Animer le roulement du village avec un effet de pion de go
@@ -613,44 +627,49 @@ class Territory {
                 mesh.position.y = targetY;
                 mesh.rotation.y = 0;
                 mesh.rotation.x = 0;
-                console.log(`🏘️ Village roulé et positionné à (${targetPosition.x}, ${targetY}, ${targetPosition.z})`);
             }
         };
         
         // Démarrer l'animation
         requestAnimationFrame(animate);
-        console.log(`🏘️ Animation de roulement du village démarrée (${duration}ms)`);
     }
 
     // Créer les mesh de guerriers
-    async createWarriors(gameBoard, meepleManager, count) {
-        if (!this.clan_id || count <= 0) {
+    async createWarriors(gameBoard, meepleManager, warriorsToAdd, animate = true) {
+        if (!this.clan_id || warriorsToAdd <= 0) {
             return; // Pas de guerriers à créer
         }
 
-        // Récupérer la couleur via la référence au clan
-        const clan = gameState.game.clans.find(c => c.id === this.clan_id);
-        if (!clan) {
-            console.warn(`⚠️ Clan non trouvé pour clan_id=${this.clan_id}`);
+        // Récupérer la couleur du clan
+        const clanColor = gameState.getClanColor(this.clan_id);
+        if (!clanColor) {
+            console.warn(`⚠️ Couleur du clan non trouvée pour clan_id=${this.clan_id}`);
             return;
         }
-        // Supprimer les anciens guerriers d'abord
-        this.removeWarriors(gameBoard);
+
+        // Lire le nombre de guerriers déjà présents
+        const currentWarriorsCount = this.warriors_mesh.length;
         
-        // Obtenir les positions pour les guerriers
-        const positions = this.getWarriorPositions(count);
         
-        for (let i = 0; i < count; i++) {
-            const mesh = await meepleManager.createMeepleInstance('guerrier', clan.color, {
+        // Obtenir la position du territoire
+        const territoryPosition = this.getCartesianPosition(gameBoard);
+        
+        // Créer les nouveaux guerriers
+        for (let i = 0; i < warriorsToAdd; i++) {
+            const warriorIndex = currentWarriorsCount + i;
+            
+            const mesh = await meepleManager.createMeepleInstance('guerrier', clanColor, {
                 territory: this,
                 type: 'warrior',
-                index: i
+                index: warriorIndex
             });
 
             if (mesh) {
-                // Positionner selon le décalage défini
-                const pos = gameBoard.hexToCartesian(positions[i]);
-                mesh.position.set(pos.x, pos.y, pos.z);
+                // Calculer la position finale du guerrier
+                const warriorPosition = this.calculateWarriorPosition(territoryPosition, warriorIndex);
+                
+                // Position initiale (en bas)
+                mesh.position.set(warriorPosition.x, -0.5, warriorPosition.z);
                 
                 // Désactiver les collisions
                 mesh.traverse((child) => {
@@ -661,10 +680,68 @@ class Territory {
 
                 // Ajouter au workplane et stocker
                 gameBoard.workplane.add(mesh);
-                this.warriors.push(mesh);
+                this.warriors_mesh.push(mesh);
+                
+                // Animer l'arrivée du guerrier seulement si animate est true
+                if (animate) {
+                    this.animateWarriorArrival(mesh, warriorPosition, 1000);
+                } else {
+                    // Positionner directement le guerrier à sa position finale
+                    mesh.position.set(warriorPosition.x, warriorPosition.y, warriorPosition.z);
+                }
             }
         }
     }
+
+    // Calculer la position d'un guerrier selon l'index
+    calculateWarriorPosition(territoryPosition, warriorIndex) {
+        const distance = 0.4; // Distance de 0.4 du centre du territoire
+        const baseAngle = -Math.PI / 4; // Angle de base (-π/4)
+        const angleStep = Math.PI / 6; // Pas d'angle de π/10
+        
+        // Calculer l'angle pour ce guerrier - formule correcte
+        const angle = baseAngle + ((-1)**warriorIndex) * Math.floor((warriorIndex + 1) / 2) * angleStep;
+        
+        // Calculer la position finale
+        const x = territoryPosition.x + distance * Math.cos(angle);
+        const y = territoryPosition.y; // Même hauteur que le territoire
+        const z = territoryPosition.z - distance * Math.sin(angle); // Inversé pour avoir bas à gauche
+        
+        return { x, y, z };
+    }
+
+    // Animer l'arrivée d'un guerrier
+    animateWarriorArrival(mesh, finalPosition, duration) {
+        const startTime = performance.now();
+        const startY = -0.5;
+        const finalY = finalPosition.y;
+        
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing pour une animation fluide
+            const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+            
+            // Animation de la position Y
+            const currentY = startY + (finalY - startY) * easeOutCubic;
+            mesh.position.y = currentY;
+            
+            // Animation de rotation (360°) synchronisée avec le mouvement
+            mesh.rotation.y = easeOutCubic * Math.PI * 2;
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                // Animation terminée, position finale exacte
+                mesh.position.set(finalPosition.x, finalY, finalPosition.z);
+                mesh.rotation.y = 0; // facultatif, sinon garder la valeur finale (2π)
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    }
+    
 
     // Supprimer la construction
     removeConstruction(gameBoard) {
@@ -684,32 +761,15 @@ class Territory {
 
     // Supprimer tous les guerriers
     removeWarriors(gameBoard) {
-        if (this.warriors.length > 0) {
-            this.warriors.forEach(warrior => {
+        if (this.warriors_mesh.length > 0) {
+            this.warriors_mesh.forEach(warrior => {
                 gameBoard.workplane.remove(warrior);
             });
-            this.warriors = [];
+            this.warriors_mesh = [];
+            this.warriors = 0;
         }
     }
 
-    async updateMeshes(gameBoard, meepleManager) {
-        // Créer/mettre à jour la construction
-        if (this.construction_type && !this.construction_mesh) {
-            await this.createConstruction(gameBoard, meepleManager);
-        } else if (!this.construction_type && this.construction_mesh) {
-            this.removeConstruction(gameBoard);
-        }
-        
-        // Créer/mettre à jour le rempart
-        if (this.rempart && !this.rempart_mesh) {
-            await this.createRempart(gameBoard, meepleManager);
-        } else if (!this.rempart && this.rempart_mesh) {
-            this.removeRempart(gameBoard);
-        }
-        
-        // Note: Pour les guerriers, utiliser createWarriors() avec le count désiré
-        // car elle gère automatiquement la suppression/recréation
-    }
 
     getAdjacentTerritories() {
         if (this.adjacentTerritories !== null) {

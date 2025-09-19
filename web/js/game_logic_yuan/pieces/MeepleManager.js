@@ -335,10 +335,8 @@ export class MeepleManager {
         
         // Appliquer la couleur si le meeple est colorable et une couleur est fournie
         if (meepleInfo.colorable && colorHex) {
-            console.log(`🎨 Application couleur ${colorHex} sur meeple type ${type}`);
             instance.traverse((child) => {
                 if (child.isMesh && child.material) {
-                    console.log(`🎨 Mesh trouvé, type matériau:`, child.material.type || 'unknown');
                     // Cloner le matériau pour éviter d'affecter les autres instances
                     const materials = Array.isArray(child.material) ? child.material : [child.material];
                     const clonedMaterials = materials.map(material => {

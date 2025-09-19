@@ -1219,9 +1219,9 @@ enableShadowsOnAdd(this.workplane);
             setTimeout(() => {
                 territory.createWarriors(this, this.meepleManager, 3);
                 
-                // Test 3: Mettre à jour le nombre de guerriers après 2 secondes
+                // Test 3: Ajouter 2 guerriers supplémentaires après 2 secondes
                 setTimeout(() => {
-                    territory.createWarriors(this, this.meepleManager, 5);
+                    territory.createWarriors(this, this.meepleManager, 2);
                     
                     // Test 4: Nettoyage après 3 secondes
                     setTimeout(() => {

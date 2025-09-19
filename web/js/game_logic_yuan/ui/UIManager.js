@@ -1239,6 +1239,21 @@ export class UIManager {
         
         requestAnimationFrame(shrinkAnimation);
     }
+
+    // Méthode pour attendre le clic sur le bouton next
+    async waitForNext() {
+        this.showNextBar();
+    
+        await new Promise((resolve) => {
+            const handleNext = () => {
+                document.removeEventListener('nextButtonClicked', handleNext);
+                resolve();
+            };
+            document.addEventListener('nextButtonClicked', handleNext);
+        });
+        this.showMenuOnlyBar();
+        this.updateInfoPanel('');
+    }
 }
 
 // Instance unique du gestionnaire UI

@@ -1,19 +1,26 @@
 import * as THREE from 'three';
 import { gameState } from '../gameState.js';
 
+  
+
+
 /**
  * Classe Arrow pour gérer une flèche individuelle avec évitement automatique des chevauchements
  */
 class Arrow {
-    constructor(action, territoryPath, arrowType) {
+    constructor(action, territoryPath, arrowType, warriorsToSend = 0, warriorsAlreadySent = 0) {
         this.action = action;
         this.territoryPath = territoryPath;
-        this.arrowType = arrowType; // 'devellopementConnecte', 'devellopementAdjacent', 'Attaque', 'telepartation'
+        this.arrowType = arrowType; // 'devellopementConnecte', 'devellopementAdjacent', 'attaque', 'telepartation'
+        this.warriorsToSend = warriorsToSend;
+        this.warriorsAlreadySent = warriorsAlreadySent;
         this.pathSprites = [];
         this.currentArrow = null;
         this.offset = { q: 0, r: 0, y: 0 };
         this.isRewinding = false; // Flag pour éviter les opérations simultanées
         this.smoothCurvePositions = []; // Stocker les positions pour le rewind
+        this.warriorMeshes = [];
+        this.warriorOffsetIndices = [];
         
         // Promesse qui se résout quand l'animation est terminée
         this.animationPromise = null;
@@ -22,6 +29,7 @@ class Arrow {
         // Récupérer les infos du clan
         const clanId = gameState.getClanIdByGameUserId(action.game_user_id);
         const clan = gameState.getClanById(clanId);
+        this.clanId = clanId;
         this.color = gameState.getClanColor(clanId) || 0xff0000;
         this.offset.y = clan ? clan.verticalOffset : 0;
         
@@ -48,43 +56,23 @@ class Arrow {
             return;
         }
         
-        // Vérifier les conflits avec les chemins existants
+        // Déterminer la paire finale
         const currentEndPair = this.getLastTwoTerritories();
-        let nombre = 0;
-        
-        // Compter les chemins avec la même paire finale
-        for (const storedPath of arrowManager.storedTerritoryPaths) {
-            const storedEndPair = this.getLastTwoTerritoriesFromPath(storedPath);
-            if (this.areSamePairs(currentEndPair, storedEndPair)) {
-                nombre++;
-            }
-        }
-       
-        // Ajouter ce chemin au stockage APRÈS la comparaison
-        arrowManager.storedTerritoryPaths.push(this.territoryPath);
-        
-        // Calculer les décalages Q/R selon les règles
-        let q, r;
         const [territory1, territory2] = currentEndPair;
-        
-        if (territory1.position.r === territory2.position.r) {
-            // Même r0
-            q = -0.05;
-            r = 0.1;
-        } else if (territory1.position.q === territory2.position.q) {
-            // Même q0
-            q = 0.1;
-            r = -0.05;
-        } else {
-            // Différents
-            q = 0.05;
-            r = 0.05;
-        }
-        
-        // Appliquer le multiplicateur selon nombre
-        const multiplier = this.getMultiplier(nombre);
-        this.offset.q = q * multiplier;
-        this.offset.r = r * multiplier;
+        const pairKey = arrowManager.getPairKey(territory1, territory2);
+
+        // Obtenir l'offset de base de la paire
+        const base = arrowManager.getBaseOffsetForPair(territory1, territory2);
+
+        // Obtenir/assigner un index d'offset par clan pour cette paire
+        const indexForClan = arrowManager.getOrAssignOffsetIndex(pairKey, this.clanId);
+
+        // Convertir index -> multiplicateur (0, 1, -1, 2, -2, ...)
+        const multiplier = arrowManager.getMultiplier(indexForClan);
+
+        // Appliquer l'offset
+        this.offset.q = base.q * multiplier;
+        this.offset.r = base.r * multiplier;
     }
     
     getLastTwoTerritories() {
@@ -111,12 +99,18 @@ class Arrow {
     
     async createArrow() {
         try {
+            // Créer immédiatement les guerriers au départ pour les attaques
+            if (this.arrowType === 'attaque' && this.warriorsToSend > 0) {
+                await this.spawnWarriorsAtStart();
+            }
+
             // Déléguer à displayPathDiscs avec les paramètres calculés
             const pathInstance = await arrowManager.displayPathDiscs(
                 this.territoryPath, 
                 this.color, 
                 this.offset,
-                this.arrowType
+                this.arrowType,
+                this // ownerArrow
             );
             
             // Stocker les références des mesh créés
@@ -124,10 +118,20 @@ class Arrow {
                 this.pathSprites = pathInstance.pathSprites || [];
                 this.currentArrow = pathInstance.currentArrow;
                 this.smoothCurvePositions = pathInstance.smoothCurvePositions || [];
+                // Les guerriers seront repositionnés par le suivi chaque update
+                // Log de la position finale de la flèche
+                // if (this.currentArrow) {
+                //     const p = this.currentArrow.position;
+                //     const [t1, t2] = this.getLastTwoTerritories();
+                //     console.log(
+                //         `🎯 Position finale flèche clan=${this.clanId} pair=(${t1.position.q},${t1.position.r})->(${t2.position.q},${t2.position.r}) ` +
+                //         `pos=(${p.x.toFixed(3)}, ${p.y.toFixed(3)}, ${p.z.toFixed(3)}) offset=(q:${this.offset.q.toFixed(3)}, r:${this.offset.r.toFixed(3)}, y:${this.offset.y.toFixed(3)})`
+                //     );
+                // }
             }
             
             // Résoudre la promesse d'animation
-            console.log(`✅ Animation terminée pour flèche ${this.arrowType}`);
+            // console.log(`✅ Animation terminée pour flèche ${this.arrowType}`);
             if (this.resolveAnimation) {
                 this.resolveAnimation();
             }
@@ -137,6 +141,134 @@ class Arrow {
             if (this.resolveAnimation) {
                 this.resolveAnimation();
             }
+        }
+    }
+
+    /**
+     * Crée les meshes de guerriers au point de départ (sans tenir compte du décalage de flèche)
+     */
+    async spawnWarriorsAtStart() {
+        try {
+            const count = Math.max(0, this.warriorsToSend | 0);
+            if (count === 0) return;
+
+            if (!arrowManager.gameBoard || !arrowManager.gameBoard.meepleManager) return;
+
+            const [territory1, territory2] = this.getLastTwoTerritories();
+            const pairKey = arrowManager.getPairKey(territory1, territory2);
+            const baseIndex = arrowManager.reserveWarriorOffsets(pairKey, count);
+            const offsets = arrowManager.hexPositionsCartesian;
+            const offsetsLen = offsets.length;
+
+            // Calculer la position de départ de l'arrow (sans décalage global)
+            const startHex = this.territoryPath[0].position;
+            let startPosHex = startHex;
+            if (this.arrowType === 'attaque' && this.territoryPath.length > 1) {
+                const nextHex = this.territoryPath[1].position;
+                startPosHex = {
+                    q: (startHex.q + nextHex.q) / 2,
+                    r: (startHex.r + nextHex.r) / 2,
+                    z: startHex.z || 0
+                };
+            }
+            const startCartesian = arrowManager.gameBoard.hexToCartesian(startPosHex);
+
+            for (let i = 0; i < count; i++) {
+                const idx = (baseIndex + i) % offsetsLen;
+                const off = offsets[idx];
+
+                const mesh = await arrowManager.gameBoard.meepleManager.createMeepleInstance('guerrier', this.color, {
+                    ownerArrowId: this.action?.id ?? undefined,
+                    ownerClanId: this.clanId,
+                    arrowType: this.arrowType,
+                    warriorIndexLocal: i,
+                    warriorIndexGlobal: baseIndex + i,
+                    pairKey: pairKey
+                });
+                if (!mesh) continue;
+
+                // Position monde au départ (ignorer le décalage q/r de la flèche)
+                mesh.position.set(startCartesian.x + off.x, 0.06 + this.offset.y, startCartesian.z + off.z);
+
+                // Ajouter sur le workplane au début
+                if (arrowManager.gameBoard && arrowManager.gameBoard.workplane) {
+                    arrowManager.gameBoard.workplane.add(mesh);
+                }
+
+                this.warriorMeshes.push(mesh);
+                this.warriorOffsetIndices.push(baseIndex + i);
+            }
+        } catch (e) {
+            console.warn('⚠️ Impossible de créer les guerriers au départ:', e);
+        }
+    }
+
+    /**
+     * Attache les guerriers à la pointe de la flèche pour qu'ils se déplacent avec elle
+     * @param {THREE.Mesh} arrowSprite
+     */
+    attachWarriorsToArrow(arrowSprite) {
+        // Gardé pour compatibilité: positionner une fois en monde sans parentage
+        if (!arrowSprite || !this.warriorMeshes || this.warriorMeshes.length === 0) return;
+        const offsets = arrowManager.hexPositionsCartesian;
+        const offsetsLen = offsets.length;
+        const arrowPos = arrowSprite.position;
+        for (let i = 0; i < this.warriorMeshes.length; i++) {
+            const mesh = this.warriorMeshes[i];
+            const idx = (this.warriorOffsetIndices[i] ?? i) % offsetsLen;
+            const off = offsets[idx];
+            // Ne pas faire tourner la formation: utiliser l'offset brut
+            mesh.position.set(arrowPos.x + off.x, 0.06 + this.offset.y, arrowPos.z + off.z);
+            if (!mesh.parent && arrowManager.gameBoard && arrowManager.gameBoard.workplane) {
+                arrowManager.gameBoard.workplane.add(mesh);
+            }
+        }
+    }
+
+    /**
+     * Anime la "mort" d'un guerrier puis le supprime proprement
+     * @param {THREE.Object3D} mesh Guerrier à éliminer
+     */
+    async animateAndRemoveWarrior(mesh) {
+        if (!mesh) return;
+        await arrowManager.animateAndRemoveMesh(mesh);
+    }
+
+    /**
+     * Supprime N guerriers de cette flèche avec animation
+     * @param {number} count nombre de guerriers à supprimer
+     */
+    async removeWarriorsWithAnimation(count) {
+        const toRemove = Math.min(Math.max(0, count | 0), this.warriorMeshes.length);
+        if (toRemove === 0) return;
+
+        // Extraire les meshes à supprimer (prendre depuis la fin pour stabilité visuelle)
+        const removedMeshes = this.warriorMeshes.splice(this.warriorMeshes.length - toRemove, toRemove);
+        // Retirer les indices correspondants
+        this.warriorOffsetIndices.splice(this.warriorOffsetIndices.length - toRemove, toRemove);
+
+        // Lancer les animations en parallèle
+        await Promise.all(removedMeshes.map(mesh => this.animateAndRemoveWarrior(mesh)));
+    }
+
+    /**
+     * Supprime immédiatement N guerriers sans animation
+     * @param {number} count
+     */
+    removeWarriorsImmediate(count) {
+        const toRemove = Math.min(Math.max(0, count | 0), this.warriorMeshes.length);
+        if (toRemove <= 0) return;
+        // Extraire et supprimer les indices réservés
+        this.warriorOffsetIndices.splice(this.warriorOffsetIndices.length - toRemove, toRemove);
+        const removedMeshes = this.warriorMeshes.splice(this.warriorMeshes.length - toRemove, toRemove);
+        for (const mesh of removedMeshes) {
+            if (!mesh) continue;
+            if (mesh.parent) {
+                mesh.parent.remove(mesh);
+            } else if (arrowManager.gameBoard && arrowManager.gameBoard.workplane) {
+                arrowManager.gameBoard.workplane.remove(mesh);
+            }
+            arrowManager.disposeMeshDeep(mesh);
         }
     }
     
@@ -151,7 +283,6 @@ class Arrow {
         }
         
         this.isRewinding = true;
-        console.log(`🔄 Début du rembobinage de l'arrow avec ${this.pathSprites.length} sprites`);
         
         try {
             // Désafficher les sprites du chemin en sens inverse
@@ -169,9 +300,9 @@ class Arrow {
                     await this.updateArrowPositionRewind(i - 1);
                 }
                 
-                // Attendre 20ms avant de supprimer le sprite suivant
+                // Attendre un délai configurable avant de supprimer le sprite suivant
                 if (i > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 20));
+                    await new Promise(resolve => setTimeout(resolve, arrowManager.animationStepDelayMs ));
                 }
             }
             
@@ -184,7 +315,6 @@ class Arrow {
                 this.currentArrow = null;
             }
             
-            console.log('✅ Rembobinage terminé');
             
         } catch (error) {
             console.error('❌ Erreur pendant le rembobinage:', error);
@@ -241,21 +371,41 @@ class Arrow {
             }
             arrowManager.disposeSprite(this.currentArrow);
         }
+
+        // Supprimer les guerriers attachés à cette flèche
+        if (this.warriorMeshes && this.warriorMeshes.length > 0) {
+            this.warriorMeshes.forEach(mesh => {
+                try {
+                    if (!mesh) return;
+                    if (mesh.parent) {
+                        mesh.parent.remove(mesh);
+                    } else if (arrowManager.gameBoard && arrowManager.gameBoard.workplane) {
+                        arrowManager.gameBoard.workplane.remove(mesh);
+                    }
+                    arrowManager.disposeSprite(mesh);
+                } catch (e) {
+                    console.warn('⚠️ Erreur lors de la suppression d\'un guerrier:', e);
+                }
+            });
+            this.warriorMeshes = [];
+            this.warriorOffsetIndices = [];
+        }
         
         // Retirer cette Arrow de la liste d'arrowManager
         const index = arrowManager.arrows.indexOf(this);
         if (index > -1) {
             arrowManager.arrows.splice(index, 1);
         }
-        
-        console.log('🗑️ Arrow supprimée et mémoire libérée');
     }
 }
 
 export const arrowManager = {
     gameBoard: null,
     storedTerritoryPaths: [], // Tableau des tableaux de territoires pour comparaison
+    offsetAssignmentsByPair: new Map(), // Clé "q1,r1|q2,r2" -> Map(clanId -> index)
     arrows: [], // Tableau des objets Arrow
+    animationStepDelayMs: 40, // Délai entre points de l'animation 
+    warriorCountsByPair: new Map(), // Clé pairKey -> nombre total de guerriers réservés
     
     // Anciens tableaux pour compatibilité (à supprimer plus tard)
     allArrows: [], 
@@ -263,17 +413,22 @@ export const arrowManager = {
 
     initialize(gameBoard) {
         this.gameBoard = gameBoard;
+        this.hexPositionsCartesian = [];
+        this.initializeHexPositionsCartesian();
+        
     },
+    
+    
     
     /**
      * Crée une nouvelle Arrow avec gestion automatique des décalages
      * @param {Object} action - L'action contenant game_user_id
      * @param {Array} territoryPath - Tableau des territoires
-     * @param {string} arrowType - Type: 'devellopementConnecte', 'devellopementAdjacent', 'Attaque', 'telepartation'
+     * @param {string} arrowType - Type: 'devellopementConnecte', 'devellopementAdjacent', 'attaque', 'telepartation'
      * @returns {Promise<Arrow>} Promise qui se résout avec l'instance Arrow créée après animation
      */
-    async createArrow(action, territoryPath, arrowType = 'devellopementConnecte') {
-        const arrow = new Arrow(action, territoryPath, arrowType);
+    async createArrow(action, territoryPath, arrowType = 'devellopementConnecte', warriorsToSend = 0, warriorsAlreadySent = 0) {
+        const arrow = new Arrow(action, territoryPath, arrowType, warriorsToSend, warriorsAlreadySent);
         // Attendre que l'animation de la flèche soit terminée
         await arrow.animationPromise;
         return arrow;
@@ -291,12 +446,91 @@ export const arrowManager = {
         
         await arrow.rewind();
     },
+
+    /**
+     * Initialise hexPositionsCartesian en convertissant les positions hexagonales en coordonnées cartésiennes
+     */
+    initializeHexPositionsCartesian() {
+        const hexPositions = [
+            {q: 0, r: 0}, {q: 0, r: -1}, {q: 1, r: -1}, {q: 1, r: 0}, {q: 0, r: 1}, 
+            {q: -1, r: 1}, {q: -1, r: 0}, {q: 0, r: -2}, {q: 1, r: -2}, {q: 2, r: -2}, 
+            {q: 2, r: -1}, {q: 2, r: 0}, {q: 1, r: 1}, {q: 0, r: 2}, {q: -1, r: 2}, 
+            {q: -2, r: 2}, {q: -2, r: 1}, {q: -2, r: 0}, {q: -1, r: -1}
+        ];
+        
+        const scale = 0.2; 
+        this.hexPositionsCartesian = hexPositions.map(pos => {
+            const {x, y, z} = this.gameBoard.hexToCartesian(pos);
+            return {x: x * scale, y: y * scale, z: z * scale};
+        });
+    },
+
+    // Construit une clé unique pour la paire finale (avant-dernier -> dernier territoire)
+    getPairKey(territory1, territory2) {
+        return `${territory1.position.q},${territory1.position.r}|${territory2.position.q},${territory2.position.r}`;
+    },
+
+    // Offset de base (q, r) selon l'orientation de la paire
+    getBaseOffsetForPair(territory1, territory2) {
+        let q, r;
+        if (territory1.position.r === territory2.position.r) {
+            q = -0.05;
+            r = 0.1;
+        } else if (territory1.position.q === territory2.position.q) {
+            q = 0.1;
+            r = -0.05;
+        } else {
+            q = 0.05;
+            r = 0.05;
+        }
+        return { q, r };
+    },
+
+    // Récupère ou attribue un index d'offset pour un clan donné sur une paire donnée
+    getOrAssignOffsetIndex(pairKey, clanId) {
+        let assignments = this.offsetAssignmentsByPair.get(pairKey);
+        if (!assignments) {
+            assignments = new Map();
+            this.offsetAssignmentsByPair.set(pairKey, assignments);
+        }
+        if (assignments.has(clanId)) {
+            return assignments.get(clanId);
+        }
+        const newIndex = assignments.size; // index basé sur le nombre de clans déjà présents
+        assignments.set(clanId, newIndex);
+        return newIndex;
+    },
+
+    // Séquence de multiplicateurs 0, 1, -1, 2, -2, ...
+    getMultiplier(index) {
+        const sequence = [0];
+        for (let i = 1; i <= index; i++) {
+            if (sequence.length > index) break;
+            sequence.push(i);
+            if (sequence.length > index) break;
+            sequence.push(-i);
+        }
+        return sequence[index] ?? 0;
+    },
+
+    /**
+     * Réserve des indices d'offset pour des guerriers sur une paire finale identique
+     * afin d'éviter le chevauchement entre plusieurs arrows
+     * @param {string} pairKey
+     * @param {number} count
+     * @returns {number} index de départ réservé
+     */
+    reserveWarriorOffsets(pairKey, count) {
+        if (count <= 0) return 0;
+        const current = this.warriorCountsByPair.get(pairKey) || 0;
+        this.warriorCountsByPair.set(pairKey, current + count);
+        return current;
+    },
     
     /**
      * Supprime toutes les arrows et remet à zéro les compteurs
      */
     clearAllArrows() {
-        console.log(`🧹 Suppression de ${this.arrows.length} arrows`);
         
         // Disposer toutes les arrows
         this.arrows.forEach(arrow => arrow.dispose());
@@ -310,6 +544,8 @@ export const arrowManager = {
         this.pathInstances = [];
         
         console.log('✅ Toutes les arrows ont été supprimées et compteurs réinitialisés');
+        // Réinitialiser aussi les réservations de guerriers
+        this.warriorCountsByPair.clear();
     },
 
     /**
@@ -320,7 +556,7 @@ export const arrowManager = {
      * a chaque joueur suplementaire au premier rajouter y+0.01 pour eviter la superposition.
      * si 2 fleche arrive sur la meme case et viene de la meme case alor decaler la fleche de de q+-0.1 ou r+-0.1 ou les deux de +-0.05, le tout perpendiculairement a ce 2 case,pour eviter la superposition. si il y a encor plus de fleche repeter l'operation
      */
-    async displayPathDiscs(territoryPath, color = 0xff0000, offset = {q: 0, r: 0, y: 0}, arrowType = 'devellopementConnecte') {
+    async displayPathDiscs(territoryPath, color = 0xff0000, offset = {q: 0, r: 0, y: 0}, arrowType = 'devellopementConnecte', ownerArrow = null) {
 
         if (!territoryPath || territoryPath.length === 0) {
             console.warn('❌ Aucun chemin fourni pour l\'affichage des disques');
@@ -353,7 +589,6 @@ export const arrowManager = {
                     const weight2 = 1;
                     const totalWeight = weight1 + weight2;
                     
-                    console.log(`🌀 Premier élément téléportation: poids1=${weight1.toFixed(2)}, poids2=${weight2}`);
                     
                     adjustedPosition = {
                         q: (weight1 * pos1.q + weight2 * pos2.q) / totalWeight + offset.q,
@@ -361,12 +596,21 @@ export const arrowManager = {
                         z: pos1.z || 0
                     };
                 } else {
-                    // Premier élément : barycentre (3, 1) entre le 1er et 2ème territoire
-                    adjustedPosition = {
-                        q: (3 * pos1.q + 1 * pos2.q) / 4 + offset.q,
-                        r: (3 * pos1.r + 1 * pos2.r) / 4 + offset.r,
-                        z: pos1.z || 0
-                    };
+                    if (arrowType === 'attaque') {
+                        // Premier élément : barycentre au milieu pour les attaques
+                        adjustedPosition = {
+                            q: (pos1.q + pos2.q) / 2 + offset.q,
+                            r: (pos1.r + pos2.r) / 2 + offset.r,
+                            z: pos1.z || 0
+                        };
+                    } else {
+                        // Premier élément : barycentre (3, 1) par défaut
+                        adjustedPosition = {
+                            q: (3 * pos1.q + 1 * pos2.q) / 4 + offset.q,
+                            r: (3 * pos1.r + 1 * pos2.r) / 4 + offset.r,
+                            z: pos1.z || 0
+                        };
+                    }
                 }
                 
             } else if (i === territoryPath.length - 1 && territoryPath.length > 1) {
@@ -383,7 +627,6 @@ export const arrowManager = {
                     const weight2 = euclideanDistance * 4 - 2;
                     const totalWeight = weight1 + weight2;
                     
-                    console.log(`🌀 Dernier élément téléportation: poids1=${weight1}, poids2=${weight2.toFixed(2)}`);
                     
                     adjustedPosition = {
                         q: (weight1 * pos1.q + weight2 * pos2.q) / totalWeight + offset.q,
@@ -391,12 +634,21 @@ export const arrowManager = {
                         z: pos2.z || 0
                     };
                 } else {
-                    // Dernier élément : barycentre (1, 3) entre l'avant-dernier et dernier territoire
-                    adjustedPosition = {
-                        q: (1 * pos1.q + 3 * pos2.q) / 4 + offset.q,
-                        r: (1 * pos1.r + 3 * pos2.r) / 4 + offset.r,
-                        z: pos2.z || 0
-                    };
+                    if (arrowType === 'attaque') {
+                        // Dernier élément : barycentre au milieu pour les attaques
+                        adjustedPosition = {
+                            q: (pos1.q + pos2.q) / 2 + offset.q,
+                            r: (pos1.r + pos2.r) / 2 + offset.r,
+                            z: pos2.z || 0
+                        };
+                    } else {
+                        // Dernier élément : barycentre (1, 3) par défaut
+                        adjustedPosition = {
+                            q: (1 * pos1.q + 3 * pos2.q) / 4 + offset.q,
+                            r: (1 * pos1.r + 3 * pos2.r) / 4 + offset.r,
+                            z: pos2.z || 0
+                        };
+                    }
                 }
                 
             } else {
@@ -414,7 +666,7 @@ export const arrowManager = {
 
         // Créer une courbe lissée avec un nombre de points 
         let multiplier;
-        if (arrowType === 'Attaque') {
+        if (arrowType === 'attaque') {
             multiplier = 7;
         } else if (arrowType === 'telepartation') {
             // Calculer la distance euclidienne entre le premier et dernier territoire
@@ -424,7 +676,6 @@ export const arrowManager = {
             const dy = firstTerritory.position.r - lastTerritory.position.r;
             const euclideanDistance = Math.sqrt(dx * dx + dy * dy);
             multiplier = (euclideanDistance + 0.5)*20;
-            console.log(`🌀 Téléportation: distance=${euclideanDistance.toFixed(2)}, multiplier=${multiplier.toFixed(2)}`);
         } else {
             multiplier = 11; // Par défaut pour devellopementConnecte, devellopementAdjacent, etc.
         }
@@ -439,7 +690,8 @@ export const arrowManager = {
             offset: offset,
             pathSprites: [],
             currentArrow: null,
-            smoothCurvePositions: smoothCurvePositions // Stocker pour le rewind
+            smoothCurvePositions: smoothCurvePositions, // Stocker pour le rewind
+            ownerArrow: ownerArrow
         };
 
         // Afficher les points un par un avec animation
@@ -459,7 +711,6 @@ export const arrowManager = {
      * @param {string} arrowType - Type de flèche
      */
     async animatePathDisplay(smoothCurvePositions, pathInstance, arrowType) {
-        console.log(`🎬 Début de l'animation: ${smoothCurvePositions.length} points à afficher`);
         
         for (let i = 0; i < smoothCurvePositions.length; i++) {
             const position = smoothCurvePositions[i];
@@ -477,7 +728,7 @@ export const arrowManager = {
             
             try {
                 // Créer une instance de sprite selon le type
-                const spriteType = arrowType === 'Attaque' ? 'pathDisc' : 'pathSquare';
+                const spriteType = arrowType === 'attaque' ? 'pathDisc' : 'pathSquare';
                 const discSprite = await this.gameBoard.meepleManager.createSpriteInstance(
                     spriteType,
                     { x: cartesianPos.x, y: cartesianPos.y, z: cartesianPos.z },
@@ -495,22 +746,27 @@ export const arrowManager = {
                     position.rotationY || 0 // Rotation selon la direction de la courbe
                 );
 
-                // Ajouter le sprite au workplane
+                // Décaler uniquement la visibilité du point, sans bloquer la logique
+                discSprite.visible = false;
+                // Ajouter le sprite au workplane immédiatement (mais invisible)
                 this.gameBoard.workplane.add(discSprite);
-                
-                // Stocker la référence dans l'instance du chemin
+                // Stocker la référence dans l'instance du chemin immédiatement
                 pathInstance.pathSprites.push(discSprite);
+                // Rendre visible après un délai sans bloquer la suite
+                setTimeout(() => {
+                    if (discSprite && discSprite.material) {
+                        discSprite.visible = true;
+                    }
+                }, arrowManager.animationStepDelayMs);
 
-                // Gestion de la flèche qui suit le tracé
-                await this.updateArrowPosition(smoothCurvePositions, i, pathInstance);
+                // Gestion de la flèche qui suit le tracé (attendre la fin de l'interpolation)
+                const movePromise = this.updateArrowPosition(smoothCurvePositions, i, pathInstance);
+                await movePromise;
 
                 const pointType = isOriginalPoint ? '🎯 ORIGINAL' : '🔗 INTERPOLÉ';
                 const rotationDeg = ((position.rotationY || 0) * 180 / Math.PI).toFixed(1);
                 
-                // Attendre 20ms avant d'afficher le prochain point
-                if (i < smoothCurvePositions.length - 1) { // Pas d'attente après le dernier point
-                    await new Promise(resolve => setTimeout(resolve, 20));
-                }
+                // Pas de délai bloquant: la visibilité est retardée via setTimeout ci-dessus
                 
             } catch (error) {
                 console.warn(`⚠️ Erreur lors de la création du disque ${i + 1}:`, error);
@@ -526,44 +782,128 @@ export const arrowManager = {
      */
     async updateArrowPosition(smoothCurvePositions, currentIndex, pathInstance) {
         const position = smoothCurvePositions[currentIndex];
-        
+
         // Utiliser les coordonnées cartésiennes directement si disponibles
-        const cartesianPos = position.cartesianX !== undefined ? 
+        const targetPos = position.cartesianX !== undefined ?
             { x: position.cartesianX, y: 0.1, z: position.cartesianZ } :
             this.gameBoard.hexToCartesian(position);
-        
         // Appliquer le décalage Y (légèrement au-dessus des carrés)
-        cartesianPos.y = 0.06 + pathInstance.offset.y;
+        targetPos.y = 0.06 + pathInstance.offset.y;
 
-        // Calculer la rotation de la flèche (pointe vers le haut dans l'image)
-        // Ajuster de -180° car l'image pointe vers le haut et non vers le bas
-        const arrowRotation = (position.rotationY || 0) + Math.PI ;
+        // Rotation cible de la flèche (texture pointe vers le haut, on ajoute PI)
+        const targetAngleRaw = position.rotationY || 0; // angle brut de la tangente
+        const targetArrowY = targetAngleRaw + Math.PI;
 
         try {
             if (!pathInstance.currentArrow) {
-                // Créer la flèche pour la première fois
+                // Créer la flèche pour la première fois (sans interpolation)
                 pathInstance.currentArrow = await this.gameBoard.meepleManager.createSpriteInstance(
                     'pathArrow',
-                    { x: cartesianPos.x, y: cartesianPos.y, z: cartesianPos.z }, // Légèrement au-dessus des carrés
-                    pathInstance.color, // Couleur de l'instance
-                    { 
+                    { x: targetPos.x, y: targetPos.y, z: targetPos.z },
+                    pathInstance.color,
+                    {
                         isArrow: true,
                         currentIndex: currentIndex,
                         pathInstanceId: pathInstance.id
                     },
-                    arrowRotation
+                    targetArrowY
                 );
 
                 // Ajouter la flèche au workplane et à la liste globale
                 this.gameBoard.workplane.add(pathInstance.currentArrow);
                 this.allArrows.push(pathInstance.currentArrow);
-            } else {
-                // Déplacer et réorienter la flèche existante
-                pathInstance.currentArrow.position.set(cartesianPos.x, cartesianPos.y, cartesianPos.z);
-                pathInstance.currentArrow.rotation.order = 'YXZ';
-                pathInstance.currentArrow.rotation.set(-Math.PI / 2, arrowRotation, 0);
-                pathInstance.currentArrow.userData.currentIndex = currentIndex;
+
+                // Position initiale des guerriers (sans parentage, formation fixe)
+                if (pathInstance.ownerArrow && pathInstance.ownerArrow.arrowType === 'attaque') {
+                    const owner = pathInstance.ownerArrow;
+                    const offsets = this.hexPositionsCartesian;
+                    const offsetsLen = offsets.length;
+                    for (let i = 0; i < (owner.warriorMeshes?.length || 0); i++) {
+                        const mesh = owner.warriorMeshes[i];
+                        const idx = (owner.warriorOffsetIndices[i] ?? i) % offsetsLen;
+                        const off = offsets[idx];
+                        mesh.position.set(targetPos.x + off.x, 0.06 + owner.offset.y, targetPos.z + off.z);
+                        mesh.rotation.set(0, 0, 0);
+                        if (!mesh.parent) {
+                            this.gameBoard.workplane.add(mesh);
+                        }
+                    }
+                }
+                return;
             }
+
+            // Interpolation fluide uniquement pour la pointe de la flèche
+            // Annuler une animation précédente si elle existe
+            if (pathInstance._arrowAnimRequestId) {
+                cancelAnimationFrame(pathInstance._arrowAnimRequestId);
+                pathInstance._arrowAnimRequestId = null;
+            }
+
+            return await new Promise((resolve) => {
+                const duration = arrowManager.animationStepDelayMs; // même tempo que l'affichage des points
+                const startTime = performance.now();
+                const startX = pathInstance.currentArrow.position.x;
+                const startY = pathInstance.currentArrow.position.y;
+                const startZ = pathInstance.currentArrow.position.z;
+                const startArrowY = pathInstance.currentArrow.rotation.y || 0; // angle Y actuel de la flèche
+
+                // Angle brut correspondant à l'angle Y actuel (flèche = brut + PI)
+                const startAngleRaw = startArrowY - Math.PI;
+
+                const lerp = (a, b, t) => a + (b - a) * t;
+                const lerpAngle = (a, b, t) => {
+                    let diff = b - a;
+                    while (diff > Math.PI) diff -= 2 * Math.PI;
+                    while (diff < -Math.PI) diff += 2 * Math.PI;
+                    return a + diff * t;
+                };
+
+                const step = (now) => {
+                    const elapsed = now - startTime;
+                    const t = duration > 0 ? Math.min(elapsed / duration, 1) : 1;
+
+                    // Interpo linéaire des positions
+                    const x = lerp(startX, targetPos.x, t);
+                    const y = lerp(startY, targetPos.y, t);
+                    const z = lerp(startZ, targetPos.z, t);
+
+                    // Interpo d'angle brut (pour offsets guerriers), puis déduire l'angle Y de la flèche
+                    const angleRaw = lerpAngle(startAngleRaw, targetAngleRaw, t);
+                    const arrowY = angleRaw + Math.PI;
+
+                    // Appliquer à la flèche
+                    pathInstance.currentArrow.position.set(x, y, z);
+                    pathInstance.currentArrow.rotation.order = 'YXZ';
+                    pathInstance.currentArrow.rotation.set(-Math.PI / 2, arrowY, 0);
+                    pathInstance.currentArrow.userData.currentIndex = currentIndex;
+
+                    // Repositionner les guerriers (toujours verticaux, formation fixe)
+                    if (pathInstance.ownerArrow && pathInstance.ownerArrow.arrowType === 'attaque') {
+                        const owner = pathInstance.ownerArrow;
+                        const offsets = this.hexPositionsCartesian;
+                        const offsetsLen = offsets.length;
+                        for (let i = 0; i < (owner.warriorMeshes?.length || 0); i++) {
+                            const mesh = owner.warriorMeshes[i];
+                            const idx = (owner.warriorOffsetIndices[i] ?? i) % offsetsLen;
+                            const off = offsets[idx];
+                            mesh.position.set(x + off.x, 0.06 + owner.offset.y, z + off.z);
+                            mesh.rotation.set(0, 0, 0);
+                            if (!mesh.parent) {
+                                this.gameBoard.workplane.add(mesh);
+                            }
+                        }
+                    }
+
+                    if (t < 1) {
+                        pathInstance._arrowAnimRequestId = requestAnimationFrame(step);
+                    } else {
+                        pathInstance._arrowAnimRequestId = null;
+                        resolve();
+                    }
+                };
+
+                pathInstance._arrowAnimRequestId = requestAnimationFrame(step);
+            });
         } catch (error) {
             console.warn('⚠️ Erreur lors de la mise à jour de la flèche:', error);
         }
@@ -578,7 +918,6 @@ export const arrowManager = {
             return;
         }
 
-        console.log(`🧹 Suppression de ${this.pathInstances.length} chemins avec ${this.allArrows.length} flèches`);
 
         // Supprimer toutes les instances de chemin
         this.pathInstances.forEach(pathInstance => {
@@ -595,9 +934,11 @@ export const arrowManager = {
             }
         });
 
-        // Nettoyer les tableaux
+        // Nettoyer les tableaux et les assignations d'offset
         this.pathInstances = [];
         this.allArrows = [];
+        this.offsetAssignmentsByPair.clear();
+        this.warriorCountsByPair.clear();
         
         console.log('✅ Toutes les flèches et chemins ont été supprimés');
     },
@@ -620,6 +961,94 @@ export const arrowManager = {
                 sprite.material.alphaMap.dispose();
             }
             sprite.material.dispose();
+        }
+    },
+
+    // Libération profonde pour les Mesh GLTF (guerriers)
+    disposeMeshDeep(object) {
+        if (!object) return;
+        try {
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    const materials = Array.isArray(child.material) ? child.material : [child.material];
+                    materials.forEach((mat) => {
+                        if (!mat) return;
+                        if (mat.map) mat.map.dispose();
+                        if (mat.normalMap) mat.normalMap.dispose();
+                        if (mat.roughnessMap) mat.roughnessMap.dispose();
+                        if (mat.metalnessMap) mat.metalnessMap.dispose();
+                        if (mat.alphaMap) mat.alphaMap.dispose();
+                        mat.dispose();
+                    });
+                }
+            });
+        } catch {}
+    },
+
+    // Animation générique et suppression d'un mesh (réutilisable pour flèches et territoires)
+    async animateAndRemoveMesh(mesh) {
+        if (!mesh) return;
+        try {
+            // Marquer l'objet pour empêcher tout repositionnement ultérieur
+            mesh.userData = mesh.userData || {};
+            mesh.userData.isDying = true;
+
+            // Capturer état initial
+            const baseY = mesh.position.y;
+            const baseRotZ = mesh.rotation.z || 0;
+
+            // Oscillation autour de Z: +20°↔-20°, 3 allers-retours, 300ms par aller-retour
+            const swingCycles = 3;
+            const swingDuration = 300; // ms par aller-retour
+            const angleMax = 20 * Math.PI / 180; // 20° en radians
+
+            for (let cycle = 0; cycle < swingCycles; cycle++) {
+                const startTime = performance.now();
+                await new Promise((resolve) => {
+                    const step = (now) => {
+                        const t = Math.min((now - startTime) / swingDuration, 1);
+                        const s = t * 2; // 0..2
+                        let angle;
+                        if (s <= 1) {
+                            angle = baseRotZ + (1 - s) * angleMax + (s) * (-angleMax); // +A -> -A
+                        } else {
+                            const u = s - 1; // 0..1
+                            angle = baseRotZ + (1 - u) * (-angleMax) + (u) * (angleMax); // -A -> +A
+                        }
+                        mesh.rotation.z = angle;
+                        if (t < 1) requestAnimationFrame(step); else resolve();
+                    };
+                    requestAnimationFrame(step);
+                });
+            }
+
+            // Descente verticale de 0.5 en 200ms, linéaire
+            await new Promise((resolve) => {
+                const drop = 0.5;
+                const duration = 200;
+                const startTime = performance.now();
+                const step = (now) => {
+                    const t = Math.min((now - startTime) / duration, 1);
+                    mesh.position.y = baseY - drop * t;
+                    if (t < 1) requestAnimationFrame(step); else resolve();
+                };
+                requestAnimationFrame(step);
+            });
+
+            // Retirer du workplane et libérer
+            if (mesh.parent) {
+                mesh.parent.remove(mesh);
+            } else if (arrowManager.gameBoard && arrowManager.gameBoard.workplane) {
+                arrowManager.gameBoard.workplane.remove(mesh);
+            }
+            arrowManager.disposeMeshDeep(mesh);
+        } catch (e) {
+            console.warn('⚠️ Erreur animation suppression mesh:', e);
+            try {
+                if (mesh.parent) mesh.parent.remove(mesh);
+                arrowManager.disposeMeshDeep(mesh);
+            } catch {}
         }
     },
 
@@ -777,3 +1206,4 @@ export const arrowManager = {
 // Pour le debug
 window.arrowManager = arrowManager;
 window.Arrow = Arrow;
+// arrowManager.createArrow(gameState.game.actions[3],gameState.getTerritoryByPosition(2,2).findShortestPathTo(gameState.getTerritoryByPosition(0,0)),"devellopementConnecte")

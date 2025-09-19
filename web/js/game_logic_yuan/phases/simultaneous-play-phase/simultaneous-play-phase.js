@@ -5,6 +5,9 @@ import { i18n } from '../../../core/i18n.js';
 import * as THREE from 'three';
 import { developpementAndMore } from './developpement.js';
 import { fortification } from './fortification.js';
+import { militarisation } from './militarisation.js';
+import { arrowManager } from '../../gameplay/arrowManager.js';
+
 
 export const simultaneousPlayPhase = {
     // Stockage des cercles actuels (plusieurs cercles pour les actions)
@@ -41,6 +44,7 @@ export const simultaneousPlayPhase = {
             // Afficher la barre d'information spécifique à cette phase
             uiManager.showSimultaneousPlayInfoBar();
 
+            arrowManager.initialize(gameBoard);
 
             await this.processVictoryBiddings(gameBoard);
             // Mettre à jour les compteurs de ressources de tous les clans
@@ -54,10 +58,12 @@ export const simultaneousPlayPhase = {
         if (this.processedTurns + 1 === gameState.game.simultaneous_play_turn) {
             developpementAndMore.animation = true;
             fortification.animation = true;
+            militarisation.animation = true;
         }
         else {
             developpementAndMore.animation = false;
             fortification.animation = false;
+            militarisation.animation = false;
         }
 
         if (this.processedTurns === gameState.game.simultaneous_play_turn) {
@@ -83,11 +89,19 @@ export const simultaneousPlayPhase = {
             // Créer des cercles pour toutes les actions du tour actuel
             await this.createActionCircles(gameBoard);
 
+            uiManager.showNextBar();
+
             console.log('🔄 debut developpement');
             await developpementAndMore.developpement(gameBoard, this.processedTurns);
             console.log('🔄 fin developpement');
             console.log('🔄 debut fortification');
-            await fortification.setupFortification(gameBoard, this.processedTurns, true);
+            await fortification.setupFortification(gameBoard, this.processedTurns, true); //true pour preMilitarization
+            console.log('🔄 fin fortification');
+            console.log('🔄 debut militarisation');
+            await militarisation.setupMilitarisation(gameBoard, this.processedTurns);
+            console.log('🔄 fin militarisation');
+            console.log('🔄 debut fortification');
+            await fortification.setupFortification(gameBoard, this.processedTurns, false); //false pour postMilitarization
             console.log('🔄 fin fortification');
 
             // Mettre à jour les compteurs de ressources de tous les clans
@@ -118,11 +132,11 @@ export const simultaneousPlayPhase = {
         // Définir le callback pour les clics
         const handleTerritoryClick = async (hexCoords, worldPoint) => {
             console.log(`🎯 Clic détecté à (${hexCoords.q}, ${hexCoords.r})`);
+         
             
             // Trouver le territoire à cette position
-            const territory = gameState.game.territories.find(t => 
-                t.position.q === hexCoords.q && t.position.r === hexCoords.r
-            );
+            const territory = gameState.getTerritoryByPosition(hexCoords.q, hexCoords.r);
+            console.log("territory trouve :", territory);
             
             if (!territory) {
                 console.log('⚠️ Aucun territoire trouvé à cette position');

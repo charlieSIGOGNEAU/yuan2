@@ -30,7 +30,7 @@ export const developpementAndMore = {
         // taxAnimation.addToScene(); // Pas besoin de scene, déjà ajouté au workplane
 
         this.assigneDevelopmentPhase(processedTurns);
-        arrowManager.initialize(gameBoard);
+        // arrowManager.initialize(gameBoard);
 
         // Nouvelle logique de gestion des développements
         await this.handleDevelopmentLogic(processedTurns);
@@ -149,16 +149,6 @@ export const developpementAndMore = {
 
     // === NOUVELLES FONCTIONS DE GESTION ===
 
-    // Fonction utilitaire pour attendre le clic sur le bouton next
-    async waitForNextButton() {
-        return new Promise((resolve) => {
-            const handleNext = () => {
-                document.removeEventListener('nextButtonClicked', handleNext);
-                resolve();
-            };
-            document.addEventListener('nextButtonClicked', handleNext);
-        });
-    },
 
     // Fonction pour afficher un message et attendre next (si animation activée)
     async showMessageAndWaitNext(messageKey) {
@@ -176,7 +166,7 @@ export const developpementAndMore = {
             uiManager.updateInfoPanel(message);
             uiManager.showNextBar();
             
-            await this.waitForNextButton();
+            await uiManager.waitForNext();
             uiManager.showMenuOnlyBar();
             
             // Effacer le message affiché
@@ -186,7 +176,7 @@ export const developpementAndMore = {
             console.error('Erreur lors de l\'affichage du message:', error);
             // Fallback: afficher quand même les barres
             uiManager.showNextBar();
-            await this.waitForNextButton();
+            await uiManager.waitForNext();
             uiManager.showMenuOnlyBar();
             
             // Effacer le message affiché même en cas d'erreur
@@ -195,6 +185,7 @@ export const developpementAndMore = {
     },
 
     // Fonction pour trouver le groupe connexe de territoires avec le même clan_id
+    // il existe une fonction toute faite dans la classe territory. elle ne necessite pas de rancegner le clan_id
     findConnectedTerritoryGroup(startTerritory, clanId) {
         const visited = new Set();
         const group = [];
@@ -292,7 +283,9 @@ export const developpementAndMore = {
                         .then(arrow => {
                             edge.arrow = arrow;
                             console.log(`🏹 Flèche niveau 1-2 terminée`);
+                            console.log("arrow", arrow);
                             return arrow; // Retourner l'arrow pour la promesse
+                            
                         });
                     arrowPromises.push(arrowPromise);
                 } else {
@@ -675,13 +668,6 @@ export const developpementAndMore = {
             console.log(`🏙️ Groupe connexe de ${group.length} territoires`);
             
             origin.construction_type = "ville";
-            
-            // Supprimer la mesh existante si nécessaire
-            if (origin.construction_mesh) {
-                console.log(`🗑️ Suppression mesh existante`);
-                // TODO: Appeler une méthode du MeepleManager pour supprimer la mesh
-                origin.construction_mesh = null;
-            }
             
             try {
                 await origin.createConstruction(this.gameBoard, this.gameBoard?.meepleManager);

@@ -22,7 +22,7 @@ export const fortification = {
         this.realiseRenforcements(this.actionsOfTurn.filter(action => action.fortification_type === "renforcement"));
         if (this.animation) {
             uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.fortification_complete_pre_militarization'));
-            await this.waitForNext();
+            await uiManager.waitForNext();
         }
     },
 
@@ -45,19 +45,6 @@ export const fortification = {
         return (territoryCible.clan_id === clan.id) && ((territoryCible.construction_type === 'ville') || (territoryCible.construction_type === '2villes'));
     },
 
-    async waitForNext() {
-        uiManager.showNextBar();
-    
-        await new Promise((resolve) => {
-            const handleNext = () => {
-                document.removeEventListener('nextButtonClicked', handleNext);
-                resolve();
-            };
-            document.addEventListener('nextButtonClicked', handleNext);
-        });
-        uiManager.showMenuOnlyBar();
-        uiManager.updateInfoPanel('');
-    },
 
     async realiseUrbanisations(actions) {
         for (const action of actions) {
@@ -65,15 +52,20 @@ export const fortification = {
             if (action.fortification_level===1 && action.isMyAction()) {
                 // afficher message qui dis "votre fortification niv1 sur un village est une urbanisation. Attention une urabnisation niv1 n'a aucun effet"
                 uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.urbanization_level1'));
-                await this.waitForNext();
+                await uiManager.waitForNext();
             }
             if ((action.fortification_level===2) || (action.fortification_level===3)) {
                 territory.construction_type = "ville";
                 await territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);
             }
             if (action.fortification_level===3) {
-                territory.rempart = "fortifiee";
-                await territory.createRempart(this.gameBoard, this.gameBoard.meepleManager);
+                if (territory.rempart !== "fortifiee") {
+                    territory.rempart = "fortifiee";
+                    await territory.createRempart(this.gameBoard, this.gameBoard.meepleManager);
+                }
+                territory.warriors += 1;
+                territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, 1);
+
                 // rajouter une arrmee
             }            
         }
@@ -81,18 +73,22 @@ export const fortification = {
     async realiseRenforcements(actions) {
         for (const action of actions) {
             const territory = action.getTerritory();
-            if ((action.fortification_level===1) || (action.fortification_level===2)) {
+            if (((action.fortification_level===1) || (action.fortification_level===2)) && territory.construction_type !== "2villes") {
                 territory.construction_type = "2villes";
                 await territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);
             }
-            if (action.fortification_level===2) {
-                territory.rempart = "fortifiee";
+            if (action.fortification_level===2 && territory.rempart !== "fortifiee") {
+                territory.rempart = "fortifiee";                
                 await territory.createRempart(this.gameBoard, this.gameBoard.meepleManager);
                 
             }
             if (action.fortification_level===3) {
-                territory.rempart = "indestruible";
-                await territory.createRempart(this.gameBoard, this.gameBoard.meepleManager);
+                if (territory.rempart !== "indestruible") {
+                    territory.rempart = "indestruible";
+                    await territory.createRempart(this.gameBoard, this.gameBoard.meepleManager);
+                }
+                territory.warriors += 1;
+                territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, 1);
                 // rajouter une arrmee
             }
         }
