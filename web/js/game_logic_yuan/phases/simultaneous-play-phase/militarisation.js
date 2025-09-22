@@ -143,12 +143,18 @@ export const militarisation = {
             await Promise.all(arrowPromises);
             console.log(`✅ Toutes les animations attaque terminées`);
         }
-
         console.log("voila les conflits: ", conflicts);
 
+        this.manageConflicts(conflicts, actions, false);
+    },
+
+
+
+
+    
+    async manageConflicts(conflicts, actions, zone = false) {
         // on groupe les conflits par territoire
         let conflictsByTerritory = new Map();
-
         for (const conflict of conflicts) {
             if (!conflictsByTerritory.has(conflict.territory)) {
                 conflictsByTerritory.set(conflict.territory, []);
@@ -161,8 +167,6 @@ export const militarisation = {
         for (const [territory, group] of conflictsByTerritory) {
             console.log("Territoire:", territory, "Conflits:", group);
         }
-
-
 
         // mainteant on creer les conflit restant apres les attaques entre les attaquants
         let intermediateConflicts = [];
@@ -197,12 +201,16 @@ export const militarisation = {
                 }
                 if (strongest.warriors > 0) intermediateConflicts.push(strongest);
             }
+            else {
+                intermediateConflicts.push(conflicts[0]);
+            }
         }
         if (this.animation && removalPromises.length > 0) {
             await Promise.all(removalPromises);
         }
         // log des conflits restant apres les afontement des attaquans
-        console.log("voila les conflits restant apres les afontement des attaquans", intermediateConflicts);
+        console.log("voila les conflits restant apres les afontement des attaquans entre eux", intermediateConflicts);
+        
 
 
 
@@ -211,14 +219,11 @@ export const militarisation = {
         // Helpers basiques
         const removeFromConflictArrows = async (conflict, count) => {
             if (!this.animation || count <= 0) return;
-            const arrows = Array.isArray(conflict.arrow) ? conflict.arrow : (conflict.arrow ? [conflict.arrow] : []);
+            const arrows = conflict.arrow;
             let remaining = count;
             const promises = [];
             for (const arr of arrows) {
-                if (!arr || typeof arr.removeWarriorsWithAnimation !== 'function') continue;
-                const available = (arr.warriorMeshes && arr.warriorMeshes.length) ? arr.warriorMeshes.length : 0;
-                if (available <= 0) continue;
-                const take = Math.min(remaining, available);
+                const take = Math.min(remaining, arr.warriorMeshes.length);
                 if (take > 0) {
                     promises.push(arr.removeWarriorsWithAnimation(take));
                     remaining -= take;
@@ -240,7 +245,10 @@ export const militarisation = {
         };
         for (const conflict of intermediateConflicts) {
             const casualties = Math.min(conflict.warriors, conflict.territory.warriors);
-            const p1 = removeFromConflictArrows(conflict, casualties);
+            let p1 = null;
+            if (!zone) {
+                p1 = removeFromConflictArrows(conflict, casualties);
+            }
             const p2 = removeFromTerritory(conflict.territory, casualties);
             await Promise.all([p1, p2]);
 
@@ -251,9 +259,72 @@ export const militarisation = {
                 finalLocalConflicts.push(conflict);
             }
         }
+        
         intermediateConflicts = null;
-        // log des conflits restant apres les afontement des attaquans
-        console.log("voila les conflit locaux restant apres les afontements des attaquans",finalLocalConflicts);
+        console.log("voila les conflits locaux restant apres les  attaquans et attaques la province cible, juste avand de gerer les conflicts de zone",finalLocalConflicts);
+
+
+        // ici on va gerer les attaques de zone
+        // on recupere les actions d'attaque de zone qui on conqui leur cible
+        
+        let conflictsZone = [];
+        if (!zone) {
+            let actionsZone = [];
+            for (const conflict of finalLocalConflicts) {
+                const conflictAction = actions.filter(action => action.getClan() === conflict.attacker)[0]
+                if (conflictAction.militarisation_level === 3) {
+                    actionsZone.push(conflictAction);
+                }
+            }
+            // on crer les conflits de zone
+            let arrowPromisesZone = this.animation ? [] : null;
+
+            for (const action of actionsZone) {
+                const provinceZone = action.getTerritory().adjacentProvinces.filter(province => province.clan_id !== action.getClan().id)
+                for (const province of provinceZone) {
+                    const conflict = {territory: province, warriors: 1, attacker: action.getClan(), arrow: []};
+                    conflictsZone.push(conflict);
+                    if (this.animation) {
+                        const arrowPromise = arrowManager.createArrow(action, [action.getTerritory(), province], "attaque", 0, 0).then(arrow => {
+                            conflict.arrow.push(arrow);
+                            console.log("arrow", arrow);
+                            return arrow;
+                        });
+                        arrowPromisesZone.push(arrowPromise);
+                    }
+                }
+            }
+            if (this.animation) await Promise.all(arrowPromisesZone);
+            
+
+
+            // console.log("voila les conflits de zone", conflictsZone);
+            // if (this.animation) {
+            //     let arrowPromisesZone = [];
+            //     for (const conflict of conflictsZone) {
+            //         const arrowPromise = arrowManager.createArrow(action, province.findShortestPathTo(territory), "attaque", arrowWarriors, 0).then(arrow => {
+            //             conflict.arrow.push(arrow);
+            //             console.log("arrow", arrow);
+            //             return arrow;
+            //         });
+            //         arrowPromisesZone.push(arrowPromise);
+            //     }
+            //     await Promise.all(arrowPromisesZone);
+            // }
+        }
+        
+        await uiManager.waitForNext();
+
+
+        
+        
+
+
+
+
+
+
+
 
         // contestingTerritories, ce sont l'integralite de territoires conteste, en comprenant les reactions en chaine. un territoire peut etre conteste par plusieurs clans
         // tableau de bi objet : territory, clan
@@ -371,6 +442,8 @@ export const militarisation = {
         await uiManager.waitForNext();
 
         // ici gerer les attaque de zone
+        if (!zone) this.manageConflicts(conflictsZone, actions, true);
+
 
     },
             
