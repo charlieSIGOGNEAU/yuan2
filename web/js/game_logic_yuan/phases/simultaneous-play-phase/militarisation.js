@@ -264,11 +264,6 @@ export const militarisation = {
         console.log("voila les conflits locaux restant apres les  attaquans et attaques la province cible, juste avand de gerer les conflicts de zone",finalLocalConflicts);
 
 
-
-
-
-
-
         // contestingTerritories, ce sont l'integralite de territoires conteste, en comprenant les reactions en chaine. un territoire peut etre conteste par plusieurs clans
         // tableau de bi objet : territory, clan
         let contestingTerritories = [];
@@ -291,13 +286,6 @@ export const militarisation = {
         }
         console.log("voila les territoires contestes", contestingTerritories);
 
-
-        // pour chauqe [territory, conflict] de contestingTerritories, on clacule la distance entre le territory et le conflict.territory et on le renseigne dans contestingTerritory.range
-        // territory.adjacentProvinces nous done l'ensembre des territory a une distance de 1 du territory. on ne met pas de securite, il y a toujours un chemain possible.
-
-        // puis dans un segond temps, pour les elements de contestingTerritories qui on un meme territory, on ne conserve que celui qui a le range le plus petit, les 2 en cas d'egalite.
-        // puis les elements de contestingTerritories qui on un meme territory, et un conflict.attacker identique, on en conserve un au hasard.
-        // puis si il reste encore des contestingTerritories qui on un meme territory, on les supprime.
 
         function computeRange(from, to) {
             const visited = new Set();
@@ -358,8 +346,6 @@ export const militarisation = {
             territory.warriors = 0;
             territory.removeWarriors(this.gameBoard);
             territory.removeConstruction(this.gameBoard);
-            console.log("territory", territory);
-            if (this.animation) await uiManager.waitForNext();
 
         }
 
@@ -387,8 +373,10 @@ export const militarisation = {
         console.log("finalLocalConflicts", finalLocalConflicts);
         console.log("filteredConflicts", filteredConflicts);
         for (const conflict of finalLocalConflicts) {
-            conflict.territory.warriors = conflict.warriors;
-            conflict.territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, conflict.warriors,false);
+            if(!zone) {
+                conflict.territory.warriors = conflict.warriors;
+                conflict.territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, conflict.warriors,false);
+            }
         }
 
         if (this.animation) {
@@ -408,7 +396,7 @@ export const militarisation = {
                 territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);
             }
         }
-        await uiManager.waitForNext();
+        if (this.animation) await uiManager.waitForNext();
 
         // ici on gere les attaque de zone
         // on recupere les actions d'attaque de zone qui on conqui leur cible
@@ -424,7 +412,7 @@ export const militarisation = {
             // on cree les conflits de zone
             let arrowPromisesZone = this.animation ? [] : null;
             for (const action of actionsZone) {
-                const provinceZone = action.getTerritory().adjacentProvinces.filter(province => province.clan_id !== action.getClan().id)
+                const provinceZone = action.getTerritory().adjacentProvinces.filter(province => province.clan_id !== action.getClan().id && province.clan_id !== null)
                 console.log("voila les provinces zone", provinceZone);
                 for (const province of provinceZone) {
                     const conflict = {territory: province, warriors: 1, attacker: action.getClan(), arrow: []};
