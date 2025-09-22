@@ -145,7 +145,7 @@ export const militarisation = {
         }
         console.log("voila les conflits: ", conflicts);
 
-        this.manageConflicts(conflicts, actions, false);
+        await this.manageConflicts(conflicts, actions, false);
     },
 
 
@@ -264,63 +264,6 @@ export const militarisation = {
         console.log("voila les conflits locaux restant apres les  attaquans et attaques la province cible, juste avand de gerer les conflicts de zone",finalLocalConflicts);
 
 
-        // ici on va gerer les attaques de zone
-        // on recupere les actions d'attaque de zone qui on conqui leur cible
-        
-        let conflictsZone = [];
-        if (!zone) {
-            let actionsZone = [];
-            for (const conflict of finalLocalConflicts) {
-                const conflictAction = actions.filter(action => action.getClan() === conflict.attacker)[0]
-                if (conflictAction.militarisation_level === 3) {
-                    actionsZone.push(conflictAction);
-                }
-            }
-            // on crer les conflits de zone
-            let arrowPromisesZone = this.animation ? [] : null;
-
-            for (const action of actionsZone) {
-                const provinceZone = action.getTerritory().adjacentProvinces.filter(province => province.clan_id !== action.getClan().id)
-                for (const province of provinceZone) {
-                    const conflict = {territory: province, warriors: 1, attacker: action.getClan(), arrow: []};
-                    conflictsZone.push(conflict);
-                    if (this.animation) {
-                        const arrowPromise = arrowManager.createArrow(action, [action.getTerritory(), province], "attaque", 0, 0).then(arrow => {
-                            conflict.arrow.push(arrow);
-                            console.log("arrow", arrow);
-                            return arrow;
-                        });
-                        arrowPromisesZone.push(arrowPromise);
-                    }
-                }
-            }
-            if (this.animation) await Promise.all(arrowPromisesZone);
-            
-
-
-            // console.log("voila les conflits de zone", conflictsZone);
-            // if (this.animation) {
-            //     let arrowPromisesZone = [];
-            //     for (const conflict of conflictsZone) {
-            //         const arrowPromise = arrowManager.createArrow(action, province.findShortestPathTo(territory), "attaque", arrowWarriors, 0).then(arrow => {
-            //             conflict.arrow.push(arrow);
-            //             console.log("arrow", arrow);
-            //             return arrow;
-            //         });
-            //         arrowPromisesZone.push(arrowPromise);
-            //     }
-            //     await Promise.all(arrowPromisesZone);
-            // }
-        }
-        
-        await uiManager.waitForNext();
-
-
-        
-        
-
-
-
 
 
 
@@ -330,16 +273,17 @@ export const militarisation = {
         // tableau de bi objet : territory, clan
         let contestingTerritories = [];
         for (const conflict of finalLocalConflicts) {
-            contestingTerritories.push({territory: conflict.territory, conflict: conflict}) // on ajoute les territory cible directement
-            const territoriesZone = finalLocalConflicts.filter(conflict2 => conflict2.territory.clan === conflict.territory.clan).map(conflict3 => conflict3.territory);
-            console.log("voila les territoires zone", territoriesZone);
+            contestingTerritories.push({territory: conflict.territory, conflict: conflict}) // on ajoute le territory cible directement avec son conflict associé
+            // const territoriesZone = finalLocalConflicts.filter(conflict2 => conflict2.territory.clan === conflict.territory.clan).map(conflict3 => conflict3.territory);
+            const territoriesZone = finalLocalConflicts.filter(conflict2 => conflict2.attacker === conflict.attacker).map(conflict3 => conflict3.territory);
+            console.log("voila les territoires zone", territoriesZone, "zone :" ,zone); // ce sont les provinces vise par le seul conflict qu'on est en train de treter (donc un seul conflict si pas zone)
             const territoriesClan = gameState.game.territories.filter(territory => territory.clan_id === conflict.territory.clan_id && !territoriesZone.includes(territory));
             console.log("voila les territoires clan", territoriesClan);
             const groupConnectedTerritories = this.groupConnectedTerritories(territoriesClan);
             for (const group of groupConnectedTerritories) {        
                 if (group.filter(territory => territory.construction_type === 'ville' || territory.construction_type === '2villes').length === 0) {
                     for (const territory of group) {
-                        const contestingTerritory = {territory: territory, conflict: conflict};
+                        const contestingTerritory = {territory: territory, conflict: conflict, range: null};
                         contestingTerritories.push(contestingTerritory);
                     }
                 }
@@ -347,44 +291,66 @@ export const militarisation = {
         }
         console.log("voila les territoires contestes", contestingTerritories);
 
-        // on compte le nombre de territoires contestes par conflict
-        const clanContestedCount = new Map();
-        for (const ct of contestingTerritories) {
-            const key = ct.conflict; 
-            clanContestedCount.set(key, (clanContestedCount.get(key) || 0) + 1);
-        }
-        console.log("voila le nombre de territoires contestes par clan", clanContestedCount);
 
-        // on groupe les territoires contestes par territoire
-        const contestingTerritoriesGroup = new Map();
-        for (const territoryConflict of contestingTerritories) {
-            const territory = territoryConflict.territory;
-            if (!contestingTerritoriesGroup.has(territory)) {
-                contestingTerritoriesGroup.set(territory, []);
-            }
-            contestingTerritoriesGroup.get(territory).push(territoryConflict.conflict);
-        }
-        console.log("voila les territoires contestes par territoire", contestingTerritoriesGroup);
+        // pour chauqe [territory, conflict] de contestingTerritories, on clacule la distance entre le territory et le conflict.territory et on le renseigne dans contestingTerritory.range
+        // territory.adjacentProvinces nous done l'ensembre des territory a une distance de 1 du territory. on ne met pas de securite, il y a toujours un chemain possible.
 
-        
-        
-        // on filtre les conflits externe pour ne conserver que ce qui sont en bout de chaine
-        const filteredConflicts = new Map();
-        for (const [territory, conflicts] of contestingTerritoriesGroup) {
-            let bestConflict = null;
-            let minCount = Infinity;
+        // puis dans un segond temps, pour les elements de contestingTerritories qui on un meme territory, on ne conserve que celui qui a le range le plus petit, les 2 en cas d'egalite.
+        // puis les elements de contestingTerritories qui on un meme territory, et un conflict.attacker identique, on en conserve un au hasard.
+        // puis si il reste encore des contestingTerritories qui on un meme territory, on les supprime.
 
-            for (const conflict of conflicts) {
-                const count = clanContestedCount.get(conflict.conflict) || 0;
-
-                if (count < minCount) {
-                    minCount = count;
-                    bestConflict = conflict;
+        function computeRange(from, to) {
+            const visited = new Set();
+            const queue = [{ t: from, d: 0 }];
+            visited.add(from);
+            while (queue.length > 0) {
+                const { t, d } = queue.shift();
+                if (t === to) return d;
+                for (const n of t.adjacentProvinces) {
+                    if (!visited.has(n)) {
+                        visited.add(n);
+                        queue.push({ t: n, d: d + 1 });
+                    }
                 }
             }
-            filteredConflicts.set(territory, bestConflict);
+            return 0;
         }
-        console.log("voila les conflits filtres", filteredConflicts);
+
+
+        for (const ct of contestingTerritories) {
+            ct.range = computeRange(ct.territory, ct.conflict.territory);
+        }
+
+        const contestingTerritoriesGroup = new Map();
+        for (const ct of contestingTerritories) {
+            if (!contestingTerritoriesGroup.has(ct.territory)) {
+                contestingTerritoriesGroup.set(ct.territory, []);
+            }
+            contestingTerritoriesGroup.get(ct.territory).push(ct);
+        }
+
+        const filteredConflicts = new Map();
+        for (const [territory, cts] of contestingTerritoriesGroup) {
+            let minRange = Infinity;
+            for (const ct of cts) {
+                if (ct.range < minRange) minRange = ct.range;
+            }
+            const withMinRange = cts.filter(ct => ct.range === minRange);
+            const byAttacker = new Map();
+            for (const ct of withMinRange) {
+                const key = ct.conflict.attacker;
+                if (!byAttacker.has(key)) {
+                    byAttacker.set(key, ct);
+                } else {
+                    if (Math.random() < 0.5) byAttacker.set(key, ct);
+                }
+            }
+            const kept = Array.from(byAttacker.values());
+            const chosen = kept.length > 0 ? kept[0] : withMinRange[0];
+            filteredConflicts.set(territory, chosen.conflict);
+        }
+        console.log("filteredConflicts", filteredConflicts);
+
 
         // on rend neutre les province en conflit
         for (const territory of filteredConflicts.keys()) {
@@ -393,6 +359,8 @@ export const militarisation = {
             territory.removeWarriors(this.gameBoard);
             territory.removeConstruction(this.gameBoard);
             console.log("territory", territory);
+            if (this.animation) await uiManager.waitForNext();
+
         }
 
         // on rend neutre les province non viable, et non revendiquee.
@@ -412,6 +380,7 @@ export const militarisation = {
             territory.removeWarriors(this.gameBoard);
             territory.construction_type = 'village';
             territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);
+            
         }
 
         // on creer les nouveau warriors, suprimer les arrow et warrior associes
@@ -441,8 +410,40 @@ export const militarisation = {
         }
         await uiManager.waitForNext();
 
-        // ici gerer les attaque de zone
-        if (!zone) this.manageConflicts(conflictsZone, actions, true);
+        // ici on gere les attaque de zone
+        // on recupere les actions d'attaque de zone qui on conqui leur cible
+        let conflictsZone = [];
+        if (!zone) {
+            let actionsZone = [];
+            for (const conflict of finalLocalConflicts) {
+                const conflictAction = actions.filter(action => action.getClan() === conflict.attacker)[0]
+                if (conflictAction.militarisation_level === 3) {
+                    actionsZone.push(conflictAction);
+                }
+            }
+            // on cree les conflits de zone
+            let arrowPromisesZone = this.animation ? [] : null;
+            for (const action of actionsZone) {
+                const provinceZone = action.getTerritory().adjacentProvinces.filter(province => province.clan_id !== action.getClan().id)
+                console.log("voila les provinces zone", provinceZone);
+                for (const province of provinceZone) {
+                    const conflict = {territory: province, warriors: 1, attacker: action.getClan(), arrow: []};
+                    conflictsZone.push(conflict);
+                    if (this.animation) {
+                        const arrowPromise = arrowManager.createArrow(action, [action.getTerritory(), province], "attaque", 0, 0).then(arrow => {
+                            conflict.arrow.push(arrow);
+                            return arrow;
+                        });
+                        arrowPromisesZone.push(arrowPromise);
+                    }
+                }
+            }
+            if (this.animation) await Promise.all(arrowPromisesZone);
+        }
+        console.log("avant zone");
+        if (this.animation) await uiManager.waitForNext();
+
+        if (!zone) await this.manageConflicts(conflictsZone, actions, true);
 
 
     },

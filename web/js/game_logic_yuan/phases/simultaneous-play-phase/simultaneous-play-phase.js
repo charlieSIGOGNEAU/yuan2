@@ -50,6 +50,9 @@ export const simultaneousPlayPhase = {
             // Mettre à jour les compteurs de ressources de tous les clans
             this.updateAllClansResources();
             uiManager.updateSimultaneousPlayInfoBar();
+
+            // pour le debug
+            this.setupTerritoryClickDetection(gameBoard);
         }
         else {
             
@@ -76,7 +79,7 @@ export const simultaneousPlayPhase = {
         }
         else {
             // Désactiver la détection des clics sur les territoires
-            this.disableTerritoryClickDetection(gameBoard);
+            // this.disableTerritoryClickDetection(gameBoard);
             
             // a faire : fonction qui verifi si un joueur et victorieux
 

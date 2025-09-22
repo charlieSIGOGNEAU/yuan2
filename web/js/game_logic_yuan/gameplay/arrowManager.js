@@ -571,6 +571,7 @@ export const arrowManager = {
 
         // Modifier les coordonnées du premier et dernier élément avec des barycentres pondérés
         const adjustedPositions = [];
+        const totalTerritories = territoryPath.length;
         
         for (let i = 0; i < territoryPath.length; i++) {
             let adjustedPosition;
@@ -596,18 +597,19 @@ export const arrowManager = {
                         z: pos1.z || 0
                     };
                 } else {
-                    if (arrowType === 'attaque') {
-                        // Premier élément : barycentre au milieu pour les attaques
-                        adjustedPosition = {
-                            q: (pos1.q + pos2.q) / 2 + offset.q,
-                            r: (pos1.r + pos2.r) / 2 + offset.r,
-                            z: pos1.z || 0
-                        };
-                    } else {
-                        // Premier élément : barycentre (3, 1) par défaut
+                    // Non téléportation: logique unifiée selon la longueur du chemin
+                    if (totalTerritories === 2) {
+                        // 2 territoires: premier point = à mi-chemin entre le premier et le milieu (3/4 du premier, 1/4 du second)
                         adjustedPosition = {
                             q: (3 * pos1.q + 1 * pos2.q) / 4 + offset.q,
                             r: (3 * pos1.r + 1 * pos2.r) / 4 + offset.r,
+                            z: pos1.z || 0
+                        };
+                    } else {
+                        // >2 territoires: premier point = milieu entre les deux premiers
+                        adjustedPosition = {
+                            q: (pos1.q + pos2.q) / 2 + offset.q,
+                            r: (pos1.r + pos2.r) / 2 + offset.r,
                             z: pos1.z || 0
                         };
                     }
@@ -634,18 +636,19 @@ export const arrowManager = {
                         z: pos2.z || 0
                     };
                 } else {
-                    if (arrowType === 'attaque') {
-                        // Dernier élément : barycentre au milieu pour les attaques
-                        adjustedPosition = {
-                            q: (pos1.q + pos2.q) / 2 + offset.q,
-                            r: (pos1.r + pos2.r) / 2 + offset.r,
-                            z: pos2.z || 0
-                        };
-                    } else {
-                        // Dernier élément : barycentre (1, 3) par défaut
+                    // Non téléportation: logique unifiée selon la longueur du chemin
+                    if (totalTerritories === 2) {
+                        // 2 territoires: dernier point = à mi-chemin entre le milieu et le second (1/4 du premier, 3/4 du second)
                         adjustedPosition = {
                             q: (1 * pos1.q + 3 * pos2.q) / 4 + offset.q,
                             r: (1 * pos1.r + 3 * pos2.r) / 4 + offset.r,
+                            z: pos2.z || 0
+                        };
+                    } else {
+                        // >2 territoires: dernier point = milieu entre les deux derniers
+                        adjustedPosition = {
+                            q: (pos1.q + pos2.q) / 2 + offset.q,
+                            r: (pos1.r + pos2.r) / 2 + offset.r,
                             z: pos2.z || 0
                         };
                     }
