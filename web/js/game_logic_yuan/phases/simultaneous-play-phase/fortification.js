@@ -8,6 +8,8 @@ export const fortification = {
     gameBoard: null,
     actionsOfTurn: [],
 
+
+
     async setupFortification(gameBoard, processedTurns, preMilitarization) {
         this.gameBoard = gameBoard;
         if (preMilitarization) {
@@ -21,8 +23,13 @@ export const fortification = {
         this.realiseUrbanisations(this.actionsOfTurn.filter(action => action.fortification_type === "urbanisation"));
         this.realiseRenforcements(this.actionsOfTurn.filter(action => action.fortification_type === "renforcement"));
         if (this.animation) {
-            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.fortification_complete_pre_militarization'));
-            await uiManager.waitForNext();
+            // uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.fortification_complete_pre_militarization'));
+            // await uiManager.waitForNext();
+        }
+    },
+    wait(){
+        if (this.animation) {
+            return new Promise(resolve => setTimeout(resolve, 1000));
         }
     },
 
@@ -66,8 +73,12 @@ export const fortification = {
                 territory.warriors += 1;
                 territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, 1);
 
-                // rajouter une arrmee
-            }            
+                
+            }   
+            if (this.animation && actions.length > 0) {
+                await times(1000);
+            }
+            
         }
     },
     async realiseRenforcements(actions) {
@@ -89,8 +100,9 @@ export const fortification = {
                 }
                 territory.warriors += 1;
                 territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, 1);
-                // rajouter une arrmee
             }
+            (actions.length > 0) && await this.wait()
+          
         }
     },
 }

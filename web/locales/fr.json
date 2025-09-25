@@ -32,10 +32,11 @@
         "colonization_targets": "Les colonisations ont pour cible",
         "clan_conflicts_territory": "Plusieurs clans veulent coloniser le même territoire. Les clans avec le plus d'honneur cèdent leur place et font l'action passer son tour (+6 chao)",
         "provinces_disputed": "Plusieurs clans se disputent les mêmes provinces, donc elles restent neutres.",
-        "free_urbanization": "Suite à une colonisation, une (ou plusieurs) province ne sont pas viables, une urbanisation gratuite est effectuée",
+        "free_urbanization": "Suite à une colonisation, une (ou plusieurs) province ne sont pas viables, une urbanisation gratuite va etre effectuée",
         "conquest_phase_complete": "Phase de conquête de provinces neutres est terminée.",
         "temple_tax_complete": "Fin de création de temple et taxe liée",
-        "revenue_collected": "Voici les revenus récupérés des différents clans"
+        "revenue_collected": "Voici les revenus récupérés des différents clans",
+        "attaque_free_urbanization": "Suite à une attaque, une (ou plusieurs) province ne sont pas viables, une urbanisation gratuite va etre effectuée"
       }
     },
     "ui": {

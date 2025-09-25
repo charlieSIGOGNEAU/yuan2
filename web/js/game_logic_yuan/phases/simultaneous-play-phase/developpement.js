@@ -36,6 +36,12 @@ export const developpementAndMore = {
         await this.handleDevelopmentLogic(processedTurns);
     },
 
+    wait(){
+        if (this.animation) {
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    },
+
     // Fonction principale pour gérer toute la logique de développement
     async handleDevelopmentLogic(processedTurns) {
         console.log(`🚀 === DÉBUT LOGIQUE DÉVELOPPEMENT TOUR ${processedTurns} ===`);
@@ -220,12 +226,12 @@ export const developpementAndMore = {
         
         console.log(`📍 ${colonizationActions.length} actions de colonisation trouvées`);
 
-        if (colonizationActions.length > 0 && this.animation) {
-            console.log(`📢 Affichage message cibles colonisation`);
-            await this.showMessageAndWaitNext('colonization_targets');
-        } else {
-            console.log(`📢 Pas d'affichage message: colonizationActions.length=${colonizationActions.length}, animation=${this.animation}`);
-        }
+        // if (colonizationActions.length > 0 && this.animation) {
+        //     console.log(`📢 Affichage message cibles colonisation`);
+        //     await this.showMessageAndWaitNext('colonization_targets');
+        // } else {
+        //     console.log(`📢 Pas d'affichage message: colonizationActions.length=${colonizationActions.length}, animation=${this.animation}`);
+        // }
 
         // Colonisations niveau 1-2
         console.log(`📍 Traitement colonisations niveau 1-2`);
@@ -885,7 +891,8 @@ export const developpementAndMore = {
         console.log(`🏁 Finalisation de la phase de développement`);
         
         // Afficher le message de fin de phase
-        await this.showMessageAndWaitNext('conquest_phase_complete');
+        // await this.showMessageAndWaitNext('conquest_phase_complete');
+        await this.wait();
         
         // Supprimer toutes les flèches et libérer la mémoire
         console.log(`🧹 Suppression de toutes les flèches...`);

@@ -13,15 +13,21 @@ export const militarisation = {
         this.actionsOfTurn = gameState.game.actions.filter(action => action.turn === processedTurns);
         this.assigneMilitarisation(this.actionsOfTurn);
         await this.realiseRecrutements(this.actionsOfTurn.filter(action => action.militarisation_type === "recrutement"));
-        if (this.animation) {
-            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.recrutement_complete'));
-            await uiManager.waitForNext();
+        // if (this.animation) {
+        //     uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.recrutement_complete'));
+        //     await uiManager.waitForNext();
+        // }
+        if ((this.animation) && (this.actionsOfTurn.filter(action => action.militarisation_type === "recrutement").length > 0)) {
+            this.wait(1000);
         }
         console.log("🔄 debut attaques" , this.actionsOfTurn.filter(action => action.militarisation_type === "attaque"));
         await this.realiseAttaques(this.actionsOfTurn.filter(action => action.militarisation_type === "attaque"));
-        if (this.animation) {
-            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.attaque_complete'));
-            await uiManager.waitForNext();
+        // if (this.animation) {
+        //     uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.attaque_complete'));
+        //     await uiManager.waitForNext();
+        // }
+        if ((this.animation) && (this.actionsOfTurn.filter(action => action.militarisation_type === "attaque").length > 0)) {
+            this.wait(1000);
         }
     },
 
@@ -47,9 +53,9 @@ export const militarisation = {
             ((territoryCible.connectedProvinces.filter(province => (province.clan_id === clan.id) && (province.warriors > 0))).length > 0) // verification que la province cible est conecte a une arme possede
     },
 
-    wait(){
+    wait(times){
         if (this.animation) {
-            return new Promise(resolve => setTimeout(resolve, 500));
+            return new Promise(resolve => setTimeout(resolve, times));
         }
     },
 
@@ -65,18 +71,18 @@ export const militarisation = {
                 console.log('🔄 debut recrutement2');
                 territory.warriors += 1;
                 territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, 1, true);
-                await this.wait();
+                await this.wait(500);
             }
             if (action.militarisation_level===3) {
                 // action.warriors += 3;
                 console.log('🔄 debut recrutement3');
                 territory.warriors += 3;
                 territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, 1, true);
-                await this.wait();
+                await this.wait(500);
                 territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, 1, true);
-                await this.wait();
+                await this.wait(500);
                 territory.createWarriors(this.gameBoard, this.gameBoard.meepleManager, 1, true);
-                await this.wait();
+                await this.wait(500);
             }
 
         }
@@ -142,6 +148,7 @@ export const militarisation = {
             console.log(`⏳ Attente de ${arrowPromises.length} animations de flèches attaque...`);
             await Promise.all(arrowPromises);
             console.log(`✅ Toutes les animations attaque terminées`);
+            (actions.length > 0) && await this.wait(1000);
         }
         console.log("voila les conflits: ", conflicts);
 
@@ -185,7 +192,6 @@ export const militarisation = {
                             let remaining = perConflictRemove;
                             const arrows = Array.isArray(c.arrow) ? c.arrow : (c.arrow ? [c.arrow] : []);
                             for (const arr of arrows) {
-                                if (!arr || typeof arr.removeWarriorsWithAnimation !== 'function') continue;
                                 const available = (arr.warriorMeshes && arr.warriorMeshes.length) ? arr.warriorMeshes.length : 0;
                                 if (available <= 0) continue;
                                 const take = Math.min(remaining, available);
@@ -207,6 +213,7 @@ export const militarisation = {
         }
         if (this.animation && removalPromises.length > 0) {
             await Promise.all(removalPromises);
+
         }
         // log des conflits restant apres les afontement des attaquans
         console.log("voila les conflits restant apres les afontement des attaquans entre eux", intermediateConflicts);
@@ -243,22 +250,37 @@ export const militarisation = {
             }
             await Promise.all(promises);
         };
+
         for (const conflict of intermediateConflicts) {
-            const casualties = Math.min(conflict.warriors, conflict.territory.warriors);
+            const attackForce = conflict.warriors;
+            let defenseForce = 0;
+            if (conflict.territory.rempart === 'fortifiee') {
+                defenseForce = conflict.territory.warriors + 2;
+                }
+            else if (conflict.territory.rempart === 'indestruible') {
+                defenseForce = Infinity;
+            }
+            else {
+                defenseForce = conflict.territory.warriors;
+            }
+            const casualties = Math.min(attackForce, defenseForce);
             let p1 = null;
             if (!zone) {
                 p1 = removeFromConflictArrows(conflict, casualties);
             }
             const p2 = removeFromTerritory(conflict.territory, casualties);
             await Promise.all([p1, p2]);
-
             conflict.warriors -= casualties;
-            conflict.territory.warriors -= casualties;
-
+            conflict.territory.warriors = Math.max(0, conflict.territory.warriors - casualties);
             if (conflict.warriors > 0) {
                 finalLocalConflicts.push(conflict);
+                conflict.territory.rempart = null;
+                conflict.territory.removeRempart(this.gameBoard);
             }
         }
+
+
+
         
         intermediateConflicts = null;
         console.log("voila les conflits locaux restant apres les  attaquans et attaques la province cible, juste avand de gerer les conflicts de zone",finalLocalConflicts);
@@ -358,6 +380,7 @@ export const militarisation = {
                 territory.removeConstruction(this.gameBoard);
             }
         }
+        (actions.length > 0) && await this.wait(500);
 
         // on change le clan, enleve les constructions et les guerriers, on passe tout en village du nouveau proprietaire
         for (const [territory, conflict] of filteredConflicts) {
@@ -365,9 +388,10 @@ export const militarisation = {
             territory.warriors = 0;
             territory.removeWarriors(this.gameBoard);
             territory.construction_type = 'village';
-            territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);
-            
+            territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);          
         }
+        (actions.length > 0) && await this.wait(500);
+
 
         // on creer les nouveau warriors, suprimer les arrow et warrior associes
         console.log("finalLocalConflicts", finalLocalConflicts);
@@ -386,9 +410,19 @@ export const militarisation = {
             }
             // Ensuite, supprimer toutes les arrows et libérer la mémoire associée
             arrowManager.clearAllArrows();
+            (actions.length > 0) && await this.wait(1000);
         }
 
-        // on attribue les urbanisation gratuite
+        // on attribue les urbanisation gratuite. On le re fais apres l'attaque de zone au cas ou la dernier ville a ete perdue par un attaquant de zone
+        const hasFreeUrbanization = actions.some(action => {
+            return action.getTerritory().getConnectedClanTerritories()
+                .every(t => t.construction_type !== 'ville' && t.construction_type !== '2villes');
+        });
+
+        if (hasFreeUrbanization && this.animation) {
+            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.attaque_free_urbanization'));
+            await uiManager.waitForNext();
+        }
         for (const action of actions) {
             const territory = action.getTerritory();
             if (territory.getConnectedClanTerritories().filter(territory => territory.construction_type === 'ville' || territory.construction_type === '2villes').length === 0) {
@@ -396,7 +430,7 @@ export const militarisation = {
                 territory.createConstruction(this.gameBoard, this.gameBoard.meepleManager);
             }
         }
-        if (this.animation) await uiManager.waitForNext();
+        (hasFreeUrbanization && this.animation) && await this.wait(1000);
 
         // ici on gere les attaque de zone
         // on recupere les actions d'attaque de zone qui on conqui leur cible
@@ -404,7 +438,7 @@ export const militarisation = {
         if (!zone) {
             let actionsZone = [];
             for (const conflict of finalLocalConflicts) {
-                const conflictAction = actions.filter(action => action.getClan() === conflict.attacker)[0]
+                const conflictAction = actions.filter(action => action.getClan() === conflict.attacker)[0] //je recupere l'action a l'origine du conflict que j'ai oublier de stoquer dans le conflict
                 if (conflictAction.militarisation_level === 3) {
                     actionsZone.push(conflictAction);
                 }
@@ -429,11 +463,12 @@ export const militarisation = {
             if (this.animation) await Promise.all(arrowPromisesZone);
         }
         console.log("avant zone");
-        if (this.animation) await uiManager.waitForNext();
+        // if (this.animation) await uiManager.waitForNext();
+        (actions.length > 0) && await this.wait(1000);
 
-        if (!zone) await this.manageConflicts(conflictsZone, actions, true);
 
-
+        const attaque3=actions.filter(action => action.militarisation_level === 3);
+        if (!zone && attaque3.length > 0) await this.manageConflicts(conflictsZone, actions, true);
     },
             
 }
