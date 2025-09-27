@@ -14,10 +14,12 @@ export const simultaneousPlayPhase = {
     currentCircle: null, // { circle: THREE.Mesh, territory: Territory } - pour la sélection
     currentCircles: [], // [{ circle: THREE.Mesh, action: Action, territory: Territory }] - pour les actions
     processedTurns: 1,
+    gameBoard: null,
 
     
 
     async simultaneousPlayPhase(gameBoard) {
+        this.gameBoard = gameBoard;
         if (this.processedTurns === 1) {
             // Exécuter getAdjacentTerritories pour tous les territoires
             console.log('🔄 Initialisation des territoires adjacents...');
@@ -79,7 +81,7 @@ export const simultaneousPlayPhase = {
         }
         else {
             // Désactiver la détection des clics sur les territoires
-            // this.disableTerritoryClickDetection(gameBoard);
+            this.disableTerritoryClickDetection(gameBoard);
             
             // a faire : fonction qui verifi si un joueur et victorieux
 
@@ -124,6 +126,117 @@ export const simultaneousPlayPhase = {
             console.log('🔄 gameState.game.simultaneous_play_turn:', gameState.game.simultaneous_play_turn);
             await this.simultaneousPlayPhase(gameBoard);
         }
+    },
+
+    isActionPossible(actionData){
+        let territory = null;
+        if (actionData.position_q !== null && actionData.position_r !== null) {
+            territory = gameState.getTerritoryByPosition(actionData.position_q, actionData.position_r);
+        }
+        const development_level = actionData.development_level;
+        const fortification_level = actionData.fortification_level;
+        const militarisation_level = actionData.militarisation_level;
+        const playerClan = gameState.game.myClan;
+
+        if (gameState.game.myChaoTemp < 0) {
+            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.not_chao'));
+            return {possible: false, saveMessage: true};
+        }
+
+
+        // si le territoire n'est pas trouvé et qu'il y a une action, alors l'action est impossible
+        if (!territory && (development_level > 0 || fortification_level > 0 || militarisation_level > 0)) {
+            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.territory_not_found'));
+            return {possible: false, saveMessage: true};
+        }
+
+        // si pas d'action
+        if (development_level === 0 && fortification_level === 0 && militarisation_level === 0) {
+            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.not_action'));
+            return {possible: true, saveMessage: true};
+        }
+
+        if (territory) {
+            // vous avez assez de province pour faire un niveau 2 de développement gratuitement a la place d'un niveau 1
+
+
+
+            // development province ennemie
+            if ((territory.clan_id !== null && territory.clan_id !== playerClan.id && development_level) > 0) {
+                uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.development_not_possible'));
+                return {possible: false, saveMessage: true};
+            }
+            // development province non connectee
+            if ((territory.clan_id === null) && (development_level === 1 || development_level === 2) ) {
+                if (territory.connectedProvinces.every(province => province.clan_id !== playerClan.id)) {
+                    uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.development_not_connected'));
+                    return {possible: false, saveMessage: true};
+                }
+            }
+            // possible urbanization gratuite
+            if (territory.clan_id === null && development_level > 0 && fortification_level === 0) {
+                // Étape 1 : récupérer les territoires adjacents libres
+                const freeAdjacent = adjacentProvinces.filter(t => t.clan_id === null);
+
+                // Étape 2 : récupérer tous les territoires du joueur adjacents à ces libres
+                const playerAdjacent = freeAdjacent.flatMap(t => 
+                    adjacentProvinces(t).filter(adj => adj.clan_id === playerClan)
+                )
+                if (playerAdjacent.length === 0) {
+                    uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.possible_urbanization'));
+                    return {possible: true, saveMessage: false};
+                }
+            }
+
+            if ( development_level === null && fortification_level > 0 && militarisation_level === 0) {
+                uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.enemy_fortification'));
+                return {possible: false, saveMessage: true};
+            }
+            if ( territory.clan_id === playerClan.id && territory.construction_type === 'village' && [null, 0, 1].includes(fortification_level) && militarisation_level > 0) {
+                uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.recruitment_impossible'));
+                return {possible: false, saveMessage: true};
+            }
+        }
+        return {possible: true, saveMessage: false};
+        
+    },
+
+    isGameOver() {
+        const objective = {
+            0: infinity,
+            1: 9,
+            2: 9,
+            3: 9,
+            4: 9,
+            5: 8,
+            6: 7,
+            7: 6,
+            8: 6,
+            9: 5,
+            10: 5,
+            11: 4,
+            12: 4,
+            13: 3
+        }
+        let potentialWinner = [];
+        for (const clan of gameState.game.clans) {
+            const numTemples = clan.numTemples;
+            if (numTemples >= objective[gameState.game.simultaneous_play_turn-1]) {
+                potentialWinner.push(clan);
+            }
+        }
+        if (potentialWinner.length > 1) {
+            const topClan = potentialWinner.reduce((max, clan) => 
+            clan.honneur > max.honneur ? clan : max
+            );
+            if (topClan === gameState.game.myClan) {
+                uiManager.showVictoryMessage(i18n.t('game.phases.simultaneous_play.your_victory'));
+            }
+            else {
+                uiManager.showVictoryMessage(i18n.t('game.phases.simultaneous_play.other_victory', {clanColor: topClan.color}));
+            }
+        }
+        return ;
     },
 
 
@@ -454,15 +567,12 @@ export const simultaneousPlayPhase = {
     handleActionValidation() {
         console.log('🎯 Validation de l\'action dans simultaneous_play_phase');
         
-        // Vérifier qu'un cercle est sélectionné
-        if (!this.currentCircle) {
-            console.warn('⚠️ Aucun territoire sélectionné');
-            uiManager.updateInfoPanel('Veuillez sélectionner un territoire');
-            return;
+
+        let territory = null;
+        if (this.currentCircle) {        
+            territory = this.currentCircle.territory;
+            console.log(`📍 Territoire sélectionné: ${territory.type} à (${territory.position.q}, ${territory.position.r})`);
         }
-        
-        const territory = this.currentCircle.territory;
-        console.log(`📍 Territoire sélectionné: ${territory.type} à (${territory.position.q}, ${territory.position.r})`);
         
         // Récupérer les niveaux depuis la barre d'action
         const actionBar = document.getElementById('player-action-bar');
@@ -500,18 +610,26 @@ export const simultaneousPlayPhase = {
         
         // Préparer les données de l'action
         const actionData = {
-            position_q: territory.position.q,
-            position_r: territory.position.r,
+            position_q: territory?.position?.q ?? null,
+            position_r: territory?.position?.r ?? null,
             development_level: developpementLevel,
             fortification_level: fortificationLevel,
             militarisation_level: militarisationLevel
-        };
+          };
+          
         
         console.log('📤 Envoi de l\'action à l\'API:', actionData);
-        
+
+        // Vérifier si l'action est possible
+        const isActionPossible = this.isActionPossible(actionData).possible;
+        const saveMessage = this.isActionPossible(actionData).saveMessage;
+
+        if (!isActionPossible) {
+            return;
+        }
         // Importer et appeler gameApi
         import('../../gameApi.js').then(module => {
-            module.gameApi.sendActionToApi(actionData);
+            module.gameApi.sendActionToApi(actionData, saveMessage);
         });
     },
 
@@ -590,7 +708,8 @@ export const simultaneousPlayPhase = {
             clan.available_chao = clan.available_chao - actionCost;
             console.log(`💰 Clan ${clan.name}: available_chao mis à jour à ${clan.available_chao}`);
         });
-        
+
+        gameState.game.myChaoTemp = gameState.game.myClan.available_chao;
         console.log('✅ Mise à jour des chaos disponibles terminée');
     },
 
@@ -701,6 +820,7 @@ export const simultaneousPlayPhase = {
         uiManager.updateSimultaneousPlayInfoBar();
         
         // Afficher le message d'accueil avec la couleur du clan du joueur
+        if (gameState.game.simultaneous_play_turn === 1) {
             const playerClan = gameState.game.myClan;
             console.log('🔍 Debug - playerClan:', playerClan);
             
@@ -721,6 +841,7 @@ export const simultaneousPlayPhase = {
             } else {
                 console.warn('⚠️ playerClan non trouvé, impossible d\'afficher le message d\'accueil');
             }
+        }
     },
 
     // Fonction pour afficher les messages d'aide de la phase simultaneous_play

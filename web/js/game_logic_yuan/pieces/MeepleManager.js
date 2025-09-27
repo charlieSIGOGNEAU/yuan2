@@ -108,6 +108,25 @@ export class MeepleManager {
                 useAsAlphaMap: false, // L'image a déjà sa propre texture alpha
                 oriented: false, // Face caméra
                 solidColor: false
+            },
+            rotation: {
+                path: './images/rotation.webp',
+                size: 1.0,
+                colorable: false,
+                defaultColor: 0xffffff,
+                useAsAlphaMap: false,
+                oriented: false, // posé à plat sur le plan XZ
+                solidColor: false
+            },
+            buttonOk: {
+                path: './images/buttonOk.webp',
+                size: 1.0,
+                colorable: false,
+                defaultColor: 0xffffff,
+                useAsAlphaMap: false,
+                oriented: false,
+                solidColor: false,
+                useThreeSprite: true // Utiliser THREE.Sprite vertical face caméra
             }
         };
 
@@ -426,54 +445,71 @@ export class MeepleManager {
 
         const spriteInfo = this.spriteTypes[type];
         
-        // Créer la géométrie du plan
-        const geometry = new THREE.PlaneGeometry(spriteInfo.size, spriteInfo.size);
-        
-        // Créer le matériau selon le type de sprite
-        let material;
-        
-        if (spriteInfo.solidColor) {
-            // Matériau simple sans texture pour carré plein
-            material = new THREE.MeshBasicMaterial({
-                transparent: false, // Pas de transparence
-                toneMapped: false,
-                color: colorHex ? colorHex : spriteInfo.defaultColor,
-                side: THREE.DoubleSide
-            });
-        } else {
-            // Matériau avec texture (pour les autres sprites)
+        // Selon le type, créer un THREE.Sprite vertical ou un Mesh plan
+        let sprite;
+        if (spriteInfo.useThreeSprite) {
+            // THREE.Sprite toujours face caméra
             const texture = await this.preloadSpriteTexture(type);
-            
-            material = new THREE.MeshBasicMaterial({
+            const material = new THREE.SpriteMaterial({
+                map: texture,
                 transparent: true,
                 alphaTest: 0.5,
                 toneMapped: false,
-                color: colorHex ? colorHex : spriteInfo.defaultColor,
-                side: THREE.DoubleSide
+                color: colorHex ? colorHex : spriteInfo.defaultColor
             });
-
-            // Appliquer la texture selon son type
-            if (spriteInfo.useAsAlphaMap) {
-                material.alphaMap = texture.clone();
+            sprite = new THREE.Sprite(material);
+            // Mise à l'échelle du sprite vertical
+            sprite.scale.set(spriteInfo.size, spriteInfo.size, 1);
+        } else {
+            // Créer la géométrie du plan
+            const geometry = new THREE.PlaneGeometry(spriteInfo.size, spriteInfo.size);
+            
+            // Créer le matériau selon le type de sprite
+            let material;
+            
+            if (spriteInfo.solidColor) {
+                // Matériau simple sans texture pour carré plein
+                material = new THREE.MeshBasicMaterial({
+                    transparent: false, // Pas de transparence
+                    toneMapped: false,
+                    color: colorHex ? colorHex : spriteInfo.defaultColor,
+                    side: THREE.DoubleSide
+                });
             } else {
-                material.map = texture.clone();
-            }
-        }
+                // Matériau avec texture (pour les autres sprites)
+                const texture = await this.preloadSpriteTexture(type);
+                
+                material = new THREE.MeshBasicMaterial({
+                    transparent: true,
+                    alphaTest: 0.5,
+                    toneMapped: false,
+                    color: colorHex ? colorHex : spriteInfo.defaultColor,
+                    side: THREE.DoubleSide
+                });
 
-        // Créer le mesh
-        const sprite = new THREE.Mesh(geometry, material);
+                // Appliquer la texture selon son type
+                if (spriteInfo.useAsAlphaMap) {
+                    material.alphaMap = texture.clone();
+                } else {
+                    material.map = texture.clone();
+                }
+            }
+
+            // Créer le mesh
+            sprite = new THREE.Mesh(geometry, material);
+        }
         
         // Positionner le sprite
         sprite.position.set(position.x, position.y, position.z);
         
-        // Calculer l'orientation finale directement
-        if (spriteInfo.oriented && rotationY !== 0) {
-            // Définir l'ordre d'Euler pour des rotations correctes
-            sprite.rotation.order = 'YXZ';
-            sprite.rotation.set(-Math.PI / 2, rotationY, 0); // X pour horizontal, Y pour direction
-        } else {
-            // Orientation standard (horizontal seulement)
-            sprite.rotation.x = -Math.PI / 2;
+        // Calculer l'orientation finale directement (seulement pour les Mesh plans)
+        if (!spriteInfo.useThreeSprite) {
+            if (spriteInfo.oriented && rotationY !== 0) {
+                sprite.rotation.order = 'YXZ';
+                sprite.rotation.set(-Math.PI / 2, rotationY, 0);
+            } else {
+                sprite.rotation.x = -Math.PI / 2;
+            }
         }
         
         // Ajouter les userData

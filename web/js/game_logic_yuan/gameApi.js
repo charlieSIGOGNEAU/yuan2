@@ -234,7 +234,7 @@ export const gameApi = {
     },
 
     // Envoyer une action à l'API
-    async sendActionToApi(actionData) {
+    async sendActionToApi(actionData, saveMessage) {
         try {
             const gameId = gameState.game.id;
             const myGameUserId = gameState.myGameUserId;
@@ -260,7 +260,7 @@ export const gameApi = {
 
             const data = await response.json();
             
-            if (data.success) {
+            if (data.success && !saveMessage) {
                 uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.action_validated'));
                 
             } else {

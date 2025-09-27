@@ -297,7 +297,7 @@ class Territory {
         // Créer un temple directement si le territoire est de type 'plain'
         setTimeout(() => {
             if (this.type === 'plain') {
-                this.createTemple(gameBoard, gameBoard.meepleManager);
+                this.createTemple(gameBoard, gameBoard.meepleManager,false);
             }
         }, 1000); // Délai pour s'assurer que gameBoard est disponible
         
@@ -498,7 +498,7 @@ class Territory {
     }
 
     // Créer la mesh de temple
-    async createTemple(gameBoard, meepleManager) {
+    async createTemple(gameBoard, meepleManager, shouldAnimate = false) {
         if (this.hasTemple && this.temple_mesh) {
             return; // Temple déjà créé
         }        
@@ -524,8 +524,13 @@ class Territory {
             this.temple_mesh = mesh;
             this.hasTemple = true;
             
-            // Créer l'animation de chute
-            this.animateTempleFall(mesh, pos);
+            // Créer l'animation de chute si demandé, sinon le positionner directement
+            if (shouldAnimate) {
+                this.animateTempleFall(mesh, pos);
+            } else {
+                mesh.position.set(pos.x, pos.y, pos.z);
+                mesh.rotation.y = 0;
+            }
         }
     }
 

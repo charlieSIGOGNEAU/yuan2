@@ -35,8 +35,8 @@ class Api::V1::ActionsController < ApplicationController
     
     if existing_action
       puts "🔄 Mise à jour de l'action existante pour ce joueur à ce tour"
-      existing_action.position_q = action_params[:position_q].to_i
-      existing_action.position_r = action_params[:position_r].to_i
+      existing_action.position_q = action_params[:position_q].present? ? action_params[:position_q].to_i : nil
+existing_action.position_r = action_params[:position_r].present? ? action_params[:position_r].to_i : nil
       existing_action.development_level = action_params[:development_level].to_i
       existing_action.fortification_level = action_params[:fortification_level].to_i
       existing_action.militarisation_level = action_params[:militarisation_level].to_i

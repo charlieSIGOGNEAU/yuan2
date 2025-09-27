@@ -2,7 +2,7 @@
   "game": {
     "phases": {
       "initial_placement": {
-        "instructions": "Replace les villes si besoin, puis valide.",
+        "instructions": "Replacez les villes si besoin, puis validez.",
         "title": "Phase de placement initial"
       },
       "bidding": {
@@ -36,7 +36,19 @@
         "conquest_phase_complete": "Phase de conquête de provinces neutres est terminée.",
         "temple_tax_complete": "Fin de création de temple et taxe liée",
         "revenue_collected": "Voici les revenus récupérés des différents clans",
-        "attaque_free_urbanization": "Suite à une attaque, une (ou plusieurs) province ne sont pas viables, une urbanisation gratuite va etre effectuée"
+        "attaque_free_urbanization": "Suite à une attaque, une (ou plusieurs) province ne sont pas viables, une urbanisation gratuite va etre effectuée",
+        "territory_not_found": "Vous ne pouvez pas sélectionner des actions sans indiquer la province cible.",
+        "not_action": "Vous avez choisi de passer votre tour pour obtenir 6 chaos.",
+        "development_not_possible": "Vous ne pouvez pas entreprendre d’action de développement dans une province ennemie.",
+        "development_not_connected": "Une expansion de niveau 1 ou 2 doit se faire sur une province connectée.",
+        "possible_urbanization": "Action validé, mais il se peut qu’une urbanisation gratuite soit possible.",
+        "enemy_fortification": "Vous ne pouvez pas fortifier une province ennemie que vous n’attaquez pas.",
+        "recruitment_impossible": "Recrutement autorisé uniquement dans une ville ou un territoire qui sera une ville ce tour-ci.",
+        "not_chao": "Vous n’avez pas assez de chaos pour effectuer ces actions.",
+        "your_victory": "Vous avez gagné la partie !",
+        "other_victory": "Le clan {{clanColor}} a triomphé et remporte la partie ! 🏆"
+
+
       }
     },
     "ui": {
