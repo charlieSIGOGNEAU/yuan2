@@ -43,8 +43,8 @@ export class GameBoard3D {
         this.waterLoaded = false; // État du chargement de l'eau
         this.waterLoadPromise = null; // Promise pour attendre le chargement
         
-        // Limites de zoom (correspondant à des hauteurs effectives de 1 à 10)
-        this.minScale = 1; // Zoom min
+        // Limites de zoom (scale du workplane)
+        this.minScale = 0.7; // Zoom min
         this.maxScale = 3; // Zoom max
         
         // Limites de déplacement du workplane
@@ -92,7 +92,8 @@ export class GameBoard3D {
     async initAsync() {
         // Créer d'abord la scène Three.js
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        this.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100);
+
         this.camera.position.set(0, 9, 6);
         this.camera.rotation.set(THREE.MathUtils.degToRad(-60), 0, 0);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -102,6 +103,8 @@ export class GameBoard3D {
         const containerRect = this.container.getBoundingClientRect();
         this.renderer.setSize(containerRect.width, containerRect.height);
         this.container.appendChild(this.renderer.domElement);
+        // FOV initial selon l'orientation
+        this.updateFovByOrientation();
         
         // Ajout d'éclairage pour les modèles 3D
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); //Éclaire uniformément toute la scène (pas d'ombres) 0 = noir total, 2 = très lumineux, Affecte la luminosité générale, réduit les contrastes
@@ -181,6 +184,18 @@ export class GameBoard3D {
         // Ajuster l'angle caméra selon le zoom initial
         this.updateCameraAngleForZoom();
         this.animate();
+    }
+
+    // Met à jour dynamiquement le FOV selon l'orientation (paysage/portrait)
+    updateFovByOrientation() {
+        if (!this.camera || !this.container) return;
+        const rect = this.container.getBoundingClientRect();
+        const isLandscape = rect.width >= rect.height;
+        const targetFov = isLandscape ? 40 : 60;
+        if (this.camera.fov !== targetFov) {
+            this.camera.fov = targetFov;
+            this.camera.updateProjectionMatrix();
+        }
     }
 
     // Met à jour l'angle de la caméra en fonction du zoom (scale du workplane)
@@ -319,7 +334,8 @@ export class GameBoard3D {
             window.addEventListener('wheel', this.onWheel.bind(this), { passive: false });
             
             // Écouter les changements de taille du container et de la fenêtre
-            window.addEventListener('resize', this.onResize.bind(this));
+        window.addEventListener('resize', this.onResize.bind(this));
+        window.addEventListener('orientationchange', this.onResize.bind(this));
             
             // Observer les changements de taille du container
             this.resizeObserver = new ResizeObserver(() => {
@@ -1192,6 +1208,8 @@ export class GameBoard3D {
             // Utiliser la taille du container au lieu de window
             const containerRect = this.container.getBoundingClientRect();
             this.camera.aspect = containerRect.width / containerRect.height;
+        // Adapter le FOV à l'orientation
+        this.updateFovByOrientation();
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(containerRect.width, containerRect.height);
         }
