@@ -720,7 +720,7 @@ export const developpementAndMore = {
                 
                 try {
                     if (this.gameBoard && this.gameBoard.meepleManager) {
-                        const templePromise = territory.createTemple(this.gameBoard, this.gameBoard.meepleManager,true);
+                        const templePromise = territory.createTemple(this.gameBoard, this.gameBoard.meepleManager);
                         templeCreationPromises.push(templePromise);
                     }
                 } catch (error) {

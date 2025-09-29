@@ -45,8 +45,19 @@
         "enemy_fortification": "Vous ne pouvez pas fortifier une province ennemie que vous n’attaquez pas.",
         "recruitment_impossible": "Recrutement autorisé uniquement dans une ville ou un territoire qui sera une ville ce tour-ci.",
         "not_chao": "Vous n’avez pas assez de chaos pour effectuer ces actions.",
+        "too_many_warriors": "Les provinces ne peuvent soutenir plus de 3 armées à la fin d’un tour.",
         "your_victory": "Vous avez gagné la partie !",
-        "other_victory": "Le clan {{clanColor}} a triomphé et remporte la partie ! 🏆"
+        "other_victory": "Le clan {{clanColor}} a triomphé et remporte la partie ! 🏆",
+        "victory_table": {
+          "title": "🏆 Classement final",
+          "rank": "Rang",
+          "clan": "Clan",
+          "temples": "Temples",
+          "honor": "Honneur",
+          "winner_congratulations": "🎉 Félicitations ! Vous avez remporté la victoire !",
+          "temple_leader_message": "🏛️ Vous aviez le plus de temples mais avez perdu à cause de l'honneur. Félicitations pour votre performance !",
+          "game_over_message": "Fin de partie ! Félicitations au clan {{winnerClan}} pour sa victoire ! 🏆"
+        }
 
 
       }

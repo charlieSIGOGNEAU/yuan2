@@ -14,6 +14,9 @@ Rails.application.routes.draw do
       
       # Routes de tiles
       resources :games do
+        member do
+          post :submit_victory
+        end
         resources :tiles, only: [] do
           member do
             post :place

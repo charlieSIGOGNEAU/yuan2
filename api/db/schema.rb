@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_27_170338) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_28_162623) do
   create_table "actions", force: :cascade do |t|
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false
@@ -58,6 +58,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_27_170338) do
     t.string "user_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "rank"
     t.index ["clan_id"], name: "index_game_users_on_clan_id"
     t.index ["game_id"], name: "index_game_users_on_game_id"
     t.index ["user_id", "game_id"], name: "index_game_users_on_user_id_and_game_id", unique: true
@@ -73,6 +74,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_27_170338) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "simultaneous_play_turn", default: 0
+    t.integer "submitted_by_user_id"
+    t.index ["submitted_by_user_id"], name: "index_games_on_submitted_by_user_id"
   end
 
   create_table "tests", force: :cascade do |t|
@@ -111,6 +114,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_27_170338) do
   add_foreign_key "game_users", "clans"
   add_foreign_key "game_users", "games"
   add_foreign_key "game_users", "users"
+  add_foreign_key "games", "users", column: "submitted_by_user_id"
   add_foreign_key "tiles", "game_users"
   add_foreign_key "tiles", "games"
 end

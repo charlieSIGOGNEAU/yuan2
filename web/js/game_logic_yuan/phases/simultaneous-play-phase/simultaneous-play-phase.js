@@ -99,6 +99,7 @@ export const simultaneousPlayPhase = {
             console.log('🔄 debut developpement');
             await developpementAndMore.developpement(gameBoard, this.processedTurns);
             console.log('🔄 fin developpement');
+            this.skipHisTurn();
             console.log('🔄 debut fortification');
             await fortification.setupFortification(gameBoard, this.processedTurns, true); //true pour preMilitarization
             console.log('🔄 fin fortification');
@@ -108,6 +109,8 @@ export const simultaneousPlayPhase = {
             console.log('🔄 debut fortification');
             await fortification.setupFortification(gameBoard, this.processedTurns, false); //false pour postMilitarization
             console.log('🔄 fin fortification');
+            await this.tooManyWarriors();
+            await this.isGameOver();
 
             // Mettre à jour les compteurs de ressources de tous les clans
             this.updateAllClansResources();
@@ -127,6 +130,45 @@ export const simultaneousPlayPhase = {
             await this.simultaneousPlayPhase(gameBoard);
         }
     },
+
+    skipHisTurn(){
+        const actions = gameState.game.actions.filter(action => action.turn === this.processedTurns);
+        for (const action of actions) {
+            if (action.development_level === 0 && action.fortification_level === 0 && action.militarisation_level === 0) {
+                const clan = action.getClan();
+                clan.available_chao += 6;
+            }
+        }
+    },
+
+    async tooManyWarriors(){
+        const actions = gameState.game.actions.filter(action => action.turn === this.processedTurns);
+        const territories = actions.map(action => action.getTerritory()).filter(territory => territory !== null);
+        console.log("territories:", territories);
+
+        if (territories.filter(territory => territory.warriors > 3).length > 0) {
+            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.too_many_warriors'));
+            await uiManager.waitForNext();
+        }
+
+        for (const action of actions) {
+            const territory = action.getTerritory();
+            if (territory && territory.warriors > 3) {
+                const toDelete = territory.warriors - 3;
+                for (let i = 0; i < toDelete; i++) {
+                    const mesh = territory.warriors_mesh.pop();
+                    if (mesh) {
+                        arrowManager.animateAndRemoveMesh(mesh);
+                    }
+                }
+                territory.warriors = 3;
+
+
+            }
+        }
+    },
+
+
 
     isActionPossible(actionData){
         let territory = null;
@@ -173,18 +215,21 @@ export const simultaneousPlayPhase = {
                     return {possible: false, saveMessage: true};
                 }
             }
-            // possible urbanization gratuite
-            if (territory.clan_id === null && development_level > 0 && fortification_level === 0) {
+            // possible urbanization gratuite, enlever le cas ou la province est une plaine
+            if (territory.clan_id === null && development_level > 0 && fortification_level === 0 && territory.type !== 'plain') {
                 // Étape 1 : récupérer les territoires adjacents libres
-                const freeAdjacent = adjacentProvinces.filter(t => t.clan_id === null);
+                let freeAdjacent = territory.adjacentProvinces.filter(t => t.clan_id === null);
+                freeAdjacent.push(territory);
+                console.log("freeAdjacent:", freeAdjacent);
 
                 // Étape 2 : récupérer tous les territoires du joueur adjacents à ces libres
                 const playerAdjacent = freeAdjacent.flatMap(t => 
-                    adjacentProvinces(t).filter(adj => adj.clan_id === playerClan)
+                    t.adjacentProvinces.filter(adj => adj.clan_id === playerClan)
                 )
+                console.log("playerAdjacent:", playerAdjacent);
                 if (playerAdjacent.length === 0) {
                     uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.possible_urbanization'));
-                    return {possible: true, saveMessage: false};
+                    return {possible: true, saveMessage: true};
                 }
             }
 
@@ -203,7 +248,7 @@ export const simultaneousPlayPhase = {
 
     isGameOver() {
         const objective = {
-            0: infinity,
+            0: 9,
             1: 9,
             2: 9,
             3: 9,
@@ -218,6 +263,8 @@ export const simultaneousPlayPhase = {
             12: 4,
             13: 3
         }
+        
+        // Vérifier s'il y a des gagnants potentiels
         let potentialWinner = [];
         for (const clan of gameState.game.clans) {
             const numTemples = clan.numTemples;
@@ -225,18 +272,46 @@ export const simultaneousPlayPhase = {
                 potentialWinner.push(clan);
             }
         }
-        if (potentialWinner.length > 1) {
-            const topClan = potentialWinner.reduce((max, clan) => 
-            clan.honneur > max.honneur ? clan : max
-            );
-            if (topClan === gameState.game.myClan) {
-                uiManager.showVictoryMessage(i18n.t('game.phases.simultaneous_play.your_victory'));
-            }
-            else {
-                uiManager.showVictoryMessage(i18n.t('game.phases.simultaneous_play.other_victory', {clanColor: topClan.color}));
-            }
+        console.log("potentialWinner:", potentialWinner);
+
+        // S'il n'y a pas de gagnant, ne rien faire
+        if (potentialWinner.length === 0) {
+            return;
         }
-        return ;
+
+        // Déterminer le gagnant parmi les candidats (celui avec le plus d'honneur)
+        const topClan = potentialWinner.reduce((max, clan) => 
+            clan.honneur > max.honneur ? clan : max
+        );
+
+        // Créer le classement complet de tous les joueurs
+        // Priorité 1: nombre de temples (descendant)
+        // Priorité 2: honneur (descendant) en cas d'égalité de temples
+        const rankedClans = gameState.game.clans.sort((a, b) => {
+            if (a.numTemples !== b.numTemples) {
+                return b.numTemples - a.numTemples; // Plus de temples = meilleur rang
+            }
+            return b.honneur - a.honneur; // Plus d'honneur = meilleur rang en cas d'égalité
+        });
+
+        // Afficher le tableau de classement avec le message personnalisé
+        import('../../../core/i18n.js').then(i18nModule => {
+            const i18n = i18nModule.i18n;
+            uiManager.showVictoryMessage(rankedClans, gameState.game.myClan, i18n);
+        });
+
+        // Convertir les clans classés en gameUsers classés pour l'API
+        const rankedGameUsers = rankedClans.map(clan => {
+            return gameState.game.game_users.find(gameUser => gameUser.clan_id === clan.id);
+        });
+        console.log("rankedGameUsers:", rankedGameUsers);
+
+        // Envoyer les résultats à l'API
+        import('../../gameApi.js').then(module => {
+            module.gameApi.sendVictoryGameToApi(rankedGameUsers);
+        });
+
+        // changer l'action du bouton valide par le fais de quiter la partie
     },
 
 

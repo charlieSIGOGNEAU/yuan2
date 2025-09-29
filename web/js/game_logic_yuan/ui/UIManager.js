@@ -1254,6 +1254,120 @@ export class UIManager {
         this.showMenuOnlyBar();
         this.updateInfoPanel('');
     }
+
+    // Afficher le message de victoire avec tableau de classement
+    showVictoryMessage(rankedClans, myClan, i18n) {
+        // Créer le tableau de classement
+        let tableHTML = `
+            <div class="victory-container">
+                <h2>${i18n.t('game.phases.simultaneous_play.victory_table.title')}</h2>
+                <table class="victory-table">
+                    <thead>
+                        <tr>
+                            <th>${i18n.t('game.phases.simultaneous_play.victory_table.rank')}</th>
+                            <th>${i18n.t('game.phases.simultaneous_play.victory_table.clan')}</th>
+                            <th>${i18n.t('game.phases.simultaneous_play.victory_table.temples')}</th>
+                            <th>${i18n.t('game.phases.simultaneous_play.victory_table.honor')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        rankedClans.forEach((clan, index) => {
+            const rank = index + 1;
+            const clanColorName = i18n.t(`colors.${clan.color_name}`);
+            const isMyRow = clan === myClan ? 'my-clan-row' : '';
+            
+            tableHTML += `
+                <tr class="${isMyRow}">
+                    <td>${rank}</td>
+                    <td>Clan ${clanColorName}</td>
+                    <td class="temples-column">${clan.numTemples}</td>
+                    <td class="honneur-column">${clan.honneur}</td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                    </tbody>
+                </table>
+        `;
+
+        // Ajouter le message personnalisé
+        const winner = rankedClans[0];
+        const templeLeader = rankedClans.reduce((max, clan) => 
+            clan.numTemples > max.numTemples ? clan : max
+        );
+
+        let personalMessage = '';
+        if (winner === myClan) {
+            personalMessage = i18n.t('game.phases.simultaneous_play.victory_table.winner_congratulations');
+        } else if (templeLeader === myClan && winner !== myClan) {
+            personalMessage = i18n.t('game.phases.simultaneous_play.victory_table.temple_leader_message');
+        } else {
+            const winnerColorName = i18n.t(`colors.${winner.color_name}`);
+            personalMessage = i18n.t('game.phases.simultaneous_play.victory_table.game_over_message', {
+                winnerClan: winnerColorName
+            });
+        }
+
+        tableHTML += `
+                <div class="victory-message">
+                    <p>${personalMessage}</p>
+                </div>
+            </div>
+        `;
+
+        // Ajouter les styles CSS
+        const styles = `
+            <style>
+                .temples-column {
+                    font-weight: bold;
+                    font-size: 150%;
+                }
+                .honneur-column {
+                }
+                p {
+                    color: white;
+                }
+
+                .victory-container {
+
+                    color: white;
+                    padding: 0px;
+                    border-radius: 10px;
+                    margin: 0px;
+                    text-align: center;
+                }
+                .victory-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                }
+                .victory-table th, .victory-table td {
+                    border: 1px solid #555;
+                    padding: 8px;
+                    text-align: center;
+                }
+                .victory-table th {
+                    background-color: #333;
+                    font-weight: bold;
+                }
+                .my-clan-row {
+                    background-color: rgba(255, 215, 0, 0.3) !important;
+                    font-weight: bold;
+                }
+                .victory-message {
+                    margin-top: 15px;
+                    font-size: 1.1em;
+                    font-weight: bold;
+                }
+            </style>
+        `;
+
+        // Afficher le contenu dans l'info panel
+        this.updateInfoPanel(styles + tableHTML);
+    }
 }
 
 // Instance unique du gestionnaire UI

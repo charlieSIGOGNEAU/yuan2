@@ -6,7 +6,7 @@ class Api::V1::ActionsController < ApplicationController
   # POST /api/v1/games/:game_id/actions
   def create  
     # Vérifier que le game_user_id correspond bien au joueur authentifié
-    if action_params[:game_user_id].to_i != @game_user.id
+    if action_params.key?(:game_user_id) && action_params[:game_user_id].present? && action_params[:game_user_id].to_i != @game_user.id
       puts "❌ Game user ID invalide: reçu #{action_params[:game_user_id]}, attendu #{@game_user.id}"
       render json: {
         success: false,
@@ -17,7 +17,7 @@ class Api::V1::ActionsController < ApplicationController
 
     # Vérifier que le turn correspond au simultaneous_play_turn de la game
     current_turn = @game.simultaneous_play_turn
-    if action_params[:turn] != current_turn
+    if action_params.key?(:turn) && action_params[:turn].present? && action_params[:turn].to_i != current_turn
       puts "❌ Turn invalide: reçu #{action_params[:turn]}, attendu #{current_turn}"
       render json: {
         success: false,
@@ -35,11 +35,23 @@ class Api::V1::ActionsController < ApplicationController
     
     if existing_action
       puts "🔄 Mise à jour de l'action existante pour ce joueur à ce tour"
-      existing_action.position_q = action_params[:position_q].present? ? action_params[:position_q].to_i : nil
-existing_action.position_r = action_params[:position_r].present? ? action_params[:position_r].to_i : nil
-      existing_action.development_level = action_params[:development_level].to_i
-      existing_action.fortification_level = action_params[:fortification_level].to_i
-      existing_action.militarisation_level = action_params[:militarisation_level].to_i
+      updates = {}
+      if action_params.key?(:position_q)
+        updates[:position_q] = action_params[:position_q].present? ? action_params[:position_q].to_i : nil
+      end
+      if action_params.key?(:position_r)
+        updates[:position_r] = action_params[:position_r].present? ? action_params[:position_r].to_i : nil
+      end
+      if action_params.key?(:development_level) && action_params[:development_level].present?
+        updates[:development_level] = action_params[:development_level].to_i
+      end
+      if action_params.key?(:fortification_level) && action_params[:fortification_level].present?
+        updates[:fortification_level] = action_params[:fortification_level].to_i
+      end
+      if action_params.key?(:militarisation_level) && action_params[:militarisation_level].present?
+        updates[:militarisation_level] = action_params[:militarisation_level].to_i
+      end
+      existing_action.assign_attributes(updates)
       
       if existing_action.save
         puts "✅ Action mise à jour avec succès pour le joueur #{@game_user.user_name}"
@@ -63,8 +75,8 @@ existing_action.position_r = action_params[:position_r].present? ? action_params
       game_id: @game.id,
       game_user_id: @game_user.id,
       turn: current_turn,
-      position_q: action_params[:position_q].to_i,
-      position_r: action_params[:position_r].to_i,
+      position_q: action_params[:position_q].present? ? action_params[:position_q].to_i : nil,
+      position_r: action_params[:position_r].present? ? action_params[:position_r].to_i : nil,
       development_level: action_params[:development_level].to_i,
       fortification_level: action_params[:fortification_level].to_i,
       militarisation_level: action_params[:militarisation_level].to_i

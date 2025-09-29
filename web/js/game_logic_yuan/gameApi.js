@@ -260,8 +260,10 @@ export const gameApi = {
 
             const data = await response.json();
             
-            if (data.success && !saveMessage) {
-                uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.action_validated'));
+            if (data.success) {
+                if (!saveMessage) {
+                    uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.action_validated'));
+                }
                 
             } else {
                 console.error('❌ Erreur lors de l\'envoi de l\'action:', data);
@@ -270,6 +272,46 @@ export const gameApi = {
         } catch (error) {
             console.error('❌ Erreur réseau lors de l\'envoi de l\'action:', error);
             uiManager.updateInfoPanel('Erreur de connexion');
+        }
+    },
+
+    // Envoyer la victoire à l'API
+    async sendVictoryGameToApi(gameUsers) {
+        try {
+            const gameId = gameState.game.id;
+            
+            // Transformer le tableau ordonné de gameUsers en format rankings
+            const rankings = gameUsers.map((gameUser, index) => ({
+                game_user_id: gameUser.id,
+                rank: index + 1  // Le rang commence à 1
+            }));
+
+            const response = await fetch(`${this.baseUrl}/games/${gameId}/submit_victory`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({
+                    rankings: rankings
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Résultats de victoire envoyés avec succès:', result.message);
+                uiManager.updateInfoPanel(result.message);
+            } else {
+                console.error('❌ Erreur lors de l\'envoi des résultats:', result.message);
+                uiManager.updateInfoPanel(`Erreur: ${result.message}`);
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('❌ Erreur réseau lors de l\'envoi des résultats de victoire:', error);
+            uiManager.updateInfoPanel('Erreur de connexion lors de l\'envoi des résultats');
+            return { success: false, error: error.message };
         }
     },
 };

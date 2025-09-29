@@ -7,7 +7,8 @@ class Game < ApplicationRecord
       starting_spot_selection: 4,
       simultaneous_play: 5,
       completed: 6,
-      abandoned: 7
+      abandoned: 7,
+      end_dispute: 8
     }, default: :waiting_for_players
   
     enum :game_type, {
@@ -15,12 +16,13 @@ class Game < ApplicationRecord
       custom_game: 1
     }, default: :quick_game
   
-    has_many :game_users, dependent: :destroy
-    has_many :users, through: :game_users
-    has_many :tiles, dependent: :destroy
-    has_many :actions, dependent: :destroy
-    has_many :clans, dependent: :destroy
-    has_many :biddings, dependent: :destroy
+  has_many :game_users, dependent: :destroy
+  has_many :users, through: :game_users
+  has_many :tiles, dependent: :destroy
+  has_many :actions, dependent: :destroy
+  has_many :clans, dependent: :destroy
+  has_many :biddings, dependent: :destroy
+  belongs_to :submitted_by_user, class_name: 'User', optional: true
   
     validates :game_status, presence: true
     validates :game_type, presence: true

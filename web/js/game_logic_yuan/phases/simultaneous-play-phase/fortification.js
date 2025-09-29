@@ -27,9 +27,9 @@ export const fortification = {
             // await uiManager.waitForNext();
         }
     },
-    wait(){
+    wait(times){
         if (this.animation) {
-            return new Promise(resolve => setTimeout(resolve, 1000));
+            return new Promise(resolve => setTimeout(resolve, times));
         }
     },
 
@@ -76,7 +76,7 @@ export const fortification = {
                 
             }   
             if (this.animation && actions.length > 0) {
-                await times(1000);
+                await this.wait(1000);
             }
             
         }
