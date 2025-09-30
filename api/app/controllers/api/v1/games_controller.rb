@@ -30,7 +30,7 @@ class Api::V1::GamesController < ApplicationController
   def submit_victory
     # Vérifier si le jeu est déjà terminé
     if @game.completed? || @game.end_dispute?
-      render json: { success: false, message: "Game already finished" }
+      render json: { success: true, message: "Game already finished" }
       return
     end
 
@@ -52,7 +52,13 @@ class Api::V1::GamesController < ApplicationController
           
           render json: { success: true, message: "Rankings submitted successfully" }
         else
-          # Un utilisateur a déjà soumis les résultats, on compare
+          # Un utilisateur a déjà soumis les résultats, vérifier que c'est un utilisateur différent
+          if @game.submitted_by_user_id == current_user.id
+            render json: { success: false, message: "You already submitted the rankings. Another player must validate." }
+            return
+          end
+          
+          # Comparer les classements soumis par les deux utilisateurs différents
           existing_rankings = @game.game_users.pluck(:id, :rank).to_h
           submitted_rankings = rankings.map { |r| [r[:game_user_id].to_i, r[:rank].to_i] }.to_h
           

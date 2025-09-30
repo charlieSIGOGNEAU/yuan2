@@ -21,6 +21,7 @@ export const simultaneousPlayPhase = {
     async simultaneousPlayPhase(gameBoard) {
         this.gameBoard = gameBoard;
         if (this.processedTurns === 1) {
+
             // Exécuter getAdjacentTerritories pour tous les territoires
             console.log('🔄 Initialisation des territoires adjacents...');
             for (const territory of gameState.game.territories) {
@@ -48,13 +49,16 @@ export const simultaneousPlayPhase = {
 
             arrowManager.initialize(gameBoard);
 
+            //  repositionner tout, pour repositioner infopanel
+            uiManager.setupResponsiveDimensions();
+
             await this.processVictoryBiddings(gameBoard);
             // Mettre à jour les compteurs de ressources de tous les clans
             this.updateAllClansResources();
             uiManager.updateSimultaneousPlayInfoBar();
 
-            // pour le debug
-            this.setupTerritoryClickDetection(gameBoard);
+
+
         }
         else {
             
@@ -64,6 +68,8 @@ export const simultaneousPlayPhase = {
             developpementAndMore.animation = true;
             fortification.animation = true;
             militarisation.animation = true;
+            // message de debut de tour au cas ou tout les joueurs auraient passer leur tour
+            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.tour_debut', {tour: this.processedTurns + 1}));
         }
         else {
             developpementAndMore.animation = false;
@@ -78,6 +84,9 @@ export const simultaneousPlayPhase = {
 
             // Activer la détection de clic sur les territoires
             this.setupTerritoryClickDetection(gameBoard);
+
+            // mes le chois des action a zero
+            uiManager.setActionChoicesToZero();
         }
         else {
             // Désactiver la détection des clics sur les territoires
@@ -99,7 +108,7 @@ export const simultaneousPlayPhase = {
             console.log('🔄 debut developpement');
             await developpementAndMore.developpement(gameBoard, this.processedTurns);
             console.log('🔄 fin developpement');
-            this.skipHisTurn();
+
             console.log('🔄 debut fortification');
             await fortification.setupFortification(gameBoard, this.processedTurns, true); //true pour preMilitarization
             console.log('🔄 fin fortification');
@@ -110,19 +119,19 @@ export const simultaneousPlayPhase = {
             await fortification.setupFortification(gameBoard, this.processedTurns, false); //false pour postMilitarization
             console.log('🔄 fin fortification');
             await this.tooManyWarriors();
-            await this.isGameOver();
+
 
             // Mettre à jour les compteurs de ressources de tous les clans
             this.updateAllClansResources();
             uiManager.updateSimultaneousPlayInfoBar();
 
+            // Vérifier si la partie est terminée
+            await this.isGameOver();
 
+            // tester les chao
+            this.chaoTest();
 
-            console.log('🔄 processedTurns:', this.processedTurns);
-
-            // a faire : pluis les autres actions
-
-
+            console.log('🔄 fin du processedTurns:', this.processedTurns);
             this.removeAllActionCircles(gameBoard);
             this.processedTurns +=1;
             console.log('🔄 processedTurns:', this.processedTurns);
@@ -131,15 +140,15 @@ export const simultaneousPlayPhase = {
         }
     },
 
-    skipHisTurn(){
-        const actions = gameState.game.actions.filter(action => action.turn === this.processedTurns);
-        for (const action of actions) {
-            if (action.development_level === 0 && action.fortification_level === 0 && action.militarisation_level === 0) {
-                const clan = action.getClan();
-                clan.available_chao += 6;
-            }
-        }
+
+    chaoTest(){
+        const clansError = gameState.game.clans.filter(clan => clan.available_chao < 0);
+        //creer une string qui comporte tout les coulor des clansError
+        const clansErrorString = clansError.map(clan => clan.color_name).join(', ');
+        console.log(`💰 clansErrorString: ${clansErrorString}`);
+        uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.chao_error', {clansErrorString: clansErrorString}));
     },
+
 
     async tooManyWarriors(){
         const actions = gameState.game.actions.filter(action => action.turn === this.processedTurns);
@@ -199,10 +208,6 @@ export const simultaneousPlayPhase = {
         }
 
         if (territory) {
-            // vous avez assez de province pour faire un niveau 2 de développement gratuitement a la place d'un niveau 1
-
-
-
             // development province ennemie
             if ((territory.clan_id !== null && territory.clan_id !== playerClan.id && development_level) > 0) {
                 uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.development_not_possible'));
@@ -241,6 +246,9 @@ export const simultaneousPlayPhase = {
                 uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.recruitment_impossible'));
                 return {possible: false, saveMessage: true};
             }
+
+            // vous avez assez de province pour faire un niveau 2 de développement gratuitement a la place d'un niveau 1
+
         }
         return {possible: true, saveMessage: false};
         
@@ -311,7 +319,7 @@ export const simultaneousPlayPhase = {
             module.gameApi.sendVictoryGameToApi(rankedGameUsers);
         });
 
-        // changer l'action du bouton valide par le fais de quiter la partie
+        // changer l'action du bouton valide par le fais de quiter la partie et enlever la bar d'action
     },
 
 

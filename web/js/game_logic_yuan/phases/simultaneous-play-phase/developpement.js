@@ -73,7 +73,7 @@ export const developpementAndMore = {
 
         // etape 6: les revenu de colonisation 2 et 3 et expention 2
         console.log(`\n💰 === ÉTAPE 5: REVENUS DE COLONISATION 2 ET 3 ET EXPANSION 2 ===`);
-        await this.handleRevenusColonisation23EtExpansion2(processedTurns);
+        await this.handleRevenusColonisation23EtExpansion2skipHisTurn(processedTurns);
         
         console.log(`\n✅ === FIN LOGIQUE DÉVELOPPEMENT TOUR ${processedTurns} ===`);
     },
@@ -662,9 +662,17 @@ export const developpementAndMore = {
                 }
             }
         }
+        if (this.animation) {
 
-        if (hasUrbanization && this.animation) {
-            await this.showMessageAndWaitNext('free_urbanization');
+            if (hasUrbanization && this.animation) {
+                await this.showMessageAndWaitNext('free_urbanization');
+            }
+            else {
+                console.log(`🏙️ Aucune urbanisation gratuite trouvée`);
+                // si la colonisation et urbanisation sont non vide faire une pose de 1000ms
+                // pour le momant on le fais dans tout les cas, car c'est tres rarement non vide
+                await this.wait(1000);
+            }
         }
 
         // Effectuer les urbanisations
@@ -909,7 +917,7 @@ export const developpementAndMore = {
         uiManager.showMenuOnlyBar();
     },
 
-    async handleRevenusColonisation23EtExpansion2(processedTurns) {
+    async handleRevenusColonisation23EtExpansion2skipHisTurn(processedTurns) {
         console.log(`💰 Gestion des revenus de colonisation 2 et 3 et expention 2`);
         
         const actions = gameState.game.actions.filter(action => 
@@ -918,31 +926,52 @@ export const developpementAndMore = {
             (action.development_type === "expantion" && action.development_level === 2))
         );
 
-        if (actions.length === 0) {
-            console.log(`💰 Aucune action de colonisation 2 ou 3 ou expention 2 trouvée`);
-            return;
-        }
-
         for (const action of actions) {
             const clan = action.getClan();
             const territory = action.getTerritory();
             clan.available_chao += 2;
 
             if (actions.length > 0 && this.animation) {
-                // Créer le sprite tax2Chao sur le territoire
-                this.createTax2ChaoSprite(territory);
+                // Créer le sprite sur le territoire
+                this.addChaoSprite(territory,2);
             }
         }   
-        if (actions.length > 0 && this.animation) {
+
+        const actionsSkipHisTurn = gameState.game.actions.filter(action => 
+            action.turn === processedTurns && 
+            (action.development_level === 0 && action.fortification_level === 0 && action.militarisation_level === 0)
+        );
+        console.log(`process turn: ${processedTurns}`);
+        console.log(`💰 actionsSkipHisTurn: ${actionsSkipHisTurn.length}`);
+        for (const action of actionsSkipHisTurn) {
+
+            const clan = action.getClan();         
+            let territory = action.getTerritory();
+            if (!territory) {
+                territory = gameState.game.territories.find(t => t.clan_id === clan.id);
+            }
+            clan.available_chao += 6;
+
+            if (actionsSkipHisTurn.length > 0 && this.animation) {
+                // Créer le sprite sur le territoire
+                this.addChaoSprite(territory,6);
+            }
+            
+
+        }
+
+
+
+        if ((actions.length > 0 || actionsSkipHisTurn.length > 0) && this.animation) {
             await this.showMessageAndWaitNext('revenue_collected');
             this.removeAllTax2ChaoSprites();
         }
     },
 
-    // Créer un sprite tax2Chao sur un territoire avec animation
-    async createTax2ChaoSprite(territory) {
-        if (!this.gameBoard || !this.gameBoard.meepleManager) {
-            console.warn(`⚠️ gameBoard ou meepleManager non disponible pour créer le sprite tax2Chao`);
+    // Créer un sprite chao sur un territoire avec animation
+    async addChaoSprite(territory, quantity) {
+        if (!this.gameBoard) {
+            console.warn(`⚠️ gameBoard non disponible pour créer le sprite chao`);
             return;
         }
 
@@ -950,48 +979,35 @@ export const developpementAndMore = {
             // Obtenir la position cartésienne du territoire
             const cartesianPos = territory.getCartesianPosition(this.gameBoard);
             
-            // Créer le sprite tax2Chao à une hauteur de base de 0.5
-            const spritePosition = {
-                x: cartesianPos.x,
-                y: 0.5,
-                z: cartesianPos.z
-            };
-
-            const tax2ChaoSprite = await this.gameBoard.meepleManager.createSpriteInstance(
-                'tax2Chao',
-                spritePosition,
-                null, // Pas de couleur personnalisée
-                { territory: territory }
-            );
-
-            if (tax2ChaoSprite) {
-                // Supprimer le sprite original du workplane
-                this.gameBoard.workplane.remove(tax2ChaoSprite);
-                
-                // Créer un vrai THREE.Sprite qui reste face à la caméra
-                const verticalSprite = await this.createVerticalSprite(territory, cartesianPos);
-                
+            // Créer directement le sprite vertical avec la bonne texture selon la quantité
+            const verticalSprite = await this.createVerticalSprite(territory, cartesianPos, quantity);
+            
+            if (verticalSprite) {
                 // Stocker la référence pour pouvoir la supprimer plus tard
                 this.echaoSprites.push(verticalSprite);
                 
                 // Démarrer l'animation d'oscillation en boucle
                 this.startTax2ChaoAnimation(verticalSprite, 0.5);
                 
-                console.log(`💰 Sprite tax2Chao vertical créé sur territoire (${territory.position.q}, ${territory.position.r}) avec animation`);
+                const textureType = quantity === 6 ? '6chao' : '2chao';
+                console.log(`💰 Sprite ${textureType} vertical créé sur territoire (${territory.position.q}, ${territory.position.r}) avec animation`);
             }
         } catch (error) {
-            console.error(`❌ Erreur lors de la création du sprite tax2Chao:`, error);
+            console.error(`❌ Erreur lors de la création du sprite chao:`, error);
         }
     },
 
     // Créer un vrai THREE.Sprite vertical qui reste face à la caméra
-    async createVerticalSprite(territory, position) {
+    async createVerticalSprite(territory, position, quantity = 2) {
         try {
-            // Charger la texture 2chao.webp
+            // Déterminer quelle texture utiliser selon la quantité
+            const texturePath = quantity === 6 ? './images/6chao.webp' : './images/2chao.webp';
+            
+            // Charger la texture appropriée
             const textureLoader = new THREE.TextureLoader();
             const texture = await new Promise((resolve, reject) => {
                 textureLoader.load(
-                    './images/2chao.webp',
+                    texturePath,
                     (loadedTexture) => {
                         loadedTexture.colorSpace = THREE.SRGBColorSpace;
                         resolve(loadedTexture);

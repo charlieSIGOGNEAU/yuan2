@@ -14,6 +14,7 @@ export const gameApi = {
     executedPhases: new Set(), // Pour éviter les exécutions multiples
     uiLoadingPromise: null, // Pour éviter les chargements multiples de l'UI
     currentPhaseInstance: null, // Référence vers l'instance de phase active
+    baseUrl: 'http://localhost:3000/api/v1/',
 
     async handleGameMessage(data) {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
@@ -290,7 +291,7 @@ export const gameApi = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${Auth.authToken}`
                 },
                 body: JSON.stringify({
                     rankings: rankings
@@ -301,16 +302,16 @@ export const gameApi = {
             
             if (result.success) {
                 console.log('✅ Résultats de victoire envoyés avec succès:', result.message);
-                uiManager.updateInfoPanel(result.message);
+
             } else {
                 console.error('❌ Erreur lors de l\'envoi des résultats:', result.message);
-                uiManager.updateInfoPanel(`Erreur: ${result.message}`);
+
             }
             
             return result;
         } catch (error) {
             console.error('❌ Erreur réseau lors de l\'envoi des résultats de victoire:', error);
-            uiManager.updateInfoPanel('Erreur de connexion lors de l\'envoi des résultats');
+            // uiManager.updateInfoPanel('Erreur de connexion lors de l\'envoi des résultats');
             return { success: false, error: error.message };
         }
     },

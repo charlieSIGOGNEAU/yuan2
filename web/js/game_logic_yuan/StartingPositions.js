@@ -3,11 +3,29 @@ import { gameState, Lake } from './gameState.js';
 
 class StartingPositions {
     constructor() {
-        // Initialiser tous les lacs
-        Lake.initializeAllLakes();
-        this.distances = new Map(); // Map<string, number> avec clé "territory1Id-territory2Id"
+        this.distances = new Map(); // Map<string, number> avec clé "territory1Id-territory2Id" 
     }
 
+    // initialise les territoire et province adjacantes et connectees
+    initializeTerritoriesAndProvinces() {
+        // Exécuter getAdjacentTerritories pour tous les territoires
+        console.log('🔄 Initialisation des territoires adjacents...');
+        for (const territory of gameState.game.territories) {
+            territory.updateProvinceTerritories();
+        }
+        console.log("territories adjacents initialisés", gameState.game.territories);
+
+        // Initialiser tous les lacs
+        Lake.initializeAllLakes();
+
+        // Exécuter getConnectedTerritories pour tous les territoires
+        console.log('🔄 Initialisation des territoires connectes...');
+        for (const territory of gameState.game.territories) {
+            territory.updateConnectedProvinces();
+        }
+        console.log('✅ Territoires connectes initialisés');
+    }
+        
     // Obtenir les territoires valides (ni water ni mountain)
     getValidTerritories() {
         const validTypes = ['mine', 'forest', 'plain', 'rice'];
@@ -18,18 +36,22 @@ class StartingPositions {
 
     // Vérifier si deux territoires sont adjacents
     areTerritoriesAdjacent(territory1, territory2) {
-        return territory1.areTerritoryAdjacent(territory2);
+        // return territory1.areTerritoryAdjacent(territory2);
+        console.log("territory adjacent", territory1.adjacentProvinces.includes(territory2));
+        return territory1.adjacentProvinces.includes(territory2);
     }
 
     // Vérifier si deux territoires sont connectés par un lac
     areTerritoriesConnectedByLake(territory1, territory2) {
-        for (const lake of gameState.game.lakes.values()) {
-            if (lake.connectedTerritories.has(territory1) && 
-                lake.connectedTerritories.has(territory2)) {
-                return true;
-            }
-        }
-        return false;
+        // for (const lake of gameState.game.lakes.values()) {
+        //     if (lake.connectedTerritories.has(territory1) && 
+        //         lake.connectedTerritories.has(territory2)) {
+        //         return true;
+        //     }
+        // }
+        // return false;
+        console.log("territory connected", territory1.connectedProvinces.includes(territory2));
+        return territory1.connectedProvinces.includes(territory2);
     }
 
     // Calculer la distance directe entre deux territoires
@@ -53,6 +75,7 @@ class StartingPositions {
 
     // Calculer toutes les distances avec l'algorithme Floyd-Warshall
     calculateAllDistances() {
+        //recupere toute les provinces, donc ni montagne ni eau
         const validTerritories = this.getValidTerritories();
         const n = validTerritories.length;
         

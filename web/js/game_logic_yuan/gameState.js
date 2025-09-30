@@ -816,6 +816,7 @@ class Territory {
 
     // Fonction pour filtrer et stocker les provinces adjacentes (plain, forest, rice, mine)
     updateProvinceTerritories() {
+        console.log("updateProvinceTerritories", this);
         const adjacentTerritories = this.getAdjacentTerritories();
         this.adjacentProvinces = adjacentTerritories.filter(territory => 
             ['plain', 'forest', 'rice', 'mine'].includes(territory.type)
@@ -1230,6 +1231,8 @@ class GameState {
         const gameUser = this.game.game_users.find(gu => gu.id === gameUserId);
         return gameUser ? gameUser.clan_id : null;
     }
+
+    
 }
 
 // Instance globale du gameState (vide au départ)

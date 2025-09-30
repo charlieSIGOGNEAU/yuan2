@@ -12,7 +12,9 @@ export const initialPlacement = {
     async execute(gameBoard) {
         console.log('🎯 Démarrage de la phase initial_placement');
 
-        
+        // initialiser les territoire et province adjacantes et connectees
+        startingPositions.initializeTerritoriesAndProvinces();
+
         
         // 1. Calculer les distances et trouver les médoïdes
         startingPositions.calculateAllDistances();

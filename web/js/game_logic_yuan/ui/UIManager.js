@@ -360,6 +360,40 @@ export class UIManager {
         });
     }
 
+    // Fonction pour mettre les choix des actions à zero
+    setActionChoicesToZero() {
+        console.log('🔄 Remise à zéro des choix d\'actions');
+        
+        // Récupérer la barre d'action
+        const actionBar = document.getElementById('player-action-bar');
+        if (!actionBar) {
+            console.error('❌ Barre d\'action non trouvée');
+            return;
+        }
+        
+        // Remettre à vide les cases 2, 3 et 4
+        const case2Element = actionBar.querySelector('.action-slot:nth-child(2) .action-slot-text');
+        const case3Element = actionBar.querySelector('.action-slot:nth-child(3) .action-slot-text');
+        const case4Element = actionBar.querySelector('.action-slot:nth-child(4) .action-slot-text');
+        
+        if (case2Element) {
+            case2Element.value = '';
+            console.log('✅ Case 2 (développement) remise à vide');
+        }
+        
+        if (case3Element) {
+            case3Element.value = '';
+            console.log('✅ Case 3 (fortification) remise à vide');
+        }
+        
+        if (case4Element) {
+            case4Element.value = '';
+            console.log('✅ Case 4 (militarisation) remise à vide');
+        }
+        
+        console.log('🎯 Remise à zéro terminée');
+    }
+
     // Fonction pour calculer le niveau d'action et son coût
     getActionLevelAndCost(value) {
         switch (value) {
