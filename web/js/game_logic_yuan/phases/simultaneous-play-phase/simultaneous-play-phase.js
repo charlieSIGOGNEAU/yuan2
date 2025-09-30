@@ -70,6 +70,7 @@ export const simultaneousPlayPhase = {
             militarisation.animation = true;
             // message de debut de tour au cas ou tout les joueurs auraient passer leur tour
             uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.tour_debut', {tour: this.processedTurns + 1}));
+            // uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.attaque_free_urbanization'));
         }
         else {
             developpementAndMore.animation = false;

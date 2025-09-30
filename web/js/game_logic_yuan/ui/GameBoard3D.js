@@ -47,8 +47,9 @@ export class GameBoard3D {
         this.minScale = 0.7; // Zoom min
         this.maxScale = 3; // Zoom max
         
-        // Limites de déplacement du workplane
-        this.maxPanDistance = 40; // Distance maximale de déplacement depuis l'origine
+        // Limites de déplacement du workplane (basées sur les tuiles)
+        this.tileBounds = { minX: 0, maxX: 0, minZ: 0, maxZ: 0 }; // Bornes calculées dynamiquement
+        this.panMargin = 5; // Marge supplémentaire autour des tuiles
         
         // Système de callback pour les clics
         this.clickCallback = null; // Callback pour les clics détectés
@@ -183,6 +184,8 @@ export class GameBoard3D {
         this.setupEvents();
         // Ajuster l'angle caméra selon le zoom initial
         this.updateCameraAngleForZoom();
+        // Initialiser les bornes des tuiles
+        this.calculateTileBounds();
         this.animate();
     }
 
@@ -459,6 +462,10 @@ export class GameBoard3D {
                         
             this.workplane.add(tile);
             this.tiles.push(tile); // Stocke la référence de la tuile
+            
+            // Recalculer les bornes après ajout d'une tuile
+            this.calculateTileBounds();
+            
                         resolve(tile);
                     },
                     (progress) => {
@@ -938,6 +945,9 @@ export class GameBoard3D {
             this.dragStart = result.point;
             this.workplaneStartPosition = this.workplane.position.clone();
             
+            // Recalculer les bornes basées sur les tuiles au début du déplacement
+            this.calculateTileBounds();
+            
             // Capturer les événements pointer
             this.container.setPointerCapture(e.pointerId);
         }
@@ -969,15 +979,69 @@ export class GameBoard3D {
             this.workplane.position.copy(newPosition);
         }
         
-        // Méthode pour contraindre la position du workplane dans les limites
+        // Calcule les bornes basées sur les tuiles posées
+        calculateTileBounds() {
+            if (this.tiles.length === 0) {
+                // Si aucune tuile, utiliser des bornes par défaut
+                this.tileBounds = { minX: -10, maxX: 10, minZ: -10, maxZ: 10 };
+                return;
+            }
+
+            let minX = Infinity, maxX = -Infinity;
+            let minZ = Infinity, maxZ = -Infinity;
+
+            // Parcourir toutes les tuiles pour trouver les bornes
+            this.tiles.forEach(tile => {
+                // Ignorer les sprites temporaires et autres objets
+                if (tile.userData && tile.userData.type) return;
+                if (this.tempTileSprites && this.tempTileSprites.includes(tile)) return;
+
+                const pos = tile.position;
+                minX = Math.min(minX, pos.x - 1.5); // -1.5 pour la demi-largeur d'une tuile (3x3)
+                maxX = Math.max(maxX, pos.x + 1.5);
+                minZ = Math.min(minZ, pos.z - 1.5);
+                maxZ = Math.max(maxZ, pos.z + 1.5);
+            });
+
+            // Ajouter une marge supplémentaire
+            this.tileBounds = {
+                minX: minX - this.panMargin,
+                maxX: maxX + this.panMargin,
+                minZ: minZ - this.panMargin,
+                maxZ: maxZ + this.panMargin
+            };
+
+        }
+
+        // Méthode pour contraindre la position du workplane dans les limites des tuiles
         constrainPosition(position) {
-            const distance = Math.sqrt(position.x * position.x + position.z * position.z);
-            if (distance > this.maxPanDistance) {
-                // Normaliser et limiter à la distance maximale
-                const scale = this.maxPanDistance / distance;
-                position.x *= scale;
-                position.z *= scale;
-                // console.log(`🚫 Déplacement du workplane limité: distance ${distance.toFixed(2)} > max ${this.maxPanDistance}`);
+            const scale = this.workplane.scale.x; // Le scale est uniforme
+            
+            // Calculer les limites effectives en tenant compte du scale
+            // Plus le scale est grand (zoom in), plus on peut se déplacer loin
+            const effectiveMinX = this.tileBounds.minX * scale;
+            const effectiveMaxX = this.tileBounds.maxX * scale;
+            const effectiveMinZ = this.tileBounds.minZ * scale;
+            const effectiveMaxZ = this.tileBounds.maxZ * scale;
+
+            // Contraindre la position
+            let constrained = false;
+            
+            if (position.x < -effectiveMaxX) {
+                position.x = -effectiveMaxX;
+                constrained = true;
+            }
+            if (position.x > -effectiveMinX) {
+                position.x = -effectiveMinX;
+                constrained = true;
+            }
+            if (position.z < -effectiveMaxZ) {
+                position.z = -effectiveMaxZ;
+                constrained = true;
+            }
+            if (position.z > -effectiveMinZ) {
+                position.z = -effectiveMinZ;
+                constrained = true;
             }
         }
 

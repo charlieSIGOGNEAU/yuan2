@@ -48,6 +48,8 @@
         "too_many_warriors": "Les provinces ne peuvent soutenir plus de 3 armées à la fin d’un tour.",
         "your_victory": "Vous avez gagné la partie !",
         "other_victory": "Le clan {{clanColor}} a triomphé et remporte la partie ! 🏆",
+        "chao_error": "Des actions normalement impossibles ont été effectuées. Les clans {{clansErrorString}} n'ont pas assez de chaos pour effectuer ces actions.",
+        "tour_debut": "Début du tour {{tour}}",
         "victory_table": {
           "title": "🏆 Classement final",
           "rank": "Rang",
