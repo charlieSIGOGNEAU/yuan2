@@ -48,6 +48,9 @@ export const gameApi = {
                         await i18n.initialize(Auth.currentUser.language);
                     }
                     
+                    // Initialiser le système d'aide après i18n
+                    uiManager.initializeHelpSystem(i18n);
+                    
                     // Récupérer le GameBoard3D depuis l'interface
                     this.gameBoard = window.gameBoard;
                     

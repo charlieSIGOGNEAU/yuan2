@@ -1,6 +1,7 @@
 // Gestionnaire de l'interface utilisateur
 import { gameApi } from '../gameApi.js';
 import { gameState } from '../gameState.js';
+import { initializeHelpSystem } from '../../core/HelpSystem.js';
 
 export class UIManager {
     constructor() {
@@ -12,6 +13,7 @@ export class UIManager {
         this.menuOnlyBar = null; // Nouvelle barre avec seulement le menu
         this.nextBar = null; // Nouvelle barre avec bouton next
         this.currentActionBar = null; // Référence vers la barre actuellement affichée
+        this.helpSystem = null; // Système d'aide (sera initialisé plus tard)
         
         // Variables pour le bidding
         this.currentBid = 0; // Valeur actuelle du numérateur
@@ -668,7 +670,7 @@ export class UIManager {
                 
                 // Vérifier si un clan est sélectionné
                 if (!biddingPhase.selectedClan) {
-                    uiManager.updateInfoPanel('Veuillez sélectionner un clan');
+                    uiManager.updateInfoPanel(i18n.t('game.phases.bidding.selection_clan'));
                     return;
                 }
                 
@@ -697,10 +699,21 @@ export class UIManager {
         }
 
             // Fonction pour mettre à jour le panneau d'informations
-        updateInfoPanel(text) {
+        updateInfoPanel(text, processHelp = true) {
             if (this.infoPanel) {
-                this.infoPanel.innerHTML = text || '';
+                // Si le système d'aide est actif et processHelp est true, traiter le texte
+                if (this.helpSystem && processHelp) {
+                    this.infoPanel.innerHTML = this.helpSystem.processText(text) || '';
+                } else {
+                    this.infoPanel.innerHTML = text || '';
+                }
             }
+        }
+
+        // Initialiser le système d'aide (appelé après l'initialisation de i18n)
+        initializeHelpSystem(i18n) {
+            this.helpSystem = initializeHelpSystem(i18n, this);
+            console.log('✅ Système d\'aide initialisé dans UIManager');
         }
 
     // Fonction pour masquer le panneau d'informations
@@ -841,24 +854,24 @@ export class UIManager {
                     switch(index) {
                         case 0: // Riz
                             const riceText = square.querySelector('.home-text');
-                            infoMessage = 'game.phases.simultaneous_play.info_development';
+                            infoMessage = 'game.help.Developpement';
                             break;
                         case 1: // Forêt
                             const forestText = square.querySelector('.shield-text');
-                            infoMessage = 'game.phases.simultaneous_play.info_fortification';
+                            infoMessage = 'game.help.Fortification';
                             break;
                         case 2: // Mine
                             const mineText = square.querySelector('.sword-text');
-                            infoMessage = 'game.phases.simultaneous_play.info_war';
+                            infoMessage = 'game.help.Militarisation';
                             break;
                         case 3: // Temples
                             const numerator = square.querySelector('.fraction-numerator');
                             const denominator = square.querySelector('.fraction-denominator');
-                            infoMessage = 'game.phases.simultaneous_play.info_temple';
+                            infoMessage = 'game.help.Temple';
                             break;
                         case 4: // Chao
                             const chaoText = square.querySelector('.chao-text');
-                            infoMessage = 'game.phases.simultaneous_play.info_chao';
+                            infoMessage = 'game.help.Chao';
                             break;
                     }
                     

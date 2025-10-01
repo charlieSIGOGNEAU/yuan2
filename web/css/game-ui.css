@@ -63,7 +63,7 @@
     padding: 15px 20px;
     border-radius: 8px;
     font-size: 14px;
-    text-align: center;
+    text-align: left;
     z-index: 10001;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     border: 2px solid white;
@@ -100,7 +100,7 @@
     padding: 15px 20px;
     border-radius: 8px;
     font-size: 14px;
-    text-align: center;
+    text-align: left;
     z-index: 10001;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     border: 2px solid white;
@@ -628,4 +628,69 @@
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+}
+
+/* Styles pour les mots-clés d'aide cliquables */
+.help-keyword {
+    color: #94c6ff;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    cursor: help;
+    transition: all 0.2s ease;
+}
+
+.help-keyword:hover {
+    color: #2e5f8a;
+    text-decoration-style: solid;
+    background-color: rgba(74, 144, 226, 0.1);
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.help-keyword:active {
+    color: #1a3d5c;
+    transform: scale(0.98);
+}
+
+/* Styles pour les tableaux d'aide dynamiques */
+.help-table {
+    width: 100%;
+    max-width: 300px;
+    margin: 10px auto;
+    border-collapse: collapse;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.help-table thead {
+    background-color: rgba(74, 144, 226, 0.2);
+}
+
+.help-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: bold;
+    color: #4a90e2;
+    border-bottom: 2px solid rgba(74, 144, 226, 0.3);
+}
+
+.help-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.help-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.help-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.help-table .honour-value {
+    text-align: center;
+    font-weight: bold;
+    color: #ffd700;
 } 

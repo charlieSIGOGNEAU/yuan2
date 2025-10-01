@@ -1,5 +1,21 @@
 {
   "game": {
+    "help": {
+      "Developpement": "Développement se sépare en 2 types :<br><br>Colonisation : Si cible une province libre<br>(si niv.1-2 doit etre connecté, si niv.3 sans condition).<br><br>Expansion : Si cible une province possédé.<br><br>Conflits :<br>- Si 2 clans veulent la même province adjacent : elle reste neutre.<br>- Si 2 clans visent le même province : le clan avec le plus d'honneur cède et reçoit 6 Chao pour compenser.<br><br>{{tableau:honneur}}",
+      "Colonisation": "Colonisation :<br>Récupère le territoire vise et ses adjacents.<br>niv. 2-3 : +2 chao.",
+      "Expansion": "Expansion :<br>niv 1-2 : récupère les territoires adjacents au groupe vise.<br>niv 2 : +2 chao.<br>niv 3 : construire un temple (si absent) + voler 2 Chao aux clans voisins.",
+      "Fortification": "Fortification se sépare en deux types :<br><br>Urbanisation si cible un village possédé.<br>Renforcement si cible une ville possédée.",
+      "Urbanisation": "Urbanisation :<br><br><br>Niv.1 : aucun effet.<br><br>Niv.2 : devient une ville.<br><br>Niv.3 : + 1 armée, devient ville fortifiée (Protège le territoire comme si 2 armées supplémentaires y étaient présentes.)",
+      "Renforcement": "Renforcement :<br><br>Niv.1 : devient une ville double → compte comme 2 territoires du même type pour la réduction de coût des actions.<br><br>Niv.2 : devient une ville double fortifiée (Protège le territoire comme si 2 armées supplémentaires y étaient présentes.)<br><br>Niv.3 : devient une ville imprenable + protège les territoires alliés adjacents de 1 ; + 1 armée.",
+      "Militarisation": "Militarisation se sépare en 2 types :<br><br>Recrutement : si la cible est une ville possédée.<br><br>Attaque : si la cible est une province ennemie.<br>⚠️ Vous devez avoir au moins une armée connectée à la cible.",
+      "Recrutement": "Recrutement<br><br>Niv.1 : aucun effet<br><br>Niv.2 : +1 armée<br><br>Niv.3 : +3 armées<br><br>👉 En fin de tour, chaque province est limitée à 3 armées max.",
+
+
+      "Attaque": "Attaque<br><br>Niv.1-2-3 :<br> - Toutes vos armées connectées attaquent.<br> - Armées s’annulent 1 pour 1.<br> - Si au moins 1 armée reste → province gagnée.<br><br>Niv.2-3 : +1 armée lors de l’attaque.<br><br>Niv.3 : si vous gagnez le combat, effectuez ensuite une attaque de force 1 gratuite (sans armée) contre toutes les provinces ennemies adjacentes.",
+      "Temple": "Temple<br><br>Vous gagnez la partie si vous possédez le nombre de temples indiqué.<br><br>Ce nombre diminue de 1 tous les 2 tours.<br><br>En cas d’égalité, le clan ayant le plus d’honneur l’emporte.<br><br>{{tableau:honneur}}",
+      "Chao": "Coût des actions :<br><br>Niv.0 et Niv.1 : gratuit<br>Niv.2 : 4 Chao<br>Niv.3 : 7 Chao<br><br>Réductions :<br>Chaque rizière possédée réduit de 1 le coût d'une action de développement.<br>Chaque forêt possédée réduit de 1 le coût d'une action de fortification.<br>Chaque mine possédée réduit de 1 le coût d'une action de Militarisation.<br>Une 'ville double'  double la reduction de la province sur lequel elle est placée.<br><br>L’ensemble de vos provinces possédées est indiqué en haut de l’écran."
+
+    },
     "phases": {
       "initial_placement": {
         "instructions": "Replacez les villes si besoin, puis validez.",
@@ -9,7 +25,8 @@
         "instructions": "Choisis ton clan — avec tes 6 chaos, enchéris — le plus offrant obtient le clan qu’il a choisi.",
         "waiting_for_others": "En attente que les autres joueurs fassent leurs enchères...",
         "bid_on_clan": "Vous avez enchéri {{chao}} chao sur le clan {{color}}",
-        "bid_confirmed": "Enchère prise en compte, en attendant les autres joueurs, vous pouvez la modifier."
+        "bid_confirmed": "Enchère prise en compte, en attendant les autres joueurs, vous pouvez la modifier.",
+        "selection_clan": "Veuillez sélectionner un clan"
 
       },
       "installation": {
@@ -24,11 +41,6 @@
       "simultaneous_play": {
         "welcome_message": "Salutations {{playerName}},<br><br>Vous incarnez le clan <span class='clan-circle' style='background-color: {{colorHex}};'></span> (indiqué par le cercle autour du bouton \"Valider\").<br><br>Choisissez un territoire, puis les niveaux de vos différentes actions avec les boutons du bas, et validez.<br><br>Des aides de jeu sont disponibles en haut.<br><br>Bonne partie !",
         "action_validated": "Action prise en compte, en attendant les autres joueurs, vous pouvez la modifier.",
-        "info_development": "Info développement",
-        "info_fortification": "Info fortification", 
-        "info_war": "Info guerre",
-        "info_temple": "Info temple",
-        "info_chao": "Info chao",
         "colonization_targets": "Les colonisations ont pour cible",
         "clan_conflicts_territory": "Plusieurs clans veulent coloniser le même territoire. Les clans avec le plus d'honneur cèdent leur place et font l'action passer son tour (+6 chao)",
         "provinces_disputed": "Plusieurs clans se disputent les mêmes provinces, donc elles restent neutres.",
