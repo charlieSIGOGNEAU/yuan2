@@ -37,7 +37,6 @@ class StartingPositions {
     // Vérifier si deux territoires sont adjacents
     areTerritoriesAdjacent(territory1, territory2) {
         // return territory1.areTerritoryAdjacent(territory2);
-        console.log("territory adjacent", territory1.adjacentProvinces.includes(territory2));
         return territory1.adjacentProvinces.includes(territory2);
     }
 
@@ -50,7 +49,6 @@ class StartingPositions {
         //     }
         // }
         // return false;
-        console.log("territory connected", territory1.connectedProvinces.includes(territory2));
         return territory1.connectedProvinces.includes(territory2);
     }
 

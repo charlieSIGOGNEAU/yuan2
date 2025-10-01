@@ -15,12 +15,21 @@ export const simultaneousPlayPhase = {
     currentCircles: [], // [{ circle: THREE.Mesh, action: Action, territory: Territory }] - pour les actions
     processedTurns: 1,
     gameBoard: null,
+    inProgress: false,
 
     
 
     async simultaneousPlayPhase(gameBoard) {
         this.gameBoard = gameBoard;
         if (this.processedTurns === 1) {
+
+            if (this.inProgress) {
+                developpementAndMore.animation = false;
+                fortification.animation = false;
+                militarisation.animation = false;
+                return;
+            }
+            this.inProgress = true;
 
             // Exécuter getAdjacentTerritories pour tous les territoires
             console.log('🔄 Initialisation des territoires adjacents...');
@@ -38,8 +47,6 @@ export const simultaneousPlayPhase = {
                 territory.updateConnectedProvinces();
             }
             console.log('✅ Territoires connectes initialisés');
-
-
 
             // Récupérer le clan du joueur actuel
             gameState.game.setMyClanFromVictoryBidding(gameState.myGameUserId);
@@ -79,7 +86,7 @@ export const simultaneousPlayPhase = {
         }
 
         if (this.processedTurns === gameState.game.simultaneous_play_turn) {
-
+            this.inProgress = false;
             // affiche la barre d'action a 6 cases
             uiManager.showPlayerActionBar();
 
@@ -90,10 +97,9 @@ export const simultaneousPlayPhase = {
             uiManager.setActionChoicesToZero();
         }
         else {
+            
             // Désactiver la détection des clics sur les territoires
             this.disableTerritoryClickDetection(gameBoard);
-            
-            // a faire : fonction qui verifi si un joueur et victorieux
 
             this.removeCurrentCircle(gameBoard) ;
 
@@ -144,10 +150,12 @@ export const simultaneousPlayPhase = {
 
     chaoTest(){
         const clansError = gameState.game.clans.filter(clan => clan.available_chao < 0);
+        if (clansError.length > 0) {
         //creer une string qui comporte tout les coulor des clansError
-        const clansErrorString = clansError.map(clan => clan.color_name).join(', ');
-        console.log(`💰 clansErrorString: ${clansErrorString}`);
-        uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.chao_error', {clansErrorString: clansErrorString}));
+            const clansErrorString = clansError.map(clan => clan.color_name).join(', ');
+            console.log(`💰 clansErrorString: ${clansErrorString}`);
+            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.chao_error', {clansErrorString: clansErrorString}));
+        }
     },
 
 

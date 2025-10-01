@@ -12,16 +12,9 @@ export class HelpSystem {
 
     // Définir les mots-clés et leurs clés i18n correspondantes
     initializeKeywords() {
-        // Format: mot affiché -> clé i18n de l'aide
-        this.helpKeywords.set('expansion', 'game.help.Expansion');
-        this.helpKeywords.set('développement', 'game.help.Developpement');
-        this.helpKeywords.set('urbanisation', 'game.help.Urbanisation');
-        this.helpKeywords.set('renforcement', 'game.help.Renforcement');
-        this.helpKeywords.set('recrutement', 'game.help.Recrutement');
-        this.helpKeywords.set('attaque', 'game.help.Attaque');
-
-        
-        console.log(`📚 Système d'aide initialisé avec ${this.helpKeywords.size} mots-clés`);
+        // Ce système n'est plus utilisé car on utilise maintenant des balises {{aide:key}}
+        // Conservé pour compatibilité si besoin
+        console.log(`📚 Système d'aide initialisé avec balises {{aide:key}}`);
     }
 
     // Transformer un texte en ajoutant des liens cliquables sur les mots-clés
@@ -35,18 +28,21 @@ export class HelpSystem {
         // Étape 1 : Remplacer les tableaux dynamiques {{tableau:type}}
         processedText = this.replaceDynamicTables(processedText);
 
-        // Étape 2 : Pour chaque mot-clé, créer un lien cliquable
-        this.helpKeywords.forEach((helpKey, keyword) => {
-            // Créer une regex pour trouver le mot (insensible à la casse, mais pas dans les balises HTML)
-            const regex = new RegExp(`\\b(${keyword})\\b(?![^<]*>)`, 'gi');
-            
-            processedText = processedText.replace(regex, (match) => {
-                // Créer un span cliquable avec une classe spéciale
-                return `<span class="help-keyword" data-help-key="${helpKey}">${match}</span>`;
-            });
-        });
+        // Étape 2 : Remplacer les balises d'aide {{aide:key:texte}}
+        processedText = this.replaceHelpLinks(processedText);
 
         return processedText;
+    }
+
+    // Remplacer les balises d'aide {{aide:key:texte}} par des liens cliquables
+    replaceHelpLinks(text) {
+        // Pattern: {{aide:cle_i18n:texte_affiche}}
+        const helpPattern = /\{\{aide:([^:]+):([^}]+)\}\}/g;
+        
+        return text.replace(helpPattern, (match, helpKey, displayText) => {
+            // Créer un span cliquable
+            return `<span class="help-keyword" data-help-key="game.help.${helpKey}">${displayText}</span>`;
+        });
     }
 
     // Remplacer les marqueurs de tableaux dynamiques par le HTML généré
@@ -92,7 +88,6 @@ export class HelpSystem {
         sortedClans.forEach(clan => {
             // Traduire le nom de la couleur
             const colorName = this.i18n.t(`colors.${clan.color_name}`);
-            console.log("color", clan.color);
             
             tableHTML += `
                 <tr>

@@ -2,6 +2,7 @@
 
 import { Auth } from './auth.js';
 import { gameApi } from '../game_logic_yuan/gameApi.js';
+import { ServerConfig } from './config.js';
 
 
 // Client WebSocket simplifié
@@ -17,7 +18,7 @@ export const WebSocketClient = {
         this.connectionStatus = 'connecting';
         this.updateConnectionUI();
 
-        const wsUrl = `ws://localhost:3000/cable?token=${Auth.authToken}`;
+        const wsUrl = `${ServerConfig.WS_URL}?token=${Auth.authToken}`;
         this.connection = new WebSocket(wsUrl);
         
         this.connection.onopen = () => {

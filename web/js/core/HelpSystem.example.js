@@ -1,14 +1,24 @@
-// Exemples d'utilisation du HelpSystem
+// Exemples d'utilisation du HelpSystem avec balises
 
-// ===== EXEMPLE 1 : Usage basique =====
-// Dans simultaneous-play-phase.js ou developpement.js
+// ===== EXEMPLE 1 : Utiliser les balises dans fr.json =====
 
-// Avant (sans mots cliquables) :
-uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.free_urbanization'));
+// Dans fr.json :
+/*
+{
+  "game": {
+    "help": {
+      "Developpement": "Faire une {{aide:Colonisation:colonisation}} coûte des {{aide:Chao:chao}}",
+      "Colonisation": "La colonisation permet de...",
+      "Chao": "Les chao sont la monnaie du jeu..."
+    }
+  }
+}
+*/
 
-// Après (avec mots cliquables automatiques) :
-uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.free_urbanization'));
-// → Les mots "colonisation", "urbanisation" sont automatiquement cliquables !
+// Dans votre code JS :
+uiManager.updateInfoPanel(i18n.t('game.help.Developpement'));
+// → Affiche : "Faire une colonisation coûte des chao"
+// → "colonisation" et "chao" sont cliquables automatiquement !
 
 // ===== EXEMPLE 2 : Tester un mot-clé spécifique =====
 // Afficher directement une aide
@@ -19,13 +29,21 @@ const customMessage = "Pour effectuer une colonisation, vous devez avoir assez d
 uiManager.helpSystem.displayMessage(customMessage);
 // → "colonisation" et "chao" seront cliquables
 
-// ===== EXEMPLE 4 : Ajouter temporairement un mot-clé =====
-// Ajouter un nouveau mot-clé pour cette session
-uiManager.helpSystem.addKeyword('province', 'game.help.Province');
-uiManager.helpSystem.addKeyword('armée', 'game.help.Armee');
+// ===== EXEMPLE 4 : Syntaxe des balises avec différentes casses =====
+// Dans fr.json, vous pouvez contrôler exactement le texte affiché :
 
-// Maintenant "province" et "armée" sont aussi cliquables
-uiManager.updateInfoPanel("Déplacez votre armée vers une province adjacente");
+/*
+{
+  "help": {
+    "Message1": "Effectuer une {{aide:Colonisation:colonisation}}",  // minuscule
+    "Message2": "Action : {{aide:Colonisation:Colonisation}}",       // majuscule
+    "Message3": "2 {{aide:Chao:chao}} ou 5 {{aide:Chao:Chao}}",     // les deux !
+  }
+}
+*/
+
+// Le deuxième paramètre de la balise contrôle ce qui est affiché
+// Le premier paramètre (la clé) reste toujours le même
 
 // ===== EXEMPLE 5 : Désactiver le traitement sur un message spécifique =====
 // Si vous voulez afficher du texte SANS transformer les mots-clés

@@ -92,7 +92,7 @@ export class UIManager {
             }
             
             // Appliquer les dimensions à toutes les barres d'action
-            const actionBars = document.querySelectorAll('.player-action-bar, .validation-bar, #rectangle-action-bar, #menu-only-bar');
+            const actionBars = document.querySelectorAll('.player-action-bar');
             actionBars.forEach(bar => {
                 if (bar) {
                     bar.style.width = `${barWidth}px`;
@@ -743,79 +743,89 @@ export class UIManager {
         this.currentActionBar = null;
     }
 
-            // Fonction pour afficher la barre d'actions complète (5 cases)
-        showPlayerActionBar() {
-            this.hideAllActionBars();
-            if (this.playerActionBar) {
-                this.playerActionBar.style.display = 'flex';
-                this.currentActionBar = this.playerActionBar;
-                
-                // Appliquer la couleur du clan au bouton de validation
-                this.applyClanColorToValidateButton();
+        // Fonction pour afficher la barre d'actions complète (5 cases)
+    showPlayerActionBar() {
+        this.hideAllActionBars();
+        if (this.playerActionBar) {
+            this.playerActionBar.style.display = 'flex';
+            this.currentActionBar = this.playerActionBar;
+            
+            // Forcer la mise à jour des dimensions après affichage
+            requestAnimationFrame(() => {
+                this.setupResponsiveDimensions();
+            });
+            
+            // Appliquer la couleur du clan au bouton de validation
+            this.applyClanColorToValidateButton();
 
-                          
-                // Mettre à jour la fraction des temples (4ème case)
-                this.updateTempleFraction();
-                
-                // Désactiver la sélection de texte
-                this.disableTextSelection();
-            }
+                        
+            // Mettre à jour la fraction des temples (4ème case)
+            this.updateTempleFraction();
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         }
+    }
 
-            // Fonction pour afficher la barre de validation simple (settings + check)
-        showValidationBar() {
-            this.hideAllActionBars();
-            if (this.validationBar) {
-                this.validationBar.style.display = 'flex';
-                this.currentActionBar = this.validationBar;
-                
-                // Désactiver la sélection de texte
-                this.disableTextSelection();
-            }
+        // Fonction pour afficher la barre de validation simple (settings + check)
+    showValidationBar() {
+        this.hideAllActionBars();
+        if (this.validationBar) {
+            this.validationBar.style.display = 'flex';
+            this.currentActionBar = this.validationBar;
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         }
+    }
 
-            // Fonction pour afficher la barre de bidding (settings + info + boutons + check)
-        showBiddingBar() {
-            this.hideAllActionBars();
-            if (this.biddingBar) {
-                this.biddingBar.style.display = 'flex';
-                this.currentActionBar = this.biddingBar;
-                
-                // Désactiver la sélection de texte
-                this.disableTextSelection();
-            }
+        // Fonction pour afficher la barre de bidding (settings + info + boutons + check)
+    showBiddingBar() {
+        this.hideAllActionBars();
+        if (this.biddingBar) {
+            this.biddingBar.style.display = 'flex';
+            this.currentActionBar = this.biddingBar;
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         }
+    }
 
-            // Fonction pour afficher la barre avec seulement le menu
-        showMenuOnlyBar() {
-            this.hideAllActionBars();
-            if (this.menuOnlyBar) {
-                this.menuOnlyBar.style.display = 'flex';
-                this.currentActionBar = this.menuOnlyBar;
-                
-                // Désactiver la sélection de texte
-                this.disableTextSelection();
-            }
+        // Fonction pour afficher la barre avec seulement le menu
+    showMenuOnlyBar() {
+        this.hideAllActionBars();
+        if (this.menuOnlyBar) {
+            this.menuOnlyBar.style.display = 'flex';
+            this.currentActionBar = this.menuOnlyBar;
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         }
+    }
 
-        // Fonction pour afficher la barre de navigation avec next (settings + next)
-        showNextBar() {
-            this.hideAllActionBars();
-            if (this.nextBar) {
-                this.nextBar.style.display = 'flex';
-                this.currentActionBar = this.nextBar;
-                
-                // Désactiver la sélection de texte
-                this.disableTextSelection();
-            }
+    // Fonction pour afficher la barre de navigation avec next (settings + next)
+    showNextBar() {
+        this.hideAllActionBars();
+        if (this.nextBar) {
+            this.nextBar.style.display = 'flex';
+            this.currentActionBar = this.nextBar;
+            
+            // Forcer la mise à jour des dimensions après affichage
+            requestAnimationFrame(() => {
+                this.setupResponsiveDimensions();
+            });
+            
+            // Désactiver la sélection de texte
+            this.disableTextSelection();
         }
+    }
 
-        // Configuration des event listeners spécifiques à la barre next
-        setupNextBarEventListeners() {
-            // Les event listeners sont déjà configurés dans setupSharedActionListeners()
-            // Cette méthode peut être utilisée pour des configurations supplémentaires si nécessaire
-            console.log('Event listeners configurés pour la barre next');
-        }
+    // Configuration des event listeners spécifiques à la barre next
+    setupNextBarEventListeners() {
+        // Les event listeners sont déjà configurés dans setupSharedActionListeners()
+        // Cette méthode peut être utilisée pour des configurations supplémentaires si nécessaire
+        console.log('Event listeners configurés pour la barre next');
+    }
 
     // Configuration des event listeners pour les cases de la barre d'information
     setupInfoBarListeners() {

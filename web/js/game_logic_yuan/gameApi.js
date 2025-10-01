@@ -7,6 +7,7 @@ import { Auth } from '../app/auth.js';
 import { uiManager } from './ui/UIManager.js';
 import { i18n } from '../core/i18n.js';
 import { simultaneousPlayPhase } from './phases/simultaneous-play-phase/simultaneous-play-phase.js';
+import { ServerConfig } from '../app/config.js';
 
 // Fonctions pour l'API
 export const gameApi = {
@@ -14,7 +15,7 @@ export const gameApi = {
     executedPhases: new Set(), // Pour éviter les exécutions multiples
     uiLoadingPromise: null, // Pour éviter les chargements multiples de l'UI
     currentPhaseInstance: null, // Référence vers l'instance de phase active
-    baseUrl: 'http://localhost:3000/api/v1/',
+    baseUrl: ServerConfig.HTTP_BASE,
 
     async handleGameMessage(data) {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
@@ -133,7 +134,7 @@ export const gameApi = {
             const tilesWithoutName = gameState.game.tiles.filter(tile => tile.name === null);
             const isLastTile = tilesWithoutName.length === 1;
             
-            const response = await fetch(`http://localhost:3000/api/v1/games/${tileData.game_id}/tiles/${tileData.tile_id}/place`, {
+            const response = await fetch(`${this.baseUrl}games/${tileData.game_id}/tiles/${tileData.tile_id}/place`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -164,7 +165,7 @@ export const gameApi = {
         try {            
             const gameId = gameState.game.id;
 
-            const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/clans`, {
+            const response = await fetch(`${this.baseUrl}games/${gameId}/clans`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -203,7 +204,7 @@ export const gameApi = {
             const gameId = gameState.game.id;
             const myGameUser = gameState.getMyGameUser();
             // Envoyer clan_id, game_user_id et chao au bidding_controller
-            const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/bidding`, {
+            const response = await fetch(`${this.baseUrl}games/${gameId}/bidding`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -244,7 +245,7 @@ export const gameApi = {
             const myGameUserId = gameState.myGameUserId;
             const turn = gameState.game.simultaneous_play_turn;
 
-            const response = await fetch(`http://localhost:3000/api/v1/games/${gameId}/actions`, {
+            const response = await fetch(`${this.baseUrl}games/${gameId}/actions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -290,7 +291,7 @@ export const gameApi = {
                 rank: index + 1  // Le rang commence à 1
             }));
 
-            const response = await fetch(`${this.baseUrl}/games/${gameId}/submit_victory`, {
+            const response = await fetch(`${this.baseUrl}games/${gameId}/submit_victory`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

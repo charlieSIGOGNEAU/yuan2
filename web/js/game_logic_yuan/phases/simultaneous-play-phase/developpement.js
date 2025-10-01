@@ -663,12 +663,10 @@ export const developpementAndMore = {
             }
         }
         if (this.animation) {
-
             if (hasUrbanization && this.animation) {
                 await this.showMessageAndWaitNext('free_urbanization');
             }
             else {
-                console.log(`🏙️ Aucune urbanisation gratuite trouvée`);
                 // si la colonisation et urbanisation sont non vide faire une pose de 1000ms
                 // pour le momant on le fais dans tout les cas, car c'est tres rarement non vide
                 await this.wait(1000);
@@ -946,18 +944,14 @@ export const developpementAndMore = {
         for (const action of actionsSkipHisTurn) {
 
             const clan = action.getClan();         
-            let territory = action.getTerritory();
-            if (!territory) {
-                territory = gameState.game.territories.find(t => t.clan_id === clan.id);
-            }
+            const territory = gameState.game.territories.find(t => t.clan_id === clan.id);
+            
             clan.available_chao += 6;
 
             if (actionsSkipHisTurn.length > 0 && this.animation) {
                 // Créer le sprite sur le territoire
                 this.addChaoSprite(territory,6);
             }
-            
-
         }
 
 

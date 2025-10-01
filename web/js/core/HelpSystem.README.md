@@ -41,20 +41,26 @@ uiManager.helpSystem.addKeyword('honneur', 'game.help.Honneur');
 uiManager.helpSystem.removeKeyword('province');
 ```
 
-## Mots-clés prédéfinis
+## Système de balises
 
-Les mots-clés suivants sont automatiquement détectés :
+Le système utilise des balises pour créer des liens cliquables, ce qui permet un support complet de toutes les langues.
 
-| Mot-clé | Clé i18n |
-|---------|----------|
-| colonisation | game.help.Colonisation |
-| expansion | game.help.Expansion |
-| développement | game.help.Developpement |
-| fortification | game.help.Fortification |
-| militarisation | game.help.Militarisation |
-| temple / temples | game.help.Temple |
-| chao / chaos | game.help.Chao |
-| honneur | game.help.Honneur |
+### Balise d'aide : `{{aide:key:texte}}`
+
+**Syntaxe :** `{{aide:CléAide:TexteAffiché}}`
+
+**Exemple :**
+```
+"Developpement": "... faire une {{aide:Colonisation:colonisation}} ..."
+```
+
+**Résultat :** Le mot "colonisation" devient cliquable et ouvre `game.help.Colonisation`
+
+### Avantages des balises :
+- ✅ Support multilingue automatique
+- ✅ Contrôle total sur le texte affiché
+- ✅ Pas besoin de maintenir une liste de mots-clés
+- ✅ Fonctionne avec n'importe quelle langue (français, anglais, chinois, etc.)
 
 ## Structure des fichiers de traduction
 
@@ -64,9 +70,9 @@ Dans `fr.json`, organisez vos aides sous `game.help` :
 {
   "game": {
     "help": {
-      "Colonisation": "Explication de la colonisation...",
-      "Expansion": "Explication de l'expansion...",
-      "Developpement": "Développement se sépare en 2 types :<br><br>Colonisation : ... {{tableau:honneur}}",
+      "Colonisation": "Explication de la {{aide:Expansion:colonisation}}...",
+      "Expansion": "Explication de l'expansion... coûte 4 {{aide:Chao:chao}}",
+      "Developpement": "Développement se sépare en 2 types :<br><br>{{aide:Colonisation:Colonisation}} : ...<br><br>{{aide:Expansion:Expansion}} : ...<br><br>{{tableau:honneur}}",
       ...
     }
   }
