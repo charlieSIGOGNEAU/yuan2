@@ -3,6 +3,7 @@ import { gameApi } from '../gameApi.js';
 import { gameState } from '../gameState.js';
 import { initializeHelpSystem } from '../../core/HelpSystem.js';
 import { optionsMenu } from '../../core/OptionsMenu.js';
+import { i18n } from '../../core/i18n.js';
 
 export class UIManager {
     constructor() {
@@ -670,59 +671,59 @@ export class UIManager {
         });
     }
 
-            // Validation spécifique pour la phase de bidding
-        handleBiddingValidation() {
-            // Importer biddingPhase pour accéder au clan sélectionné
-            import('../phases/biddingPhase.js').then(module => {
-                const biddingPhase = module.biddingPhase;
-                
-                // Vérifier si un clan est sélectionné
-                if (!biddingPhase.selectedClan) {
-                    uiManager.updateInfoPanel(i18n.t('game.phases.bidding.selection_clan'));
-                    return;
-                }
-                
-                // Récupérer la valeur actuelle de l'enchère
-                const currentBid = this.currentBid;
-                
-                // Envoyer le clan et l'enchère à l'API
-                gameApi.sendClanBiddingToApi(biddingPhase.selectedClan.id, currentBid);
-            });
-        }
+    // Validation spécifique pour la phase de bidding
+    handleBiddingValidation() {
+        // Importer biddingPhase pour accéder au clan sélectionné
+        import('../phases/biddingPhase.js').then(module => {
+            const biddingPhase = module.biddingPhase;
+            
+            // Vérifier si un clan est sélectionné
+            if (!biddingPhase.selectedClan) {
+                uiManager.updateInfoPanel(i18n.t('game.phases.bidding.selection_clan'));
+                return;
+            }
+            
+            // Récupérer la valeur actuelle de l'enchère
+            const currentBid = this.currentBid;
+            
+            // Envoyer le clan et l'enchère à l'API
+            gameApi.sendClanBiddingToApi(biddingPhase.selectedClan.id, currentBid);
+        });
+    }
 
-            handleStartingSpotSelectionValidation() {
-            // Appeler la fonction de validation via gameApi
-            gameApi.sendClanSelectionToApi();
-        }
+    handleStartingSpotSelectionValidation() {
+        // Appeler la fonction de validation via gameApi
+        gameApi.sendClanSelectionToApi();
+    }
 
-            // Validation spécifique pour la phase de jeu simultané
-        handleSimultaneousPlayValidation() {
-            // Importer simultaneousPlayPhase pour accéder à la fonction de validation
-            import('../phases/simultaneous-play-phase/simultaneous-play-phase.js').then(module => {
-                const simultaneousPlayPhase = module.simultaneousPlayPhase;
-                
-                // Appeler la fonction de validation de l'action
-                simultaneousPlayPhase.handleActionValidation();
-            });
-        }
+    // Validation spécifique pour la phase de jeu simultané
+    handleSimultaneousPlayValidation() {
+        // Importer simultaneousPlayPhase pour accéder à la fonction de validation
+        import('../phases/simultaneous-play-phase/simultaneous-play-phase.js').then(module => {
+            const simultaneousPlayPhase = module.simultaneousPlayPhase;
+            
+            // Appeler la fonction de validation de l'action
+            simultaneousPlayPhase.handleActionValidation();
+        });
+    }
 
-            // Fonction pour mettre à jour le panneau d'informations
-        updateInfoPanel(text, processHelp = true) {
-            if (this.infoPanel) {
-                // Si le système d'aide est actif et processHelp est true, traiter le texte
-                if (this.helpSystem && processHelp) {
-                    this.infoPanel.innerHTML = this.helpSystem.processText(text) || '';
-                } else {
-                    this.infoPanel.innerHTML = text || '';
-                }
+    // Fonction pour mettre à jour le panneau d'informations
+    updateInfoPanel(text, processHelp = true) {
+        if (this.infoPanel) {
+            // Si le système d'aide est actif et processHelp est true, traiter le texte
+            if (this.helpSystem && processHelp) {
+                this.infoPanel.innerHTML = this.helpSystem.processText(text) || '';
+            } else {
+                this.infoPanel.innerHTML = text || '';
             }
         }
+    }
 
-        // Initialiser le système d'aide (appelé après l'initialisation de i18n)
-        initializeHelpSystem(i18n) {
-            this.helpSystem = initializeHelpSystem(i18n, this);
-            console.log('✅ Système d\'aide initialisé dans UIManager');
-        }
+    // Initialiser le système d'aide (appelé après l'initialisation de i18n)
+    initializeHelpSystem(i18n) {
+        this.helpSystem = initializeHelpSystem(i18n, this);
+        console.log('✅ Système d\'aide initialisé dans UIManager');
+    }
 
     // Fonction pour masquer le panneau d'informations
     hideInfoPanel() {

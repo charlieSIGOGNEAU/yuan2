@@ -17,11 +17,7 @@ class Api::V1::GameUsersController < ApplicationController
       return
     end
 
-    # Vérifier que le joueur n'a pas déjà abandonné
-    # if @game_user.abandoned?
-    #   render json: { success: false, message: "You already abandoned this game" }, status: 422
-    #   return
-    # end
+
 
     # Marquer le game_user comme ayant abandonné
     if @game_user.update(abandoned: true)
@@ -40,6 +36,13 @@ class Api::V1::GameUsersController < ApplicationController
       }, status: 422
     end
     GameBroadcast.user_broadcast_player_abandoned(@game.id, @game_user.id)
+
+    # gerer le desabonement dans le model game_user
+    @game_user.unsubscribe_from_game(@game.id)
+
+    # Vérifier si la partie est terminée (0 ou 1 joueur actif restant)
+    @game.check_game_completion_after_abandon
+
   end
 
   private

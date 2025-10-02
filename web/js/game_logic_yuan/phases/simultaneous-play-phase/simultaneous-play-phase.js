@@ -133,7 +133,7 @@ export const simultaneousPlayPhase = {
             uiManager.updateSimultaneousPlayInfoBar();
 
             // Vérifier si la partie est terminée
-            await this.isGameOver();
+            await this.isGameOver(false);
 
             // tester les chao
             this.chaoTest();
@@ -263,7 +263,7 @@ export const simultaneousPlayPhase = {
         
     },
 
-    isGameOver() {
+    isGameOver(force = false) {
         const objective = {
             0: 9,
             1: 9,
@@ -292,24 +292,32 @@ export const simultaneousPlayPhase = {
         console.log("potentialWinner:", potentialWinner);
 
         // S'il n'y a pas de gagnant, ne rien faire
-        if (potentialWinner.length === 0) {
+        if (potentialWinner.length === 0 && !force) {
             return;
         }
 
-        // Déterminer le gagnant parmi les candidats (celui avec le plus d'honneur)
-        const topClan = potentialWinner.reduce((max, clan) => 
-            clan.honneur > max.honneur ? clan : max
-        );
 
         // Créer le classement complet de tous les joueurs
         // Priorité 1: nombre de temples (descendant)
         // Priorité 2: honneur (descendant) en cas d'égalité de temples
-        const rankedClans = gameState.game.clans.sort((a, b) => {
+        let rankedClans = gameState.game.clans.sort((a, b) => {
             if (a.numTemples !== b.numTemples) {
                 return b.numTemples - a.numTemples; // Plus de temples = meilleur rang
             }
             return b.honneur - a.honneur; // Plus d'honneur = meilleur rang en cas d'égalité
         });
+        // si force est true, donc victoire par forfait des autre joueurs, donc on met le clan du joueur actuel en premier
+        if (force) {
+            rankedClans.sort((a, b) => {
+                if  (a.id === gameState.game.myClan.id) {
+                    return -1;
+                }
+                else {
+                    return 0;
+                }
+            });
+        }
+
 
         // Afficher le tableau de classement avec le message personnalisé
         import('../../../core/i18n.js').then(i18nModule => {

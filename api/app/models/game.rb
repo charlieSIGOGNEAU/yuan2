@@ -167,6 +167,43 @@ class Game < ApplicationRecord
       result
     end
 
+    def check_game_completion_after_abandon
+      # Compter les joueurs qui n'ont pas abandonné
+      active_players = game_users.where(abandoned: false)
+      active_players_count = active_players.count
+
+      p "#"*111
+      puts "🔍 Vérification de la fin de partie: #{active_players_count} joueur(s) actif(s)"
+      
+      if active_players_count <= 1
+        puts "🏁 Fin de partie détectée (#{active_players_count} joueur(s) restant(s))"
+        
+        # Mettre à jour le statut de la game
+        update!(game_status: :completed)
+        
+        # Si un seul joueur reste, il est le gagnant
+        if active_players_count == 1
+          winner = active_players.first
+          puts "🏆 Gagnant par abandon: #{winner.user_name} (ID: #{winner.id})"
+          
+          # Envoyer un message au gagnant
+          GameBroadcast.user_broadcast_game_won(winner.user_id, id, winner.id)
+          
+          # Notifier tous les joueurs de la fin de partie
+          GameBroadcast.game_broadcast_game_details(id)
+        else
+          puts "❌ Aucun joueur actif, partie terminée sans gagnant"
+          # Notifier tous les joueurs de la fin de partie
+          GameBroadcast.game_broadcast_game_details(id)
+        end
+        
+        return true
+      else
+        puts "✅ La partie continue (#{active_players_count} joueurs actifs)"
+        return false
+      end
+    end
+
     
 
 

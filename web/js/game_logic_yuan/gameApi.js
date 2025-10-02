@@ -144,6 +144,15 @@ export const gameApi = {
                 console.log('✅ Désabonné du game channel:', data.message.game_id);
             });
         }
+
+        // Gestion de la victoire d'un joueur
+        if (data.message && data.message.type === 'game_won') {
+            console.log('🏆 Victoire !', data.message);
+            simultaneousPlayPhase.isGameOver(true);
+            
+        }
+
+        // Gestion de la fin de partie par abandon des autres joueurs
     },
 
 
@@ -248,8 +257,6 @@ export const gameApi = {
 
                 uiManager.updateInfoPanel(i18n.t('game.phases.bidding.bid_confirmed'));
                 
-                // Masquer la barre de bidding après envoi réussi
-                uiManager.hideAllActionBars();
                 
             } else {
                 console.error('❌ Erreur lors de l\'envoi clan + enchère:', data);
@@ -308,7 +315,7 @@ export const gameApi = {
     async sendVictoryGameToApi(gameUsers) {
         try {
             const gameId = gameState.game.id;
-            
+            console.log("sendVictoryGameToApi");            
             // Transformer le tableau ordonné de gameUsers en format rankings
             const rankings = gameUsers.map((gameUser, index) => ({
                 game_user_id: gameUser.id,

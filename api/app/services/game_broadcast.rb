@@ -42,4 +42,13 @@ class GameBroadcast
             message: 'Vous avez quitté cette partie'
         }
     end
+
+    def self.user_broadcast_game_won(user_id, game_id, game_user_id)
+        ActionCable.server.broadcast "user_#{user_id}", {
+            type: 'game_won',
+            game_id: game_id,
+            game_user_id: game_user_id,
+            message: 'Félicitations ! Vous avez gagné la partie par abandon des autres joueurs'
+        }
+    end
 end

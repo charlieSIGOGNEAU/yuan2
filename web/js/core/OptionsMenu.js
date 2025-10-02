@@ -228,16 +228,6 @@ export class OptionsMenu {
     // Gérer l'abandon de la partie
     async handleAbandonGame() {
 
-        console.log("faire l'action passer son tour");
-        const gameapi = await import('../game_logic_yuan/gameApi.js');
-        gameapi.gameApi.sendActionToApi({
-            position_q: null,
-            position_r: null,
-            development_level: 0,
-            fortification_level: 0,
-            militarisation_level: 0
-        }, false);
-
 
         console.log('🚪 Demande d\'abandon de partie');
         console.log('🔍 Auth.authToken:', Auth.authToken);
@@ -250,6 +240,15 @@ export class OptionsMenu {
             return;
         }
 
+        console.log("faire l'action passer son tour");
+        const gameapi = await import('../game_logic_yuan/gameApi.js');
+        gameapi.gameApi.sendActionToApi({
+            position_q: null,
+            position_r: null,
+            development_level: 0,
+            fortification_level: 0,
+            militarisation_level: 0
+        }, false);
 
 
         try {
@@ -296,7 +295,7 @@ export class OptionsMenu {
                 
                 // Rediriger vers le menu principal après 3 secondes
                 setTimeout(() => {
-                    window.location.href = '/';
+                    // rediriger vers la le choix de partie. on est en mono page donc complique
                 }, 3000);
             } else {
                 console.error('❌ Erreur lors de l\'abandon de la partie:', data);
