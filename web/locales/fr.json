@@ -62,6 +62,7 @@
         "other_victory": "Le clan {{clanColor}} a triomphé et remporte la partie ! 🏆",
         "chao_error": "Des actions normalement impossibles ont été effectuées. Les clans {{clansErrorString}} n'ont pas assez de chaos pour effectuer ces actions.",
         "tour_debut": "Début du tour {{tour}}",
+        "player_abandoned": "Le clan <span class='clan-circle' style='background-color: {{colorHex}};'></span> a abandonné la partie.",
         "victory_table": {
           "title": "🏆 Classement final",
           "rank": "Rang",
@@ -110,5 +111,19 @@
     "blue": "bleu",
     "purple": "violet",
     "yellow": "jaune"
+  },
+  "options": {
+    "title": "Options",
+    "language": "Langue",
+    "abandon_game": "Abandonner la partie",
+    "return_to_game": "Revenir à la partie",
+    "abandon_confirmation": "Êtes-vous sûr de vouloir abandonner la partie ? Ce n'est pas très sympa pour les autres joueurs...",
+    "language_updated": "Langue mise à jour avec succès",
+    "game_abandoned": "Vous avez abandonné la partie",
+    "languages": {
+      "fr": "Français",
+      "en": "English",
+      "zh": "中文"
+    }
   }
 } 

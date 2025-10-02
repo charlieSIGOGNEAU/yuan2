@@ -9,6 +9,9 @@ Rails.application.routes.draw do
       post 'auth/login', to: 'auth#login'
       get 'auth/me', to: 'auth#me'
       
+      # Routes utilisateur
+      patch 'user', to: 'users#update'
+      
       # Routes de jeu
       post 'games/quick_game', to: 'games#quick_game'
       
@@ -31,6 +34,13 @@ Rails.application.routes.draw do
         
         # Routes d'actions
         resources :actions, only: [:create]
+        
+        # Routes de game_users
+        resources :game_users, only: [] do
+          member do
+            post :abandon
+          end
+        end
       end
       
     end

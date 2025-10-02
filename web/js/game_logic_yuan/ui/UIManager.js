@@ -2,6 +2,7 @@
 import { gameApi } from '../gameApi.js';
 import { gameState } from '../gameState.js';
 import { initializeHelpSystem } from '../../core/HelpSystem.js';
+import { optionsMenu } from '../../core/OptionsMenu.js';
 
 export class UIManager {
     constructor() {
@@ -224,6 +225,12 @@ export class UIManager {
             link.rel = 'stylesheet';
             link.href = `./css/game-ui.css?v=${Date.now()}&force=${Math.random()}`;
             document.head.appendChild(link);
+            
+            // Charger le CSS du menu d'options
+            const optionsLink = document.createElement('link');
+            optionsLink.rel = 'stylesheet';
+            optionsLink.href = `./css/options-menu.css?v=${Date.now()}&force=${Math.random()}`;
+            document.head.appendChild(optionsLink);
             
             // Références vers les éléments UI
             this.gameUI = document.getElementById('game-ui-overlay');
@@ -602,7 +609,8 @@ export class UIManager {
 
             // Action du bouton settings (partagée par toutes les interfaces)
         handleSettingsClick() {
-            // TODO: Implémenter l'ouverture du menu settings
+            console.log('⚙️ Clic sur le bouton options');
+            optionsMenu.open();
         }
 
             // Action du bouton validation (partagée par toutes les interfaces)
@@ -1428,4 +1436,7 @@ export class UIManager {
 }
 
 // Instance unique du gestionnaire UI
-export const uiManager = new UIManager(); 
+export const uiManager = new UIManager();
+
+// Exposer uiManager globalement pour l'accès depuis d'autres modules
+window.uiManager = uiManager; 

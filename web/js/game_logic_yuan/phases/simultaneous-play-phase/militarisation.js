@@ -240,7 +240,7 @@ export const militarisation = {
             await Promise.all(promises);
         };
         const removeFromTerritory = async (territory, count) => {
-            if (!this.animation || count <= 0 || !territory?.warriors_mesh?.length) return;
+            if (!this.animation || count <= 0 || !territory?.warriors_mesh?.length) return; // probablemet un probleme, il faut suprimer les worrior aussi si il ni a pas d'animation
             let remaining = count;
             const promises = [];
             while (remaining > 0 && territory.warriors_mesh.length > 0) {

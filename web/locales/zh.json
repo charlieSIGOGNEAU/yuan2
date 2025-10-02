@@ -1,0 +1,61 @@
+{
+  "game": {
+    "phases": {
+      "initial_placement": {
+        "instructions": "如需要，重新放置城市，然后验证。",
+        "title": "初始放置阶段"
+      },
+      "installation": {
+        "title": "安装阶段"
+      }
+    },
+    "ui": {
+      "loading": "加载中...",
+      "waiting": "等待中...",
+      "your_turn": "轮到你了",
+      "game_over": "游戏结束"
+    },
+    "actions": {
+      "validate": "验证",
+      "cancel": "取消",
+      "place": "放置",
+      "move": "移动"
+    }
+  },
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "yes": "是",
+    "no": "否",
+    "back": "返回",
+    "next": "下一个",
+    "previous": "上一个",
+    "save": "保存",
+    "load": "加载"
+  },
+  "options": {
+    "title": "选项",
+    "language": "语言",
+    "abandon_game": "放弃游戏",
+    "return_to_game": "返回游戏",
+    "abandon_confirmation": "您确定要放弃游戏吗？这对其他玩家不太友好...",
+    "language_updated": "语言更新成功",
+    "game_abandoned": "您已放弃游戏",
+    "languages": {
+      "fr": "Français",
+      "en": "English",
+      "zh": "中文"
+    }
+  },
+  "colors": {
+    "black": "黑色",
+    "red": "红色",
+    "green": "绿色",
+    "orange": "橙色",
+    "white": "白色",
+    "blue": "蓝色",
+    "purple": "紫色",
+    "yellow": "黄色"
+  }
+}
+

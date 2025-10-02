@@ -32,5 +32,29 @@
     "previous": "Previous",
     "save": "Save",
     "load": "Load"
+  },
+  "options": {
+    "title": "Options",
+    "language": "Language",
+    "abandon_game": "Abandon Game",
+    "return_to_game": "Return to Game",
+    "abandon_confirmation": "Are you sure you want to abandon the game? It's not very nice for the other players...",
+    "language_updated": "Language updated successfully",
+    "game_abandoned": "You have abandoned the game",
+    "languages": {
+      "fr": "Français",
+      "en": "English",
+      "zh": "中文"
+    }
+  },
+  "colors": {
+    "black": "black",
+    "red": "red",
+    "green": "green",
+    "orange": "orange",
+    "white": "white",
+    "blue": "blue",
+    "purple": "purple",
+    "yellow": "yellow"
   }
 } 

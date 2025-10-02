@@ -20,6 +20,7 @@ export const gameApi = {
     async handleGameMessage(data) {
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
             console.log('📨 Message reçu:', data);
+
         }  
         
         // Gestion du message d'attente des autres joueurs
@@ -125,8 +126,30 @@ export const gameApi = {
             }
 
         } 
+
+        if (data.message && data.message.type === 'player_abandoned') {
+            console.log('🚫 Joueur abandonné:', data.message.game_user_id);
+            const gameUser = gameState.game.game_users.find(gameUser => gameUser.id === data.message.game_user_id);
+            console.log('🔍 GameUser:', gameUser);
+            const clan = gameState.game.clans.find(clan => clan.id === gameUser.clan_id);
+            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.player_abandoned', { colorHex: clan.color }));
+        }
+
+        // Gestion du désabonnement d'un joueur du channel de la game
+        if (data.message && data.message.type === 'unsubscribe_from_game') {
+            console.log('📤 Désabonnement du game channel:', data.message.game_id);
+            // Importer WebSocketClient dynamiquement pour éviter la dépendance circulaire
+            import('../app/websocket.js').then(module => {
+                module.WebSocketClient.unsubscribeFromGameChannel(data.message.game_id);
+                console.log('✅ Désabonné du game channel:', data.message.game_id);
+            });
+        }
     },
 
+
+
+
+    
     // Envoyer une tile à l'API
     async sendTileToApi(tileData) {
         try {          
@@ -241,6 +264,7 @@ export const gameApi = {
     // Envoyer une action à l'API
     async sendActionToApi(actionData, saveMessage) {
         try {
+            console.log("test sendActionToApi");
             const gameId = gameState.game.id;
             const myGameUserId = gameState.myGameUserId;
             const turn = gameState.game.simultaneous_play_turn;

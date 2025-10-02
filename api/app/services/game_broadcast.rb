@@ -27,4 +27,19 @@ class GameBroadcast
             message: 'En attente des autres joueurs...'
         }
     end
+
+    def self.user_broadcast_player_abandoned(game_id, game_user_id)
+        ActionCable.server.broadcast "game_#{game_id}", {
+            type: 'player_abandoned',
+            game_user_id: game_user_id
+        }
+    end
+
+    def self.user_broadcast_unsubscribe_from_game(user_id, game_id)
+        ActionCable.server.broadcast "user_#{user_id}", {
+            type: 'unsubscribe_from_game',
+            game_id: game_id,
+            message: 'Vous avez quitté cette partie'
+        }
+    end
 end
