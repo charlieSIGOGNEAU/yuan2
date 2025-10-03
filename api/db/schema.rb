@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_01_173149) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_03_111100) do
   create_table "actions", force: :cascade do |t|
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false
@@ -60,6 +60,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_01_173149) do
     t.datetime "updated_at", null: false
     t.integer "rank"
     t.boolean "abandoned", default: false, null: false
+    t.boolean "is_creator_of_game", default: false
     t.index ["clan_id"], name: "index_game_users_on_clan_id"
     t.index ["game_id"], name: "index_game_users_on_game_id"
     t.index ["user_id", "game_id"], name: "index_game_users_on_user_id_and_game_id", unique: true
@@ -76,6 +77,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_01_173149) do
     t.datetime "updated_at", null: false
     t.integer "simultaneous_play_turn", default: 0
     t.integer "submitted_by_user_id"
+    t.integer "waiting_players_count", default: 0, null: false
     t.index ["submitted_by_user_id"], name: "index_games_on_submitted_by_user_id"
   end
 

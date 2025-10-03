@@ -1,5 +1,5 @@
 import { LoginPage } from './login.js';
-import { MenuPage } from './menu.js';
+import { LobbyPage } from './lobby.js';
 import { WebSocketClient } from './websocket.js';
 import { i18n } from '../core/i18n.js';
 
@@ -31,7 +31,7 @@ export const Auth = {
                 // Démarrer la connexion WebSocket après l'authentification, connect() est une methode de WebSocket.js
                 await WebSocketClient.connect();
                 
-                MenuPage.show();
+                LobbyPage.show();
             } else {
                 alert('❌ Erreur: ' + data.message);
             }

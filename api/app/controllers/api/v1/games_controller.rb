@@ -1,6 +1,6 @@
 class Api::V1::GamesController < ApplicationController
   before_action :authenticate_request
-  before_action :set_game, only: [:submit_victory]
+  before_action :set_game, only: [:submit_victory, :join_game_custom]
 
   # POST /api/v1/games/quick_game
   def quick_game
@@ -24,6 +24,37 @@ class Api::V1::GamesController < ApplicationController
     else
       render json: { success: false }, status: 422
     end
+  end
+
+  def custom_game
+    result = Game.ongoing_game(current_user)
+    if result
+      game = result[:game]
+      game_user = result[:game_user]
+      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      render json: { success: false, game_id: game.id }
+    end
+    
+    game = Game.create(player_count: @player_count, game_type: :custom_game, game_status: :waiting_for_players, clan_names: Game.the_clans(@player_count))
+    game_user = game.add_player(current_user)
+    GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+    render json: { success: true, game_id: game.id }
+  end
+
+  def join_game_custom
+    result = Game.ongoing_game(current_user)
+    if result
+      game = result[:game]
+      game_user = result[:game_user]
+      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      render json: { success: false, game_id: game.id }
+    end
+    
+    game = Game.find(params[:game_id])
+    if game
+
+    end
+
   end
 
   # POST /api/v1/games/:id/submit_victory
@@ -81,6 +112,11 @@ class Api::V1::GamesController < ApplicationController
   end
 
   private
+  def set_player_count
+    @player_count = params[:player_count]
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: "Player count not found" }, status: 404
+  end
 
   def set_game
     @game = Game.find(params[:id])

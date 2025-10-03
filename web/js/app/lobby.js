@@ -4,12 +4,12 @@ import { WebSocketClient } from './websocket.js';
 import { Game } from './game.js';
 
 // Gestion menu principal - Version simplifiée
-export const MenuPage = {
+export const LobbyPage = {
     // Afficher la page
     async show() {
-        const html = await loadPartial('partials/menu.html');
+        const html = await loadPartial('partials/lobby.html');
         document.getElementById('app').innerHTML = html;
-        loadCSS('css/menu.css');
+        loadCSS('css/lobby.css');
         
         // Afficher le nom d'utilisateur
         document.getElementById('username').textContent = Auth.currentUser?.name || '';
@@ -40,16 +40,6 @@ export const MenuPage = {
             case 'options-btn':
                 alert('🔧 Options - À implémenter');
                 break;
-            // Boutons Game Channels
-            // case 'game-1-btn':
-            //     WebSocketClient.toggleGameChannel(1);
-            //     break;
-            // case 'game-2-btn':
-            //     WebSocketClient.toggleGameChannel(2);
-            //     break;
-            // case 'game-3-btn':
-            //     WebSocketClient.toggleGameChannel(3);
-            //     break;
         }
     }
 }; 

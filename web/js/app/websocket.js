@@ -167,12 +167,4 @@ export const WebSocketClient = {
             this.gameSubscriptions = this.gameSubscriptions.filter(id => id !== gameId);
         }
     },
-
-    // toggleGameChannel(gameId) {
-    //     if (this.gameSubscriptions.includes(gameId)) {
-    //         this.unsubscribeFromGameChannel(gameId);
-    //     } else {
-    //         this.subscribeToGameChannel(gameId);
-    //     }
-    // }
 }; 

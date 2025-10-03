@@ -20,5 +20,11 @@ export const Game = {
         }
     },
 
+    async joinGame(gameId) {
+    },
+
+    async createGame(playerCount) {
+    },
+
 
 }; 
