@@ -15,6 +15,8 @@ class Game < ApplicationRecord
       quick_game: 0,
       custom_game: 1
     }, default: :quick_game
+
+  belongs_to :creator, class_name: 'User', optional: true
   
   has_many :game_users, dependent: :destroy
   has_many :users, through: :game_users
@@ -28,8 +30,6 @@ class Game < ApplicationRecord
   validates :game_type, presence: true
   validates :player_count, presence: true, numericality: { only_integer: true}
 
-  # before_create :set_clans_for_quick_game
-
   # verrifie si l'utilisateur a une partie en cours
   def self.ongoing_game(user)
     existing_game_for_user = Game.joins(:game_users)
@@ -40,7 +40,6 @@ class Game < ApplicationRecord
       game_user = existing_game_for_user.game_users.find_by(user_id: user.id)
       return {game: existing_game_for_user, game_user: game_user, message: "ongoing game"}
     end
-    p "1"*111
     return nil
   end
 
@@ -52,11 +51,6 @@ class Game < ApplicationRecord
   def self.find_or_create_waiting_game(user)
     # verrifie si l'utilisateur a une partie en cours
     ongoing_game = self.ongoing_game(user)
-    p "0"*111
-    p ongoing_game
-    p ongoing_game
-
-    p "0"*111
     if ongoing_game
       return ongoing_game
     end
@@ -64,29 +58,22 @@ class Game < ApplicationRecord
     # Si on ne peut pas rejoindre la partie, on cherche une autre partie
     waiting_game = where(game_status: :waiting_for_players, game_type: :quick_game).first
 
-    p "2"*111
     if waiting_game
-      case waiting_game.add_player()
+      result = waiting_game.add_player(user)
+      game_user = result[:game_user]
+      message = result[:message]
+      case message
       when "yes waiting for other players"
-        game_user = waiting_game.game_users.create(user: user)
-        p "3"*111
         return { game: waiting_game, game_user: game_user, message: "waiting for players" }
       when "too many players"
-        p "4"*111
         # self.find_or_create_waiting_game(user)
       when "game ready installation_phase"
-        p "5"*111
-        game_user = waiting_game.game_users.create(user: user)
-        p "5"*111
-        p waiting_game.calculate_tile_count
-        p "5"*111
         waiting_game.create_tiles_for_players(waiting_game.calculate_tile_count)
         waiting_game.clan_names=waiting_game.the_clans(waiting_game.player_count)
         waiting_game.save
         return { game: waiting_game, game_user: game_user, message: "game ready installation_phase" }
       end
     else
-      p "6"*111
       game = create(
         player_count: 3,
         game_status: :waiting_for_players,
@@ -98,31 +85,24 @@ class Game < ApplicationRecord
     end
   end
 
-  def add_player()
+  def add_player(user)
     transaction do
       reload.lock!
-      p "7"*111
-      p self.waiting_players_count
-      p self.player_count
-      p self.game_status
-      p (self.waiting_players_count < (player_count - 1))
-      p (self.game_status == "waiting_for_players")
-      p "7"*111
       if (self.waiting_players_count < (player_count - 1)) && (self.game_status == "waiting_for_players")
         self.waiting_players_count += 1
         self.save
-        p "8"*111
-        return "yes waiting for other players"
+        game_user = self.game_users.create(user: user)
+        return {message: "yes waiting for other players", game_user: game_user}
 
       elsif (self.waiting_players_count == (player_count - 1)) && (self.game_status == "waiting_for_players")
         self.waiting_players_count += 1
         self.game_status = :installation_phase
         self.save
-        p "9"*111
-        return "game ready installation_phase"
+        game_user = self.game_users.create(user: user)
+        return {message: "game ready installation_phase", game_user: game_user}
 
       else
-        return "too many players"
+        return {message: "too many players"}
       end
 
     end
@@ -141,9 +121,6 @@ class Game < ApplicationRecord
   end
 
   def create_tiles_for_players(tile_count)
-    p "10"*111
-    p tile_count
-    p "10"*111
     game_users_list = game_users.to_a
     Rails.logger.info "Liste des game_users : #{game_users_list.map(&:id)}"
     
@@ -165,6 +142,140 @@ class Game < ApplicationRecord
   end
 
 
+  def self.custom_game(user)
+    # on rejoind une partie si une partie en cours
+    ongoing_game = self.ongoing_game(user)
+    if ongoing_game
+      game_user = ongoing_game.game_users.find_by(user_id: user.id)
+      return {game: ongoing_game, game_user: game_user, message: "ongoing game"}
+    # sinon on cree une nouvelle partie
+    else
+      game = nil
+      custom_code = nil
+      loop do
+        custom_code = SecureRandom.alphanumeric(6).upcase
+        game = self.create(game_type: :custom_game, game_status: :waiting_for_players, creator: user, custom_code: custom_code)
+        break if game.persisted?
+      end
+      game_user = game.game_users.create(user: user)
+      return {game: game, game_user: game_user, custom_code: custom_code, message: "new game"}
+    end
+  end
+
+
+  def self.ongoing_game_custom(user,custom_code)
+    # on rejoind une partie si une partie en cours
+    ongoing_game = self.ongoing_game(user)
+    if ongoing_game
+      game_user = ongoing_game.game_users.find_by(user_id: user.id)
+      return {game: ongoing_game, game_user: game_user, message: "ongoing game"}
+    # sinon on cree une nouvelle partie
+    else
+      game = self.where(custom_code: custom_code)
+           .where("waiting_players_count <= ?", 8)
+           .first
+      unless game
+        return {message: "game not found"}
+      else
+        success = false
+        Game.transaction do
+          game.lock!
+          var_waiting_players_count = 0
+          if game.waiting_players_count < 8
+            game.waiting_players_count += 1
+            var_waiting_players_count = game.waiting_players_count
+            game.save!
+            success = true
+          else
+            raise ActiveRecord::Rollback
+          end
+        end
+        unless success
+          return {message: "game full"}
+        else
+          game_user = game.game_users.create(user: user)
+          if var_waiting_players_count < 8
+            return {game: game, game_user: game_user, message: "joined game and waiting for other players"}
+          else
+            return {game: game, game_user: game_user, message: "joined game and game ready installation_phase"}
+          end
+        end
+      end
+      
+    end
+  end
+
+  def self.launch_custom_game(user,custom_code)
+    game = self.where(custom_code: custom_code).first
+    place_available = 0
+    success = false
+    Game.transaction do
+      game.lock!
+      if game.game_status == "waiting_for_players"
+        game.game_status = "installation_phase"
+        game.save!
+        place_available = 8 - game.waiting_players_count
+        success = true
+      else
+        raise ActiveRecord::Rollback
+      end
+    end
+    unless success
+      return {message: "game already in installation phase"}
+    end
+    if place_available > 0
+      game.reassign_players(place_available)
+    end
+    game.game_status = "installation_phase"
+    con_players_count = GameUser.where(game_id: game.id).count
+    game.player_count = con_players_count
+    game.clan_names = game.the_clans(con_players_count)
+
+    # au cas ou une erreur dans mon code
+    begin
+      game.save!
+    rescue ActiveRecord::RecordInvalid => e
+      puts "Erreur lors de la sauvegarde : #{e.message}"
+    end
+
+    game.create_tiles_for_players(game.calculate_tile_count)
+    return {game: game, message: "game ready installation_phase"}
+
+  end
+
+
+  def reassign_players(place_available)
+    other_game = self.where(game_status: "waiting_for_players", game_type: "quick_game").first
+    if other_game
+      num_players_to_move = 0
+      Game.transaction do
+        other_game.lock!
+        if other_game.game_status == "waiting_for_players"
+          num_players_to_move = [place_available, other_game.waiting_players_count].min
+          other_game.waiting_players_count -= num_players_to_move
+          other_game.save!
+
+          num_players_to_move.times do |i|
+            game_user = other_game.game_users.first
+            game_user.game_id = self.id
+            game_user.save!
+            other_game.game_users.delete(game_user)
+          end
+          self.waiting_players_count += num_players_to_move
+          self.save!
+        else
+          raise ActiveRecord::Rollback
+        end
+      end
+    end
+  end
+
+
+
+      
+
+
+  # je n'ai pas check ce qu'a fais cursor, il y a probablement beaucoup de choses non necessaire et à optimiser
   def check_turn_completion_and_broadcast(action, current_user)
     # creer des action passer le tour pour les joueurs qui ont abandonné
     game_users_abandoned = game_users.where(abandoned: true)
@@ -254,6 +365,7 @@ class Game < ApplicationRecord
     result
   end
 
+  # je n'ai pas check ce qu'a fais cursor, il y a probablement beaucoup de choses non necessaire et à optimiser
   def check_game_completion_after_abandon
     # Compter les joueurs qui n'ont pas abandonné
     active_players = game_users.where(abandoned: false)
@@ -290,15 +402,7 @@ class Game < ApplicationRecord
     end
   end
 
-  # def create_tiles
-  #   tile_count = calculate_tile_count
-  #   return unless tile_count
 
-  #   Rails.logger.info "Création de #{tile_count} tuiles pour la partie #{id}"
-  #   success = create_tiles_for_players(tile_count)
-  #   Rails.logger.info "Création des tuiles #{success ? 'réussie' : 'échouée'}"
-  #   Rails.logger.info "Nombre de tuiles créées : #{tiles.count}"
-  # end
 
   
 
@@ -306,12 +410,6 @@ class Game < ApplicationRecord
 
   def can_add_player?
     waiting_for_players? && game_users.count < player_count
-  end
-
-  def set_clans_for_quick_game
-    if quick_game?
-      write_attribute(:clan_names, "red_clan yellow_clan white_clan")
-    end
   end
 
   def initialize_game
@@ -322,12 +420,6 @@ class Game < ApplicationRecord
     Rails.logger.error "ERROR during game initialization for game #{id}: #{e.message}"
     raise
   end
-
-
-
-
-
-
 
   def format_action_response(action)
     response = {

@@ -1,6 +1,7 @@
 class Api::V1::GamesController < ApplicationController
   before_action :authenticate_request
   before_action :set_game, only: [:submit_victory, :join_game_custom]
+  before_action :set_custom_code, only: [:join_game_custom]
 
   # POST /api/v1/games/quick_game
   def quick_game
@@ -27,22 +28,44 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def custom_game
-    result = Game.ongoing_game(current_user)
-    if result
-      game = result[:game]
-      game_user = result[:game_user]
+    result = Game.custom_game(current_user)
+    message = result[:message]
+    game = result[:game]
+    game_user = result[:game_user]
+
+    if message == "ongoing game"
+      render json: { success: false, message: "You are already in a game" }
       GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
-      render json: { success: false, game_id: game.id }
+    elsif message == "new game"
+      render json: { success: true, game_id: game.id, game_user_id: game_user.id, custom_code: result[:custom_code] }
     end
-    
-    game = Game.create(player_count: @player_count, game_type: :custom_game, game_status: :waiting_for_players, clan_names: Game.the_clans(@player_count))
-    game_user = game.add_player(current_user)
-    GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
-    render json: { success: true, game_id: game.id }
   end
 
   def join_game_custom
-    result = Game.ongoing_game(current_user)
+    result = Game.ongoing_game_custom(current_user,@custom_code)
+    message = result[:message]
+
+    if message == "ongoing game"
+      render json: { success: false, message: "You are already in a game" }
+      game = result[:game]
+      game_user = result[:game_user]
+      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+    elsif message == "game not found"
+      render json: { success: false, message: "Game not found" }
+    elsif message == "joined game and waiting for other players"
+      render json: { success: true, game_id: game.id }
+      game = result[:game]
+      game_user = result[:game_user]
+      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+    elsif message == "joined game and game ready installation_phase"
+    end
+  end
+
+  def launch_custom_game
+    result = Game.launch_custom_game(current_user,@custom_code)
+
+
+
     if result
       game = result[:game]
       game_user = result[:game_user]
@@ -122,6 +145,10 @@ class Api::V1::GamesController < ApplicationController
     @game = Game.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { success: false, message: "Game not found" }, status: 404
+  end
+
+  def set_custom_code
+    @custom_code = params[:custom_code]
   end
 
 end 

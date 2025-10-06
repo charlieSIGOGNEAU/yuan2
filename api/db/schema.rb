@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_03_111100) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_06_115122) do
   create_table "actions", force: :cascade do |t|
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false
@@ -78,6 +78,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_03_111100) do
     t.integer "simultaneous_play_turn", default: 0
     t.integer "submitted_by_user_id"
     t.integer "waiting_players_count", default: 0, null: false
+    t.integer "creator_id"
+    t.string "custom_code"
+    t.index ["custom_code"], name: "index_games_on_custom_code", unique: true
     t.index ["submitted_by_user_id"], name: "index_games_on_submitted_by_user_id"
   end
 

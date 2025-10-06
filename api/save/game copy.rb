@@ -30,7 +30,8 @@ class Game < ApplicationRecord
 
   before_create :set_clans_for_quick_game
 
-  def self.find_or_create_waiting_game(user)
+  # verrifie si l'utilisateur a une partie en cours
+  def self.ongoing_game(user)
     existing_game_for_user = Game.joins(:game_users)
                                   .where(game_users: { user_id: user.id, abandoned: false })
                                   .where.not(game_status: [:completed, :abandoned])
@@ -38,6 +39,19 @@ class Game < ApplicationRecord
     if existing_game_for_user
       game_user = existing_game_for_user.game_users.find_by(user_id: user.id)
       return {game: existing_game_for_user, game_user: game_user, message: "ongoing game"}
+    end
+  end
+
+  def the_clans(n)
+    clans = ["black_clan","red_clan","green_clan","orange_clan","white_clan","blue_clan","purple_clan","yellow_clan"]
+    clans.take(n).join(" ")
+  end
+
+  def self.find_or_create_waiting_game(user)
+    # verrifie si l'utilisateur a une partie en cours
+    ongoing_game = self.ongoing_game(user)
+    if ongoing_game
+      return ongoing_game
     end
     
     waiting_game = where(game_status: :waiting_for_players, game_type: :quick_game).first
@@ -172,7 +186,6 @@ class Game < ApplicationRecord
     active_players = game_users.where(abandoned: false)
     active_players_count = active_players.count
 
-    p "#"*111
     puts "🔍 Vérification de la fin de partie: #{active_players_count} joueur(s) actif(s)"
     
     if active_players_count <= 1
