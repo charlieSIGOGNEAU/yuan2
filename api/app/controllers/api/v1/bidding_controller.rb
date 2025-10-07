@@ -200,7 +200,7 @@ class Api::V1::BiddingController < ApplicationController
       # Broadcast SEULEMENT si ce thread a gagné le verrou
       if winner_determined
         puts "📡 Broadcasting des résultats du tour..."
-        GameBroadcast.game_broadcast_game_details(@game.id)
+        GameBroadcast.game_broadcast_game_details(@game)
         
         render json: {
           success: true,
@@ -212,7 +212,7 @@ class Api::V1::BiddingController < ApplicationController
         }, status: bidding.created_at == bidding.updated_at ? :created : :ok
       else
         puts "📡 Tour déjà finalisé par un autre joueur, broadcast des détails actuels..."
-        GameBroadcast.game_broadcast_game_details(@game.id)
+        GameBroadcast.game_broadcast_game_details(@game)
         
         render json: {
           success: true,

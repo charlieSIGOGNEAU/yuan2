@@ -72,7 +72,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_06_115122) do
     t.integer "game_type", default: 0, null: false
     t.integer "player_count"
     t.string "clan_names"
-    t.integer "biddings_turn"
+    t.integer "biddings_turn", default: 1, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "simultaneous_play_turn", default: 0

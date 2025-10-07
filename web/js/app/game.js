@@ -15,9 +15,9 @@ export const Game = {
         
         const data = await response.json();
         
-        if (data.success) {
-            WebSocketClient.subscribeToGameChannel(data.game_id);
-        }
+        // if (data.success) {
+        //     WebSocketClient.subscribeToGameChannel(data.game_id);
+        // }
     },
 
     async joinGame(gameId) {

@@ -3,6 +3,7 @@ class User < ApplicationRecord
     has_many :game_users
     has_many :games, through: :game_users
     has_many :tiles
+    has_many :created_games, class_name: 'Game', foreign_key: 'creator_id'
 
     validates :name, presence: true
 

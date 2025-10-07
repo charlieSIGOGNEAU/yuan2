@@ -35,7 +35,7 @@ class Api::V1::GameUsersController < ApplicationController
         errors: @game_user.errors.full_messages 
       }, status: 422
     end
-    GameBroadcast.user_broadcast_player_abandoned(@game.id, @game_user.id)
+    GameBroadcast.user_broadcast_player_abandoned(@game, @game_user)
 
     # gerer le desabonement dans le model game_user
     @game_user.unsubscribe_from_game(@game.id)

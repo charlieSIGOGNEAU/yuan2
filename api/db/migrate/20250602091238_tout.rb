@@ -18,7 +18,7 @@ class Tout < ActiveRecord::Migration[7.2]
       t.integer :game_type, default: 0, null: false
       t.integer :player_count
       t.string :clan_names
-      t.integer :biddings_left
+      t.integer :biddings_turn, default: 1, null: false
 
       t.timestamps
     end

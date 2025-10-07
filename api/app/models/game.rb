@@ -70,7 +70,15 @@ class Game < ApplicationRecord
       when "game ready installation_phase"
         waiting_game.create_tiles_for_players(waiting_game.calculate_tile_count)
         waiting_game.clan_names=waiting_game.the_clans(waiting_game.player_count)
-        waiting_game.save
+        p "2"*100
+        begin
+          waiting_game.save!
+        rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error "❌ Échec de la sauvegarde : #{e.record.errors.full_messages.join(', ')}"
+        end
+        p "2"*100
+        p waiting_game
+        p "2"*100
         return { game: waiting_game, game_user: game_user, message: "game ready installation_phase" }
       end
     else
@@ -259,7 +267,10 @@ class Game < ApplicationRecord
             game_user = other_game.game_users.first
             game_user.game_id = self.id
             game_user.save!
-            other_game.game_users.delete(game_user)
+
+            # demander desabonnement du joueur de la partie
+            user = game_user.user
+            user.unsubscribe_from_game(other_game.id)
           end
           self.waiting_players_count += num_players_to_move
           self.save!
@@ -327,7 +338,7 @@ class Game < ApplicationRecord
       # Broadcast SEULEMENT si ce thread a gagné le verrou
       if turn_completed
         puts "📡 Broadcasting des résultats du tour..."
-        GameBroadcast.game_broadcast_game_details(id)
+        GameBroadcast.game_broadcast_game_details(self)
         
         result = {
           success: true,
@@ -337,7 +348,7 @@ class Game < ApplicationRecord
         }
       else
         puts "📡 Tour déjà finalisé par un autre joueur, broadcast des détails actuels..."
-        GameBroadcast.game_broadcast_game_details(id)
+        GameBroadcast.game_broadcast_game_details(self)
         
         result = {
           success: true,
@@ -388,11 +399,11 @@ class Game < ApplicationRecord
         GameBroadcast.user_broadcast_game_won(winner.user_id, id, winner.id)
         
         # Notifier tous les joueurs de la fin de partie
-        GameBroadcast.game_broadcast_game_details(id)
+        GameBroadcast.game_broadcast_game_details(self)
       else
         puts "❌ Aucun joueur actif, partie terminée sans gagnant"
         # Notifier tous les joueurs de la fin de partie
-        GameBroadcast.game_broadcast_game_details(id)
+        GameBroadcast.game_broadcast_game_details(self)
       end
       
       return true

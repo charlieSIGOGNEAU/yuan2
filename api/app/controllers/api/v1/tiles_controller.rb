@@ -27,7 +27,7 @@ class Api::V1::TilesController < ApplicationController
       end
       
       # Diffuser les changements à tous les joueurs
-      GameBroadcast.game_broadcast_game_details(game.id)
+      GameBroadcast.game_broadcast_game_details(game)
       
       render json: { success: true, tile: tile }
     else

@@ -11,14 +11,20 @@ class Api::V1::GamesController < ApplicationController
     game_user = result[:game_user]
 
     if game
-      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      # GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
+      p "1"*100
+      puts message
+      p "1"*100
+
 
       case message
       when "ongoing game"
+        GameBroadcast.game_broadcast_game_details(game)
+
       when "game ready installation_phase"
-        GameBroadcast.game_broadcast_game_details(game.id)
+        GameBroadcast.game_broadcast_game_details(game)
       when "waiting for players"
-        GameBroadcast.game_broadcast_new_player(game.id, game_user.id) 
+        GameBroadcast.game_broadcast_new_player(game, game_user) 
       when "new game"
       end
       render json: { success: true, game_id: game.id }
@@ -35,7 +41,7 @@ class Api::V1::GamesController < ApplicationController
 
     if message == "ongoing game"
       render json: { success: false, message: "You are already in a game" }
-      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
     elsif message == "new game"
       render json: { success: true, game_id: game.id, game_user_id: game_user.id, custom_code: result[:custom_code] }
     end
@@ -49,14 +55,14 @@ class Api::V1::GamesController < ApplicationController
       render json: { success: false, message: "You are already in a game" }
       game = result[:game]
       game_user = result[:game_user]
-      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
     elsif message == "game not found"
       render json: { success: false, message: "Game not found" }
     elsif message == "joined game and waiting for other players"
       render json: { success: true, game_id: game.id }
       game = result[:game]
       game_user = result[:game_user]
-      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
     elsif message == "joined game and game ready installation_phase"
     end
   end
@@ -69,7 +75,7 @@ class Api::V1::GamesController < ApplicationController
     if result
       game = result[:game]
       game_user = result[:game_user]
-      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
       render json: { success: false, game_id: game.id }
     end
     
