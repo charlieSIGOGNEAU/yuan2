@@ -5,18 +5,26 @@ class UserChannel < ApplicationCable::Channel
       stream_from "user_#{current_user.id}"
       logger.info "📡 Utilisateur #{current_user.name} souscrit au UserChannel"
 
-      user=User.find(current_user.id)
-      game=Game.ongoing_game(user)[:game]
+      user = current_user
+      ongoing_game_result = Game.ongoing_game(user)
+      
+      if ongoing_game_result
+        # Utiliser les IDs pour éviter tout problème de sérialisation
+        game_id = ongoing_game_result[:game].id
+        user_id = user.id
+        game_user_id = ongoing_game_result[:game_user].id
 
-      if game
-        game_user=game.game_users.find_by(user_id: user.id)
-
         p "1"*100
-        p game
+        p "game_id: #{game_id}, user_id: #{user_id}, game_user_id: #{game_user_id}"
         p "1"*100
-        p game.class
-        p "1"*100
-        GameBroadcast.user_broadcast_game_details(user, game, game_user)
+        begin
+          GameBroadcast.user_broadcast_game_details(user_id, game_id, game_user_id)
+        rescue => e
+          logger.error "‼️ Broadcast failed: #{e.class}: #{e.message}"
+          logger.error e.backtrace.join("\n")
+          raise
+        end
+        
       end
 
       p "2"*100
