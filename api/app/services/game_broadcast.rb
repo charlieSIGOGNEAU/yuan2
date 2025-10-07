@@ -25,7 +25,7 @@ class GameBroadcast
     end
 
 
-    # on peux probablement le remplacer par game_broadcast_game_details
+    # comme game_broadcast_game_details mais pour un seul joueur
     def self.user_broadcast_game_details(user_id, game_id, game_user_id)
         ActionCable.server.broadcast "user_#{user_id}", {
             type: 'game_details',

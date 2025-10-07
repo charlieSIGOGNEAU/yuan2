@@ -70,15 +70,11 @@ class Game < ApplicationRecord
       when "game ready installation_phase"
         waiting_game.create_tiles_for_players(waiting_game.calculate_tile_count)
         waiting_game.clan_names=waiting_game.the_clans(waiting_game.player_count)
-        p "2"*100
         begin
           waiting_game.save!
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "❌ Échec de la sauvegarde : #{e.record.errors.full_messages.join(', ')}"
         end
-        p "2"*100
-        p waiting_game
-        p "2"*100
         return { game: waiting_game, game_user: game_user, message: "game ready installation_phase" }
       end
     else

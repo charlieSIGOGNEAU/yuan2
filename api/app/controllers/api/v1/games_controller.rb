@@ -12,11 +12,6 @@ class Api::V1::GamesController < ApplicationController
 
     if game
       # GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
-      p "1"*100
-      puts message
-      p "1"*100
-
-
       case message
       when "ongoing game"
         GameBroadcast.game_broadcast_game_details(game)
