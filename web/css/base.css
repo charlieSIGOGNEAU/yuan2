@@ -1,12 +1,51 @@
 /* Styles de base */
 body { 
-    font-family: Arial, sans-serif; 
-    max-width: 600px; 
-    margin: 50px auto; 
-    padding: 20px; 
-    background: #f8f9fa;
+    margin: 0;          /* supprime les marges par défaut */
+    padding: 0;         /* supprime les padding par défaut */
+    width: 100vw;       /* largeur = largeur de la fenêtre */
+    height: 100vh;      /* hauteur = hauteur de la fenêtre */
+    min-height: 100vh;  /* garantit la hauteur minimale */
+
+}
+#wrapper {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+.background {
+    position: fixed;       /* reste immobile */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('../images/landingPage.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;           /* passe derrière tout le reste */
+  }
+  
+
+.titre-image {
+
+    margin-top: 3vh;
+    margin-bottom: 3vh;
+    height: 28vh;
+    width: auto;
+}
+
+#app {
+    flex: 1;
+    display: flex;
+    flex-direction: column; /* empile les éléments */
+    justify-content: center; /* centre verticalement */
+    align-items: center;     /* centre horizontalement */
+    width: 100%;
+    max-width: 300px;
+}
 h1 {
     text-align: center;
     color: #333;

@@ -19,7 +19,7 @@ class Api::V1::GamesController < ApplicationController
       when "game ready installation_phase"
         GameBroadcast.game_broadcast_game_details(game)
       when "waiting for players"
-        GameBroadcast.game_broadcast_new_player(game, game_user) 
+        GameBroadcast.game_broadcast_new_player(game_user.id, game.id) 
       when "new game"
       end
       render json: { success: true, game_id: game.id }

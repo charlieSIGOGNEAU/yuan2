@@ -334,7 +334,7 @@ class Game < ApplicationRecord
       # Broadcast SEULEMENT si ce thread a gagné le verrou
       if turn_completed
         puts "📡 Broadcasting des résultats du tour..."
-        GameBroadcast.game_broadcast_game_details(self)
+        GameBroadcast.game_broadcast_game_details(self.id)
         
         result = {
           success: true,
@@ -344,7 +344,7 @@ class Game < ApplicationRecord
         }
       else
         puts "📡 Tour déjà finalisé par un autre joueur, broadcast des détails actuels..."
-        GameBroadcast.game_broadcast_game_details(self)
+        GameBroadcast.game_broadcast_game_details(self.id)
         
         result = {
           success: true,
@@ -395,11 +395,11 @@ class Game < ApplicationRecord
         GameBroadcast.user_broadcast_game_won(winner.user_id, id, winner.id)
         
         # Notifier tous les joueurs de la fin de partie
-        GameBroadcast.game_broadcast_game_details(self)
+        GameBroadcast.game_broadcast_game_details(self.id)
       else
         puts "❌ Aucun joueur actif, partie terminée sans gagnant"
         # Notifier tous les joueurs de la fin de partie
-        GameBroadcast.game_broadcast_game_details(self)
+        GameBroadcast.game_broadcast_game_details(self.id)
       end
       
       return true

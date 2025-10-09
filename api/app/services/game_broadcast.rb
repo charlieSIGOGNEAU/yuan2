@@ -1,6 +1,6 @@
 class GameBroadcast
-    def self.game_broadcast_new_player(game, game_user)
-        gameUsers = game.game_users.where.not(id: game_user.id)
+    def self.game_broadcast_new_player(game_user_id, game_id)
+        gameUsers = game.game_users.where.not(id: game_user_id)
         gameUsers.each do |gameUser|
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
                 type: 'new_player',
@@ -13,7 +13,8 @@ class GameBroadcast
 
 
 
-    def self.game_broadcast_game_details(game)
+    def self.game_broadcast_game_details(game_id)
+        game = Game.find(game_id)
         gameUsers = game.game_users
         gameUsers.each do |gameUser|
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
@@ -45,12 +46,13 @@ class GameBroadcast
         }
     end
 
-    def self.user_broadcast_player_abandoned(game, game_user)
-        gameUsers = game.game_users.where.not(id: game_user.id)
+    def self.user_broadcast_player_abandoned(game_id, game_user_id)
+        game = Game.find(game_id)
+        gameUsers = game.game_users.where.not(id: game_user_id)
         gameUsers.each do |gameUser|
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
                 type: 'player_abandoned',
-                game_user_id: game_user.id
+                game_user_id: game_user_id
             }
         end
     end

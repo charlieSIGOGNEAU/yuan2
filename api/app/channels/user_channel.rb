@@ -14,21 +14,14 @@ class UserChannel < ApplicationCable::Channel
         user_id = user.id
         game_user_id = ongoing_game_result[:game_user].id
 
-        p "1"*100
-        p "game_id: #{game_id}, user_id: #{user_id}, game_user_id: #{game_user_id}"
-        p "1"*100
         begin
           GameBroadcast.user_broadcast_game_details(user_id, game_id, game_user_id)
         rescue => e
           logger.error "‼️ Broadcast failed: #{e.class}: #{e.message}"
           logger.error e.backtrace.join("\n")
           raise
-        end
-        
+        end 
       end
-
-      p "2"*100
-
     else
       reject
     end
