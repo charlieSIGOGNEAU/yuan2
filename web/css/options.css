@@ -1,0 +1,208 @@
+/* Pages d'options et paramètres */
+.options-page,
+.change-name-page,
+.delete-account-page {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.options-page h2,
+.change-name-page h2,
+.delete-account-page h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 24px;
+}
+
+/* Liste des options */
+.options-list {
+    width: 100%;
+}
+
+.option-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+}
+
+.option-item label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.option-select {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.option-select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* Checkbox */
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+}
+
+.checkbox-item label {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.option-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+/* Boutons d'options */
+.option-btn {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.logout-btn {
+    background: #ffc107;
+    color: #333;
+}
+
+.logout-btn:hover {
+    background: #e0a800;
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.delete-account-btn {
+    background: #dc3545;
+}
+
+.delete-account-btn:hover {
+    background: #c82333;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Formulaires de paramètres */
+.settings-form {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.settings-form .form-group {
+    margin-bottom: 20px;
+}
+
+.settings-form .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.settings-form input[type="text"],
+.settings-form input[type="password"] {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.settings-form input[readonly] {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.settings-form input:focus:not([readonly]) {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* Message d'avertissement */
+.warning-message {
+    padding: 20px;
+    margin-bottom: 25px;
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.warning-message p {
+    margin: 10px 0;
+    color: #856404;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.warning-message p:first-child {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Bouton danger */
+.danger-btn {
+    background: #dc3545;
+}
+
+.danger-btn:hover {
+    background: #c82333;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Bouton retour */
+.back-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    background: transparent;
+    color: #666;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #f8f9fa;
+    border-color: #bbb;
+    color: #333;
+}
+

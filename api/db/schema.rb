@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_06_115122) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
   create_table "actions", force: :cascade do |t|
     t.integer "game_user_id", null: false
     t.integer "game_id", null: false
@@ -109,6 +109,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_06_115122) do
     t.string "language", default: "fr", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "email"
+    t.string "provider", default: "email"
+    t.string "password_digest"
+    t.index ["email"], name: "index_users_on_email", unique: true
   end
 
   add_foreign_key "actions", "game_users"

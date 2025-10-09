@@ -7,6 +7,8 @@ Rails.application.routes.draw do
     namespace :v1 do
       # Routes d'authentification
       post 'auth/login', to: 'auth#login'
+      post 'auth/login_email', to: 'auth#login_email'
+      post 'auth/signup', to: 'auth#signup'
       get 'auth/me', to: 'auth#me'
       
       # Routes utilisateur
@@ -14,7 +16,10 @@ Rails.application.routes.draw do
       
       # Routes de jeu
       post 'games/quick_game', to: 'games#quick_game'
-      
+      post 'games/creat_custom_game', to: 'games#creat_custom_game'
+      post 'games/join_game_custom', to: 'games#join_game_custom'
+      post 'games/launch_custom_game', to: 'games#launch_custom_game'
+
       # Routes de tiles
       resources :games do
         member do

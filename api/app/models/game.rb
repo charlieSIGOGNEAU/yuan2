@@ -146,19 +146,22 @@ class Game < ApplicationRecord
   end
 
 
-  def self.custom_game(user)
+  def self.creat_custom_game(user)
     # on rejoind une partie si une partie en cours
     ongoing_game = self.ongoing_game(user)
     if ongoing_game
-      game_user = ongoing_game.game_users.find_by(user_id: user.id)
-      return {game: ongoing_game, game_user: game_user, message: "ongoing game"}
+      game_user = ongoing_game[:game].game_users.find_by(user_id: user.id)
+      return {game: ongoing_game[:game], game_user: game_user, message: "ongoing game"}
     # sinon on cree une nouvelle partie
     else
       game = nil
       custom_code = nil
       loop do
         custom_code = SecureRandom.alphanumeric(6).upcase
-        game = self.create(game_type: :custom_game, game_status: :waiting_for_players, creator: user, custom_code: custom_code)
+        game = self.create(game_type: :custom_game, game_status: :waiting_for_players, creator: user, custom_code: custom_code, player_count: 8, waiting_players_count: 1)
+        unless game.persisted?
+          puts "❌ Erreurs : #{game.errors.full_messages.join(', ')}"
+        end
         break if game.persisted?
       end
       game_user = game.game_users.create(user: user)

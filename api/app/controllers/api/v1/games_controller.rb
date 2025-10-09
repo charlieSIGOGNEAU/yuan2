@@ -1,6 +1,6 @@
 class Api::V1::GamesController < ApplicationController
   before_action :authenticate_request
-  before_action :set_game, only: [:submit_victory, :join_game_custom]
+  before_action :set_game, only: [:submit_victory]
   before_action :set_custom_code, only: [:join_game_custom]
 
   # POST /api/v1/games/quick_game
@@ -14,13 +14,15 @@ class Api::V1::GamesController < ApplicationController
       # GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
       case message
       when "ongoing game"
-        GameBroadcast.game_broadcast_game_details(game)
+        GameBroadcast.game_broadcast_game_details(game.id)
 
       when "game ready installation_phase"
-        GameBroadcast.game_broadcast_game_details(game)
+        GameBroadcast.game_broadcast_game_details(game.id)
       when "waiting for players"
         GameBroadcast.game_broadcast_new_player(game_user.id, game.id) 
+        GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       when "new game"
+        GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       end
       render json: { success: true, game_id: game.id }
     else
@@ -28,14 +30,18 @@ class Api::V1::GamesController < ApplicationController
     end
   end
 
-  def custom_game
-    result = Game.custom_game(current_user)
+  def creat_custom_game
+
+    p "3"*100
+    result = Game.creat_custom_game(current_user)
     message = result[:message]
+    p "3"*100
     game = result[:game]
     game_user = result[:game_user]
+    p "3"*100
 
     if message == "ongoing game"
-      render json: { success: false, message: "You are already in a game" }
+      render json: { success: false, message: "You are already in a game", game_id: game.id, game_user_id: game_user.id, custom_code: game.custom_code }
       GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
     elsif message == "new game"
       render json: { success: true, game_id: game.id, game_user_id: game_user.id, custom_code: result[:custom_code] }
@@ -43,8 +49,14 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def join_game_custom
+    puts "1"*100
+    puts "custom_code: #{@custom_code}"
+    p "1"*100
     result = Game.ongoing_game_custom(current_user,@custom_code)
     message = result[:message]
+    p "2"*100
+    puts "message: #{message}"
+    p "2"*100
 
     if message == "ongoing game"
       render json: { success: false, message: "You are already in a game" }

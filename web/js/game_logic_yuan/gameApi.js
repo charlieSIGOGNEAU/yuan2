@@ -1,5 +1,5 @@
 import { gameState } from './gameState.js';
-import { Game } from '../app/game.js';
+// import { Game } from '../app/game a suprimer.js';
 import { installationPhase } from './phases/installationPhase.js';
 import { initialPlacement } from './phases/initial_placement.js';
 import { biddingPhase } from './phases/biddingPhase.js';
@@ -17,29 +17,75 @@ export const gameApi = {
     currentPhaseInstance: null, // Référence vers l'instance de phase active
     baseUrl: ServerConfig.HTTP_BASE,
 
+    iAmACreator(data) {
+        const message = data.message;
+        const userIdCreator = message.game.creator_id;
+        const myGameUserId = message.my_game_user_id;
+        const gameUser = message.game.game_users.find(gameUser => gameUser.id === myGameUserId);
+        return (gameUser.user_id === userIdCreator);
+    },
+
+    checkAndRedirectToGameCreation(data) {
+        if (this.iAmACreator(data) && data.message.game.game_status == 'waiting_for_players') {
+
+            // import Router dina
+            
+
+            // const custom_code = data.message.game.custom_code;
+            // const waiting_players_count = data.message.game.waiting_players_count;
+            const data2 = {
+                custom_code: data.message?.game?.custom_code,
+                waiting_players_count: data.message?.game?.waiting_players_count || 0
+              };
+              
+
+
+            import('../app/router.js').then(module => {
+                module.Router.navigateTo('create-quick-game', data2);
+            });
+
+
+            return true;
+
+        }
+    },
+
+
     async handleGameMessage(data) {
+        if (data.type !== 'ping' ) {
+            console.log('🎮 full data:', data);
+        }
+
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
             console.log('📨 Message reçu:', data);
 
         }  
         
+        
         // Gestion du message d'attente des autres joueurs
-        if (data.message && data.message.type === 'waiting_for_other_players') {
-            // uiManager.updateInfoPanel(i18n.t('game.ui.waiting_for_others'));
-            return;
-        }
+        // if (data.message && data.message.type === 'waiting_for_other_players') {
+        //     uiManager.updateInfoPanel(i18n.t('game.ui.waiting_for_others'));
+        //     return;
+        // }
         
         
-        if (data.message && data.message.type === 'game_details') {
+        if (data.message && data.message.type === 'game_details' ) {
             // Mettre à jour le gameState avec les nouvelles données
             gameState.update({
                 ...data.message,
                 gameBoard: this.gameBoard // Passer le gameBoard s'il existe
             });
             console.log('🎮 GameState mis à jour:', gameState);
+
+            this.iAmACreator(data);
+
+            if (this.checkAndRedirectToGameCreation(data)) {
+                return;
+            }
             
             // Charger l'interface UI en premier si pas déjà chargée
-            if (!uiManager.gameUI && !this.uiLoadingPromise) {
+            
+            if (!uiManager.gameUI && !this.uiLoadingPromise && !(this.iAmACreator(data) && data.message.game.game_status == 'waiting_for_players')) {
                 this.uiLoadingPromise = uiManager.loadGameUI();
                 
                 try {

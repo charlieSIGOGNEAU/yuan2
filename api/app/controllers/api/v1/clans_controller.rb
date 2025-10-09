@@ -62,7 +62,7 @@ class Api::V1::ClansController < ApplicationController
       puts "🎮 Jeu #{@game.id} passé en phase bidding_phase "
       
       # Diffuser les changements à tous les joueurs
-      GameBroadcast.game_broadcast_game_details(@game)
+      GameBroadcast.game_broadcast_game_details(@game.id)
       
       render json: {
         success: true,

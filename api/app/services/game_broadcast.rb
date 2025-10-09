@@ -1,5 +1,6 @@
 class GameBroadcast
     def self.game_broadcast_new_player(game_user_id, game_id)
+        game = Game.find(game_id)
         gameUsers = game.game_users.where.not(id: game_user_id)
         gameUsers.each do |gameUser|
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
