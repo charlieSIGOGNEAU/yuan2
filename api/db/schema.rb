@@ -55,6 +55,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
     t.integer "user_id", null: false
     t.integer "game_id", null: false
     t.integer "clan_id"
+    t.boolean "player_ready", default: false, null: false
     t.string "user_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

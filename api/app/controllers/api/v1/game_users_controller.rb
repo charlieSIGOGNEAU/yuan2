@@ -3,6 +3,21 @@ class Api::V1::GameUsersController < ApplicationController
   before_action :set_game
   before_action :set_game_user
 
+
+
+  def confirmPlayerReady
+    game = @game
+    result = @game_user.confirmPlayerReady(game)
+    message = result[:message]
+    if message == "Player ready confirmed"
+      render json: { success: true, message: "Player ready confirmed" }
+    else message == "Player already ready"
+      render json: { success: false, message: "Player already ready" }
+    end
+  end
+
+
+
   # POST /api/v1/games/:game_id/game_users/:id/abandon
   def abandon
     # Vérifier que le game_user appartient bien à l'utilisateur actuel

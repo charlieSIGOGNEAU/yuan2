@@ -1,11 +1,24 @@
 class GameBroadcast
     def self.game_broadcast_new_player(game_user_id, game_id)
         game = Game.find(game_id)
-        gameUsers = game.game_users.where.not(id: game_user_id)
+        gameUsers = game.game_users.where.not(id: game_user_id).where(abandoned: false)
         gameUsers.each do |gameUser|
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
                 type: 'new_player',
                 game_user: gameUser.as_json
+            }
+        end
+    end
+
+    # envoi un message pour demender confirmation de demarage de la partie a tous les joueurs sauf le joueur a l'initiative qui est pres valide
+    def self.game_broadcast_ready_to_play(game_id, game_user_id)
+        GameUser.find(game_user_id).update(player_ready: true)
+        game = Game.find(game_id)
+        gameUsers = game.game_users.where.not(id: game_user_id).where(abandoned: false)
+        gameUsers.each do |gameUser|
+            ActionCable.server.broadcast "user_#{gameUser.user_id}", {
+                type: 'ready_to_play',
+                game_id: game_id
             }
         end
     end
@@ -16,7 +29,7 @@ class GameBroadcast
 
     def self.game_broadcast_game_details(game_id)
         game = Game.find(game_id)
-        gameUsers = game.game_users
+        gameUsers = game.game_users.where(abandoned: false)
         gameUsers.each do |gameUser|
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
                 type: 'game_details',
@@ -49,7 +62,7 @@ class GameBroadcast
 
     def self.user_broadcast_player_abandoned(game_id, game_user_id)
         game = Game.find(game_id)
-        gameUsers = game.game_users.where.not(id: game_user_id)
+        gameUsers = game.game_users.where.not(id: game_user_id).where(abandoned: false)
         gameUsers.each do |gameUser|
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
                 type: 'player_abandoned',

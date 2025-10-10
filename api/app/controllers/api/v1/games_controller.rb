@@ -17,12 +17,12 @@ class Api::V1::GamesController < ApplicationController
         GameBroadcast.game_broadcast_game_details(game.id)
 
       when "game ready installation_phase"
-        GameBroadcast.game_broadcast_game_details(game.id)
+        GameBroadcast.game_broadcast_ready_to_play(game.id, game_user.id)
       when "waiting for players"
         GameBroadcast.game_broadcast_new_player(game_user.id, game.id) 
-        GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+        # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       when "new game"
-        GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+        # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       end
       render json: { success: true, game_id: game.id }
     else
@@ -31,7 +31,6 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def creat_custom_game
-
     p "3"*100
     result = Game.creat_custom_game(current_user)
     message = result[:message]
@@ -41,34 +40,29 @@ class Api::V1::GamesController < ApplicationController
     p "3"*100
 
     if message == "ongoing game"
-      render json: { success: false, message: "You are already in a game", game_id: game.id, game_user_id: game_user.id, custom_code: game.custom_code }
+      render json: { success: false, message: "You are already in a game", game_id: game.id, game_user_id: game_user.id, custom_code: game.custom_code, waiting_players_count: game.waiting_players_count }
       GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
     elsif message == "new game"
-      render json: { success: true, game_id: game.id, game_user_id: game_user.id, custom_code: result[:custom_code] }
+      render json: { success: true, game_id: game.id, game_user_id: game_user.id, custom_code: result[:custom_code], waiting_players_count: game.waiting_players_count }
     end
   end
 
   def join_game_custom
-    puts "1"*100
-    puts "custom_code: #{@custom_code}"
-    p "1"*100
     result = Game.ongoing_game_custom(current_user,@custom_code)
     message = result[:message]
-    p "2"*100
-    puts "message: #{message}"
-    p "2"*100
 
     if message == "ongoing game"
       render json: { success: false, message: "You are already in a game" }
       game = result[:game]
       game_user = result[:game_user]
+
       GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
     elsif message == "game not found"
       render json: { success: false, message: "Game not found" }
-    elsif message == "joined game and waiting for other players"
-      render json: { success: true, game_id: game.id }
+    elsif message == "joined game and waiting for other players"   
       game = result[:game]
       game_user = result[:game_user]
+      render json: { success: true, game_id: game.id }
       GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
     elsif message == "joined game and game ready installation_phase"
     end
@@ -76,16 +70,12 @@ class Api::V1::GamesController < ApplicationController
 
   def launch_custom_game
     result = Game.launch_custom_game(current_user,@custom_code)
-
-
-
     if result
       game = result[:game]
       game_user = result[:game_user]
       GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
       render json: { success: false, game_id: game.id }
     end
-    
     game = Game.find(params[:game_id])
     if game
 
@@ -144,6 +134,17 @@ class Api::V1::GamesController < ApplicationController
       render json: { success: false, message: "Invalid data: #{e.message}" }, status: 422
     rescue => e
       render json: { success: false, message: "Error processing victory submission: #{e.message}" }, status: 500
+    end
+  end
+
+  def startGameAfterTimeout
+    result = @game.start_game_after_timeout
+    message = result[:message]
+    if message == "game ready installation_phase"
+      render json: { success: true, message: "Game ready installation_phase" }
+      GameBroadcast.game_broadcast_game_details(@game.id)
+    else message == "missing player, waiting for player"
+      render json: { success: false, message: "Missing player, waiting for player" }
     end
   end
 

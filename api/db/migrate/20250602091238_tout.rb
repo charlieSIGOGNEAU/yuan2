@@ -51,6 +51,7 @@ class Tout < ActiveRecord::Migration[7.2]
       t.references :user, null: false, foreign_key: true
       t.references :game, null: false, foreign_key: true
       t.references :clan, foreign_key: true
+      t.boolean :player_ready, default: false, null: false
       t.string :user_name
 
       t.timestamps

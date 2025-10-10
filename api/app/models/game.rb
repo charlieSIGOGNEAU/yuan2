@@ -1,14 +1,15 @@
 class Game < ApplicationRecord
     enum :game_status, {
       waiting_for_players: 0,
-      installation_phase: 1,
-      initial_placement: 2,
-      bidding_phase: 3,
-      starting_spot_selection: 4,
-      simultaneous_play: 5,
-      completed: 6,
-      abandoned: 7,
-      end_dispute: 8
+      waiting_for_confirmation_players: 1,
+      installation_phase: 2,
+      initial_placement: 3,
+      bidding_phase: 4,
+      starting_spot_selection: 5,
+      simultaneous_play: 6,
+      completed: 7,
+      abandoned: 8,
+      end_dispute: 9
     }, default: :waiting_for_players
   
     enum :game_type, {
@@ -30,6 +31,38 @@ class Game < ApplicationRecord
   validates :game_type, presence: true
   validates :player_count, presence: true, numericality: { only_integer: true}
 
+  def start_game_after_timeout
+    # on peux probablement optimiser cette transaction et lock, mais elle ne devrais pas arriver souvent
+    transaction do
+      self.lock!
+      if (self.game_status == "waiting_for_confirmation_players") && (self.updated_at < 20.seconds.ago)
+        game_users = self.game_users
+        game_users.each do |game_user|
+          unless game_user.player_ready
+            game_user.destroy
+          end
+        end
+        self.waiting_players_count = self.game_users.count
+        if self.waiting_players_count >= 2
+          self.game_status = "installation_phase"
+          self.player_count = self.waiting_players_count
+          self.save!
+          self.clan_names = self.the_clans()
+          self.create_tiles_for_players()
+          self.save
+          return {message: "game ready installation_phase"}
+        else
+          self.game_status = "waiting_for_confirmation_players"
+          self.save
+          return {message: "missing player, waiting for player"}
+        end
+      end
+    end
+  end
+
+
+
+
   # verrifie si l'utilisateur a une partie en cours
   def self.ongoing_game(user)
     existing_game_for_user = Game.joins(:game_users)
@@ -43,9 +76,9 @@ class Game < ApplicationRecord
     return nil
   end
 
-  def the_clans(n)
+  def the_clans()
     clans = ["black_clan","red_clan","green_clan","orange_clan","white_clan","blue_clan","purple_clan","yellow_clan"]
-    clans.take(n).join(" ")
+    clans.take(self.player_count).join(" ")
   end
 
   def self.find_or_create_waiting_game(user)
@@ -68,13 +101,13 @@ class Game < ApplicationRecord
       when "too many players"
         # self.find_or_create_waiting_game(user)
       when "game ready installation_phase"
-        waiting_game.create_tiles_for_players(waiting_game.calculate_tile_count)
-        waiting_game.clan_names=waiting_game.the_clans(waiting_game.player_count)
-        begin
-          waiting_game.save!
-        rescue ActiveRecord::RecordInvalid => e
-          Rails.logger.error "❌ Échec de la sauvegarde : #{e.record.errors.full_messages.join(', ')}"
-        end
+        # waiting_game.create_tiles_for_players()
+        # waiting_game.clan_names=waiting_game.the_clans()
+        # begin
+        #   waiting_game.save!
+        # rescue ActiveRecord::RecordInvalid => e
+        #   Rails.logger.error "❌ Échec de la sauvegarde : #{e.record.errors.full_messages.join(', ')}"
+        # end
         return { game: waiting_game, game_user: game_user, message: "game ready installation_phase" }
       end
     else
@@ -100,7 +133,7 @@ class Game < ApplicationRecord
 
       elsif (self.waiting_players_count == (player_count - 1)) && (self.game_status == "waiting_for_players")
         self.waiting_players_count += 1
-        self.game_status = :installation_phase
+        self.game_status = :waiting_for_confirmation_players
         self.save
         game_user = self.game_users.create(user: user)
         return {message: "game ready installation_phase", game_user: game_user}
@@ -124,7 +157,8 @@ class Game < ApplicationRecord
     end
   end
 
-  def create_tiles_for_players(tile_count)
+  def create_tiles_for_players()
+    tile_count = self.calculate_tile_count
     game_users_list = game_users.to_a
     Rails.logger.info "Liste des game_users : #{game_users_list.map(&:id)}"
     
@@ -201,7 +235,7 @@ class Game < ApplicationRecord
           return {message: "game full"}
         else
           game_user = game.game_users.create(user: user)
-          if var_waiting_players_count < 8
+          if game.waiting_players_count < 8
             return {game: game, game_user: game_user, message: "joined game and waiting for other players"}
           else
             return {game: game, game_user: game_user, message: "joined game and game ready installation_phase"}
@@ -236,7 +270,8 @@ class Game < ApplicationRecord
     game.game_status = "installation_phase"
     con_players_count = GameUser.where(game_id: game.id).count
     game.player_count = con_players_count
-    game.clan_names = game.the_clans(con_players_count)
+    game.save!
+    game.clan_names = game.the_clans()
 
     # au cas ou une erreur dans mon code
     begin
@@ -245,7 +280,7 @@ class Game < ApplicationRecord
       puts "Erreur lors de la sauvegarde : #{e.message}"
     end
 
-    game.create_tiles_for_players(game.calculate_tile_count)
+    game.create_tiles_for_players()
     return {game: game, message: "game ready installation_phase"}
 
   end
