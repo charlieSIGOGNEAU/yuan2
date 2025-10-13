@@ -30,7 +30,6 @@ body {
   
 
 .titre-image {
-
     margin-top: 3vh;
     margin-bottom: 3vh;
     height: 28vh;
@@ -48,10 +47,28 @@ body {
 }
 h1 {
     text-align: center;
-    color: #333;
+    color: #000000;
+}
+
+h2 {
+    text-align: center;
+    color: #000000;
 }
 
 p {
     text-align: center;
-    color: #666;
+    color: #000000;
 } 
+
+.btn {
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 10px;
+
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}

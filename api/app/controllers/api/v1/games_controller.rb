@@ -1,6 +1,6 @@
 class Api::V1::GamesController < ApplicationController
   before_action :authenticate_request
-  before_action :set_game, only: [:submit_victory]
+  before_action :set_game, only: [:submit_victory, :i_am_ready, :startGameAfterDelay]
   before_action :set_custom_code, only: [:join_game_custom]
 
   # POST /api/v1/games/quick_game
@@ -17,11 +17,13 @@ class Api::V1::GamesController < ApplicationController
         GameBroadcast.game_broadcast_game_details(game.id)
 
       when "game ready installation_phase"
-        GameBroadcast.game_broadcast_ready_to_play(game.id, game_user.id)
+        game_user.update(player_ready: true)
+        GameBroadcast.game_broadcast_ready_to_play( game.id) 
       when "waiting for players"
-        GameBroadcast.game_broadcast_new_player(game_user.id, game.id) 
+        GameBroadcast.game_broadcast_waiting_for_players( game.id) 
         # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       when "new game"
+        GameBroadcast.game_broadcast_waiting_for_players(game.id)
         # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       end
       render json: { success: true, game_id: game.id }
@@ -55,8 +57,8 @@ class Api::V1::GamesController < ApplicationController
       render json: { success: false, message: "You are already in a game" }
       game = result[:game]
       game_user = result[:game_user]
-
       GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+
     elsif message == "game not found"
       render json: { success: false, message: "Game not found" }
     elsif message == "joined game and waiting for other players"   
@@ -83,6 +85,22 @@ class Api::V1::GamesController < ApplicationController
 
   end
 
+  def i_am_ready
+    game = Game.find(params[:game_id])
+    game_user = game.game_users.find_by(user_id: current_user.id)
+    result = game.i_am_ready(game_user)
+    message = result[:message]
+    if message == "player ready and game full"
+      render json: { success: true, message: "Game ready installation_phase" }
+      GameBroadcast.game_broadcast_game_details(game.id)
+    elsif message == "player ready and game not full"
+      render json: { success: true, message: "player ready and game not full" }
+      GameBroadcast.game_broadcast_ready_to_play( game.id) 
+    else
+      render json: { success: false, message: "Game not in waiting_for_confirmation_players" }
+    end
+  end
+    
   # POST /api/v1/games/:id/submit_victory
   def submit_victory
     # Vérifier si le jeu est déjà terminé
@@ -137,14 +155,23 @@ class Api::V1::GamesController < ApplicationController
     end
   end
 
-  def startGameAfterTimeout
-    result = @game.start_game_after_timeout
+  def startGameAfterDelay
+    result = @game.start_game_after_delay
+
     message = result[:message]
     if message == "game ready installation_phase"
       render json: { success: true, message: "Game ready installation_phase" }
       GameBroadcast.game_broadcast_game_details(@game.id)
     else message == "missing player, waiting for player"
       render json: { success: false, message: "Missing player, waiting for player" }
+    end
+    if result[:user_of_game_users_destroyed]
+      p "3"*100
+      p result[:user_of_game_users_destroyed]
+      p "3"*100
+      result[:user_of_game_users_destroyed].each do |user|
+        GameBroadcast.user_broadcast_player_destroyed(@game.id, user.id)
+      end
     end
   end
 
@@ -156,7 +183,8 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def set_game
-    @game = Game.find(params[:id])
+    id = params[:id] || params[:game_id]
+    @game = Game.find(id)
   rescue ActiveRecord::RecordNotFound
     render json: { success: false, message: "Game not found" }, status: 404
   end

@@ -14,13 +14,18 @@ class UserChannel < ApplicationCable::Channel
         user_id = user.id
         game_user_id = ongoing_game_result[:game_user].id
 
-        begin
+        if ongoing_game_result[:game].game_status == "waiting_for_players"
+          GameBroadcast.user_broadcast_waiting_for_players(user_id, game_id)
+        end
+
+        if ongoing_game_result[:game].game_status == "waiting_for_confirmation_players"
+          GameBroadcast.user_broadcast_ready_to_play(user_id, game_id)
+        end
+
+        if ["installation_phase", "initial_placement", "bidding_phase", "starting_spot_selection", "simultaneous_play"].include?(ongoing_game_result[:game].game_status)
           GameBroadcast.user_broadcast_game_details(user_id, game_id, game_user_id)
-        rescue => e
-          logger.error "‼️ Broadcast failed: #{e.class}: #{e.message}"
-          logger.error e.backtrace.join("\n")
-          raise
-        end 
+        end
+
       end
     else
       reject

@@ -1,0 +1,56 @@
+.btn-quit-game {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-quit-game:hover {
+    background: #c82333;
+}
+
+.btn-ready-game {
+    background: #28a745;
+}
+
+.btn-ready-game:hover {
+    background: #218838;
+}
+
+@media (max-height: 550px) {
+  .titre-image {
+    display: none;
+  }
+}
+
+#go-to-game {
+  background: linear-gradient(270deg, #ff6, #f06, #6cf, #ff6);
+  background-size: 800% 800%;
+  color: white;
+  padding: 40px;
+  border: none;
+  cursor: pointer;
+  animation: gradientMove 4s linear infinite;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+#waiting-players-count {
+    display: inline-block;
+    background: white;
+    color: black;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+#custom-code {
+  background: white;
+}
+

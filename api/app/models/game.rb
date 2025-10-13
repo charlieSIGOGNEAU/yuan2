@@ -31,35 +31,69 @@ class Game < ApplicationRecord
   validates :game_type, presence: true
   validates :player_count, presence: true, numericality: { only_integer: true}
 
-  def start_game_after_timeout
+  # on verrifi si les 20s sont ecoule et lance la partie
+  def start_game_after_delay
     # on peux probablement optimiser cette transaction et lock, mais elle ne devrais pas arriver souvent
     transaction do
       self.lock!
-      if (self.game_status == "waiting_for_confirmation_players") && (self.updated_at < 20.seconds.ago)
+      if (self.game_status == "waiting_for_confirmation_players") && (self.updated_at < 5.seconds.ago)
         game_users = self.game_users
+        user_of_game_users_destroyed = []
         game_users.each do |game_user|
           unless game_user.player_ready
+            game_user.lock!
+            user = game_user.user
+            user_of_game_users_destroyed << user
             game_user.destroy
+            p "2"*100
+            p user
+            p "2"*100
+            p user_of_game_users_destroyed
+            p "3"*100
           end
         end
         self.waiting_players_count = self.game_users.count
         if self.waiting_players_count >= 2
-          self.game_status = "installation_phase"
-          self.player_count = self.waiting_players_count
-          self.save!
-          self.clan_names = self.the_clans()
-          self.create_tiles_for_players()
-          self.save
-          return {message: "game ready installation_phase"}
+          self.start_installation_phase()   
+          return {message: "game ready installation_phase", user_of_game_users_destroyed: user_of_game_users_destroyed}
         else
           self.game_status = "waiting_for_confirmation_players"
-          self.save
+          self.save!
           return {message: "missing player, waiting for player"}
         end
       end
     end
   end
 
+  # fonction a imbrique dans une transaction avec un lock de la game pour etre sur que la game est bien en status waiting_for_confirmation_players
+  # on lance la phase d'installation, creation de Tiles, liste des clans
+  def start_installation_phase()
+      self.game_status = "installation_phase"
+      self.player_count = self.game_users.where(player_ready: true).count
+      self.save!
+      self.create_tiles_for_players()
+      self.clan_names = the_clans()
+      self.save!
+  end
+
+  # si possible on mes le joueur a ready to  et si touts les joueurs sont ready on lance la phase d'installation
+  def i_am_ready(game_user)
+    transaction do
+      self.lock!
+      if self.game_status == "waiting_for_confirmation_players"
+        game_user.update(player_ready: true)
+        game_users_ready = game_users.where(player_ready: true)
+        if game_users_ready.count == self.player_count
+          start_installation_phase()
+          return {message: "player ready and game full"}
+        else
+          return {message: "player ready and game not full"}
+        end
+      else
+        return {message: "game not in waiting_for_confirmation_players"}
+      end
+    end
+  end
 
 
 
@@ -71,11 +105,15 @@ class Game < ApplicationRecord
                                   .first
     if existing_game_for_user
       game_user = existing_game_for_user.game_users.find_by(user_id: user.id)
+      if existing_game_for_user.game_status == "waiting_for_confirmation_players"
+        return {game: existing_game_for_user, game_user: game_user, message: "waiting for confirmation players"}
+      end
       return {game: existing_game_for_user, game_user: game_user, message: "ongoing game"}
     end
     return nil
   end
 
+  # on atribu les clan disponible en fonction du nombre de joueur 
   def the_clans()
     clans = ["black_clan","red_clan","green_clan","orange_clan","white_clan","blue_clan","purple_clan","yellow_clan"]
     clans.take(self.player_count).join(" ")
@@ -101,13 +139,6 @@ class Game < ApplicationRecord
       when "too many players"
         # self.find_or_create_waiting_game(user)
       when "game ready installation_phase"
-        # waiting_game.create_tiles_for_players()
-        # waiting_game.clan_names=waiting_game.the_clans()
-        # begin
-        #   waiting_game.save!
-        # rescue ActiveRecord::RecordInvalid => e
-        #   Rails.logger.error "❌ Échec de la sauvegarde : #{e.record.errors.full_messages.join(', ')}"
-        # end
         return { game: waiting_game, game_user: game_user, message: "game ready installation_phase" }
       end
     else
@@ -122,6 +153,7 @@ class Game < ApplicationRecord
     end
   end
 
+  # ajoute et creer un game_user a waiting_for_players, on renvoi un message pour dire si il reste de la place ou si la game est full
   def add_player(user)
     transaction do
       reload.lock!
@@ -145,6 +177,7 @@ class Game < ApplicationRecord
     end
   end
 
+  # on calcul le nombre de tuile en fonction du nombre de joueur
   def calculate_tile_count
     case player_count
     when 2 then 8
@@ -157,9 +190,10 @@ class Game < ApplicationRecord
     end
   end
 
+  # on cree les Tuiles pour la game en fonction du nombre de joueur
   def create_tiles_for_players()
     tile_count = self.calculate_tile_count
-    game_users_list = game_users.to_a
+    game_users_list = game_users.reload.to_a
     Rails.logger.info "Liste des game_users : #{game_users_list.map(&:id)}"
     
     tile_count.times do |i|
@@ -205,7 +239,7 @@ class Game < ApplicationRecord
 
 
   def self.ongoing_game_custom(user,custom_code)
-    # on rejoind une partie si une partie en cours
+    # on rejoind une partie si on a une partie en cours
     ongoing_game = self.ongoing_game(user)
     if ongoing_game
       game_user = ongoing_game.game_users.find_by(user_id: user.id)

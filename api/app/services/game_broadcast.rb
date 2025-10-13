@@ -10,17 +10,63 @@ class GameBroadcast
         end
     end
 
-    # envoi un message pour demender confirmation de demarage de la partie a tous les joueurs sauf le joueur a l'initiative qui est pres valide
-    def self.game_broadcast_ready_to_play(game_id, game_user_id)
-        GameUser.find(game_user_id).update(player_ready: true)
+    def self.user_broadcast_waiting_for_players(user_id, game_id)
         game = Game.find(game_id)
-        gameUsers = game.game_users.where.not(id: game_user_id).where(abandoned: false)
+        user = User.find(user_id)
+        waiting_players_count = game.waiting_players_count
+        custom_code = game.custom_code
+        ActionCable.server.broadcast "user_#{user_id}", {
+            type: 'waiting_for_players',
+            game_id: game_id,
+            waiting_players_count: waiting_players_count,
+            **(custom_code ? { custom_code: custom_code } : {})
+        }
+    end
+
+
+    def self.game_broadcast_waiting_for_players(game_id)
+        game = Game.find(game_id)
+        gameUsers = game.game_users.where(abandoned: false)
+        custom_code = game.custom_code
+        gameUsers.each do |gameUser|
+            ActionCable.server.broadcast "user_#{gameUser.user_id}", {
+                type: 'waiting_for_players',
+                game_id: game_id,
+                waiting_players_count: gameUsers.count,
+                **(custom_code ? { custom_code: custom_code } : {})
+            }
+        end
+    end
+
+    # envoi un message pour demender confirmation de demarage de la partie a tous les joueurs 
+    def self.game_broadcast_ready_to_play(game_id)
+        game = Game.find(game_id)
+        custom_code = game.custom_code
+        waiting_players_count = game.waiting_players_count
+        gameUsers = game.game_users.where(abandoned: false)
         gameUsers.each do |gameUser|
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
                 type: 'ready_to_play',
-                game_id: game_id
+                already_confirmation: gameUser.player_ready,
+                game_id: game_id,
+                waiting_players_count: waiting_players_count,
+                **(custom_code ? { custom_code: custom_code } : {})
             }
         end
+    end
+
+    #message pour demender confirmation de demarage de la partie
+    def self.user_broadcast_ready_to_play(user_id, game_id)
+        game = Game.find(game_id)
+        waiting_players_count = game.waiting_players_count
+        custom_code = game.custom_code
+        ActionCable.server.broadcast "user_#{user_id}", {
+                already_confirmation: GameUser.find_by(user_id: user_id, game_id: game_id).player_ready,
+                type: 'ready_to_play',
+                game_id: game_id,
+                waiting_players_count: waiting_players_count,
+                **(custom_code ? { custom_code: custom_code } : {})
+            }
     end
 
 
@@ -57,6 +103,16 @@ class GameBroadcast
             type: 'waiting_for_other_players',
             game_id: game_id,
             message: 'En attente des autres joueurs...'
+        }
+    end
+
+    def self.user_broadcast_player_destroyed(game_id, user_id)
+        p "4"*100
+        p user_id
+        p "4"*100
+        ActionCable.server.broadcast "user_#{user_id}", {
+            type: 'player_destroyed',
+            game_id: game_id,
         }
     end
 

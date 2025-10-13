@@ -20,6 +20,8 @@ Rails.application.routes.draw do
       post 'games/join_game_custom', to: 'games#join_game_custom'
       post 'games/launch_custom_game', to: 'games#launch_custom_game'
       post 'games/startGameAfterTimeout', to: 'games#startGameAfterTimeout'
+      post 'games/i_am_ready', to: 'games#i_am_ready'
+      post 'games/startGameAfterDelay', to: 'games#startGameAfterDelay'
 
       # Routes de tiles
       resources :games do

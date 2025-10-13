@@ -32,6 +32,8 @@
 
 .info-item {
     margin-bottom: 15px;
+    display: flex;
+    align-items: center;    /* aligne verticalement les éléments */
 }
 
 .info-item:last-child {
@@ -39,20 +41,21 @@
 }
 
 .info-item label {
-    display: block;
-    margin-bottom: 8px;
+    /* display: block; */
+    display: flex;
+    /* margin-bottom: 8px; */
     color: #666;
     font-size: 14px;
     font-weight: 500;
 }
 
 .code-display {
-    font-size: 32px;
+    font-size: 20px;
     font-weight: 700;
     color: #007bff;
     text-align: center;
-    padding: 15px;
-    background: white;
+    /* padding: 15px; */
+    /* background: white; */
     border-radius: 6px;
     letter-spacing: 4px;
 }

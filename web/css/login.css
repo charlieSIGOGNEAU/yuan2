@@ -20,3 +20,9 @@ form button {
 form button:hover {
     background: #0056b3;
 } 
+
+@media (max-height: 550px) {
+    .titre-image {
+      display: none;
+    }
+  }

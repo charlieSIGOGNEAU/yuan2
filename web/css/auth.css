@@ -127,3 +127,8 @@
     color: #333;
 }
 
+@media (max-height: 550px) {
+    .titre-image {
+      display: none;
+    }
+  }

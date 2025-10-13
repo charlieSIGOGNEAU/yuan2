@@ -22,7 +22,6 @@ export const GameMenuPage = {
     },
 
     async startQuickGame() {
-
         const response = await fetch(`${ServerConfig.HTTP_BASE}/games/quick_game`, {
             method: 'POST',
             headers: { 
@@ -30,12 +29,14 @@ export const GameMenuPage = {
                 'Authorization': `Bearer ${Auth.authToken}`
             }
         });
-        
-        // const data = await response.json();
-        
-        // if (data.success) {
-        //     WebSocketClient.subscribeToGameChannel(data.game_id);
-        // }
+        const data = await response.json();
+        console.log('🎮 Données reçues:', data);
+        if (data.game_id) {
+            // Router.navigateTo('player-waiting',{game_id: data.game_id});
+        }
+        else {
+            console.error('❌ Erreur lors de la tentative de création de partie rapide:', data);
+        }
     },
 
     async createCustomGame() {
@@ -49,9 +50,14 @@ export const GameMenuPage = {
         const data = await response.json();
         console.log('🎮 Données reçues:', data);
         if (data.custom_code) {
-            console.log('🎮 Code personnalisé:', data.custom_code);
-            const display = document.getElementById("game-code-display");
-            display.textContent = data.custom_code;  // remplace "-"
+            const data2 = {
+                custom_code: data.custom_code,
+                waiting_players_count: data.waiting_players_count
+            };
+            return data2;
+        }
+        else {
+            return false;
         }
     },
 
@@ -63,6 +69,8 @@ export const GameMenuPage = {
         document.getElementById('quick-game-btn')?.addEventListener('click', () => {
             console.log('🎮 Partie rapide sélectionnée');
             this.startQuickGame();
+            // Router.navigateTo('player-waiting');
+
         });
 
         // Rejoindre une partie personnalisée
@@ -71,9 +79,11 @@ export const GameMenuPage = {
         });
 
         // Créer une partie personnalisée
-        document.getElementById('create-custom-game-btn')?.addEventListener('click', () => {
-            this.createCustomGame();
-            Router.navigateTo('create-quick-game');
+        document.getElementById('create-custom-game-btn')?.addEventListener('click', async () => {
+            const data2 = await this.createCustomGame();
+            if (data2) {
+                Router.navigateTo('create-quick-game',data2);
+            }
         });
 
         // Options

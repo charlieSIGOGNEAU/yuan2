@@ -8,6 +8,7 @@ import { uiManager } from './ui/UIManager.js';
 import { i18n } from '../core/i18n.js';
 import { simultaneousPlayPhase } from './phases/simultaneous-play-phase/simultaneous-play-phase.js';
 import { ServerConfig } from '../app/config.js';
+import { Router } from '../app/router.js';
 
 // Fonctions pour l'API
 export const gameApi = {
@@ -16,6 +17,8 @@ export const gameApi = {
     uiLoadingPromise: null, // Pour éviter les chargements multiples de l'UI
     currentPhaseInstance: null, // Référence vers l'instance de phase active
     baseUrl: ServerConfig.HTTP_BASE,
+    timer: null,
+
 
     iAmACreator(data) {
         const message = data.message;
@@ -27,27 +30,23 @@ export const gameApi = {
 
     checkAndRedirectToGameCreation(data) {
         if (this.iAmACreator(data) && data.message.game.game_status == 'waiting_for_players') {
-
-            // import Router dina
-            
-
-            // const custom_code = data.message.game.custom_code;
-            // const waiting_players_count = data.message.game.waiting_players_count;
             const data2 = {
                 custom_code: data.message?.game?.custom_code,
                 waiting_players_count: data.message?.game?.waiting_players_count || 0
               };
-              
-
-
             import('../app/router.js').then(module => {
                 module.Router.navigateTo('create-quick-game', data2);
             });
-
-
             return true;
-
         }
+    },
+
+    startDelay (methode) {
+        if (this.timer) {return}
+            this.timer = setTimeout(() => {
+                methode();
+                this.timer = null;
+            }, 5000);
     },
 
 
@@ -58,16 +57,21 @@ export const gameApi = {
 
         if (data.type !== 'ping' && data.type !== 'welcome' && data.type !== 'confirm_subscription') {
             console.log('📨 Message reçu:', data);
-
         }  
-        
-        
-        // Gestion du message d'attente des autres joueurs
-        // if (data.message && data.message.type === 'waiting_for_other_players') {
-        //     uiManager.updateInfoPanel(i18n.t('game.ui.waiting_for_others'));
-        //     return;
-        // }
-        
+
+        if (data.message && (data.message.type === 'ready_to_play' || data.message.type === 'waiting_for_players')) {
+            console.log('🎮 Message de ready_to_play reçu:', data.message);
+            Router.navigateTo('player-waiting',data.message);
+        }
+
+        if (data.message && data.message.type === 'ready_to_play') {
+            this.startDelay(() => this.startGameAfterDelay(data.message.game_id));
+        }
+
+        if (data.message && data.message.type === 'player_destroyed') {
+            console.log('🚫 Joueur détruit:', data.message.game_user_id);
+            Router.navigateTo('game-menu');
+        }
         
         if (data.message && data.message.type === 'game_details' ) {
             // Mettre à jour le gameState avec les nouvelles données
@@ -203,6 +207,21 @@ export const gameApi = {
 
 
 
+    async startGameAfterDelay(game_id) {
+        console.log('🎯🎯🎯 startGameAfterDelay');
+        const response = await fetch(`${this.baseUrl}games/startGameAfterDelay`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Auth.authToken}`
+            },
+            body: JSON.stringify({
+                game_id: game_id,
+            })
+        });
+        const data = await response.json();
+        console.log('🎯🎯🎯 data:', data);
+    },
 
     
     // Envoyer une tile à l'API

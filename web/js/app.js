@@ -16,6 +16,7 @@ import { SignupPage } from './app/signup.js';
 import { GameMenuPage } from './app/gameMenu.js';
 import { JoinQuickGamePage } from './app/joinQuickGame.js';
 import { CreateQuickGamePage } from './app/createQuickGame.js';
+import { PlayerWaitingPage } from './app/playerWaiting.js';
 
 // Pages d'options
 import { OptionsPage } from './app/options.js';
@@ -33,6 +34,7 @@ Router.registerPage('create-quick-game', CreateQuickGamePage);
 Router.registerPage('options', OptionsPage);
 Router.registerPage('change-name', ChangeNamePage);
 Router.registerPage('delete-account', DeleteAccountPage);
+Router.registerPage('player-waiting', PlayerWaitingPage);
 
 // Initialiser le router
 Router.init();

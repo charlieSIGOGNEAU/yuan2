@@ -135,3 +135,9 @@
 #logout-btn:hover {
     background: #c82333;
 } 
+
+@media (max-height: 550px) {
+    .titre-image {
+      display: none;
+    }
+  }
