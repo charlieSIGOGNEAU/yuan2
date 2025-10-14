@@ -34,34 +34,47 @@ class Game < ApplicationRecord
   # on verrifi si les 20s sont ecoule et lance la partie
   def start_game_after_delay
     # on peux probablement optimiser cette transaction et lock, mais elle ne devrais pas arriver souvent
-    transaction do
-      self.lock!
-      if (self.game_status == "waiting_for_confirmation_players") && (self.updated_at < 5.seconds.ago)
+    game_users_ready_count = self.game_users.where(player_ready: true).count
+    if game_users_ready_count >= 2
+      transaction do
+        self.lock!
+        p "1"*100
+        p self.updated_at<5
+        p "1"*100
+        p self.game_status
+        p "1"*100
+        if (self.game_status == "waiting_for_confirmation_players") && (self.updated_at < 20.seconds.ago)
         game_users = self.game_users
-        user_of_game_users_destroyed = []
-        game_users.each do |game_user|
-          unless game_user.player_ready
-            game_user.lock!
-            user = game_user.user
-            user_of_game_users_destroyed << user
-            game_user.destroy
-            p "2"*100
-            p user
-            p "2"*100
-            p user_of_game_users_destroyed
-            p "3"*100
+          user_of_game_users_destroyed = []
+          game_users.each do |game_user|
+            unless game_user.player_ready
+              game_user.lock!
+              user = game_user.user
+              user_of_game_users_destroyed << user
+              game_user.destroy
+              p "2"*100
+              p user
+              p "2"*100
+              p user_of_game_users_destroyed
+              p "3"*100
+            end
           end
-        end
-        self.waiting_players_count = self.game_users.count
-        if self.waiting_players_count >= 2
-          self.start_installation_phase()   
-          return {message: "game ready installation_phase", user_of_game_users_destroyed: user_of_game_users_destroyed}
+          self.waiting_players_count = self.game_users.count
+          if self.waiting_players_count >= 2
+            self.start_installation_phase()   
+            return {message: "game ready installation_phase", user_of_game_users_destroyed: user_of_game_users_destroyed}
+          else
+            self.game_status = "waiting_for_confirmation_players"
+            self.save!
+            return {message: "missing player, waiting for player"}
+          end
+          
         else
-          self.game_status = "waiting_for_confirmation_players"
-          self.save!
           return {message: "missing player, waiting for player"}
         end
       end
+    else
+      return {message: "missing player, waiting for player"}
     end
   end
 
@@ -226,7 +239,7 @@ class Game < ApplicationRecord
       custom_code = nil
       loop do
         custom_code = SecureRandom.alphanumeric(6).upcase
-        game = self.create(game_type: :custom_game, game_status: :waiting_for_players, creator: user, custom_code: custom_code, player_count: 8, waiting_players_count: 1)
+        game = self.create(game_type: :custom_game, game_status: :waiting_for_players, creator: user, custom_code: custom_code, player_count: 8, waiting_players_count: 1, creator_id: user.id)
         unless game.persisted?
           puts "❌ Erreurs : #{game.errors.full_messages.join(', ')}"
         end
@@ -280,48 +293,37 @@ class Game < ApplicationRecord
     end
   end
 
-  def self.launch_custom_game(user,custom_code)
-    game = self.where(custom_code: custom_code).first
+  def launch_custom_game()
     place_available = 0
     success = false
     Game.transaction do
-      game.lock!
-      if game.game_status == "waiting_for_players"
-        game.game_status = "installation_phase"
-        game.save!
-        place_available = 8 - game.waiting_players_count
+      self.lock!
+      if self.game_status == "waiting_for_players"
+        self.game_status = "waiting_for_confirmation_players"
+        self.save!
+        place_available = 8 - self.waiting_players_count
         success = true
       else
         raise ActiveRecord::Rollback
       end
     end
     unless success
-      return {message: "game already in installation phase"}
+      return {message: "error game not in waiting_for_players"}
     end
     if place_available > 0
-      game.reassign_players(place_available)
+      self.reassign_players(place_available)
     end
-    game.game_status = "installation_phase"
-    con_players_count = GameUser.where(game_id: game.id).count
-    game.player_count = con_players_count
-    game.save!
-    game.clan_names = game.the_clans()
-
-    # au cas ou une erreur dans mon code
-    begin
-      game.save!
-    rescue ActiveRecord::RecordInvalid => e
-      puts "Erreur lors de la sauvegarde : #{e.message}"
-    end
-
-    game.create_tiles_for_players()
-    return {game: game, message: "game ready installation_phase"}
+    player_count = GameUser.where(game_id: self.id).count
+    self.player_count = player_count
+    self.waiting_players_count = player_count
+    self.save!
+    return {game: self, message: "go ready to play"}
 
   end
 
 
   def reassign_players(place_available)
-    other_game = self.where(game_status: "waiting_for_players", game_type: "quick_game").first
+    other_game = Game.where(game_status: "waiting_for_players", game_type: "quick_game").first
     if other_game
       num_players_to_move = 0
       Game.transaction do
@@ -336,9 +338,6 @@ class Game < ApplicationRecord
             game_user.game_id = self.id
             game_user.save!
 
-            # demander desabonnement du joueur de la partie
-            user = game_user.user
-            user.unsubscribe_from_game(other_game.id)
           end
           self.waiting_players_count += num_players_to_move
           self.save!

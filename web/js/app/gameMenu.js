@@ -50,11 +50,12 @@ export const GameMenuPage = {
         const data = await response.json();
         console.log('🎮 Données reçues:', data);
         if (data.custom_code) {
-            const data2 = {
-                custom_code: data.custom_code,
-                waiting_players_count: data.waiting_players_count
-            };
-            return data2;
+            Router.navigateTo('player-waiting',data);
+            // const data2 = {
+            //     custom_code: data.custom_code,
+            //     waiting_players_count: data.waiting_players_count
+            // };
+            // return data2;
         }
         else {
             return false;

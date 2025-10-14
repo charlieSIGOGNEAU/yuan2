@@ -1,6 +1,6 @@
 class Api::V1::GamesController < ApplicationController
   before_action :authenticate_request
-  before_action :set_game, only: [:submit_victory, :i_am_ready, :startGameAfterDelay]
+  before_action :set_game, only: [:submit_victory, :i_am_ready, :startGameAfterDelay, :launch_custom_game]
   before_action :set_custom_code, only: [:join_game_custom]
 
   # POST /api/v1/games/quick_game
@@ -44,8 +44,10 @@ class Api::V1::GamesController < ApplicationController
     if message == "ongoing game"
       render json: { success: false, message: "You are already in a game", game_id: game.id, game_user_id: game_user.id, custom_code: game.custom_code, waiting_players_count: game.waiting_players_count }
       GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+
     elsif message == "new game"
       render json: { success: true, game_id: game.id, game_user_id: game_user.id, custom_code: result[:custom_code], waiting_players_count: game.waiting_players_count }
+      GameBroadcast.game_broadcast_waiting_for_players(game.id)
     end
   end
 
@@ -57,7 +59,8 @@ class Api::V1::GamesController < ApplicationController
       render json: { success: false, message: "You are already in a game" }
       game = result[:game]
       game_user = result[:game_user]
-      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      GameBroadcast.game_broadcast_waiting_for_players(game.id)
 
     elsif message == "game not found"
       render json: { success: false, message: "Game not found" }
@@ -65,28 +68,35 @@ class Api::V1::GamesController < ApplicationController
       game = result[:game]
       game_user = result[:game_user]
       render json: { success: true, game_id: game.id }
-      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      GameBroadcast.game_broadcast_waiting_for_players(game.id)
     elsif message == "joined game and game ready installation_phase"
     end
   end
 
   def launch_custom_game
-    result = Game.launch_custom_game(current_user,@custom_code)
-    if result
-      game = result[:game]
-      game_user = result[:game_user]
-      GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
-      render json: { success: false, game_id: game.id }
-    end
-    game = Game.find(params[:game_id])
-    if game
+    game = @game
+    user = current_user
+    creator = game.creator
+    if (user.id == creator.id && game.game_status == "waiting_for_players")
+    result = game.launch_custom_game
 
+    p "1"*100
+    p result
+    p "2"*100
+    end
+    if result[:message] == "go ready to play"
+      render json: { success: true, game_id: game.id }
+      game_user = game.game_users.find_by(user_id: user.id)
+      game_user.update(player_ready: true)
+      GameBroadcast.game_broadcast_ready_to_play(game.id)
     end
 
   end
 
   def i_am_ready
-    game = Game.find(params[:game_id])
+    # game = Game.find(params[:game_id])
+    game = @game
     game_user = game.game_users.find_by(user_id: current_user.id)
     result = game.i_am_ready(game_user)
     message = result[:message]

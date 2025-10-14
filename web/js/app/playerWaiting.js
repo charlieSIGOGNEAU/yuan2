@@ -21,6 +21,7 @@ export const PlayerWaitingPage = {
         const button = document.getElementById('go-to-game');
         const waiting_message = document.getElementById('waiting-message');
         const already_confirmation = document.getElementById('already-confirmation');
+        const start_game_btn = document.getElementById('start-game-btn');
 
 
 
@@ -44,6 +45,12 @@ export const PlayerWaitingPage = {
             already_confirmation.style.display = 'none';
         }
 
+        if (data.i_am_creator && data.waiting_players_count >= 2) {
+            start_game_btn.style.display = 'block';
+        } else {
+            start_game_btn.style.display = 'none';
+        }
+
 
         const div_custom_code = document.querySelector('.custom-code');
         if (data.custom_code) {
@@ -59,6 +66,21 @@ export const PlayerWaitingPage = {
         this.setupEvents();
 
     },
+    async launchCustomGame() {
+        const response = await fetch(`${ServerConfig.HTTP_BASE}/games/launch_custom_game`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Auth.authToken}`
+            },
+            body: JSON.stringify({
+                game_id: this.game_id,
+            })
+        });
+        const data = await response.json();
+        console.log('🎮 Données reçues:', data);
+    },
+
     async iamReady() {
         const response = await fetch(`${ServerConfig.HTTP_BASE}/games/i_am_ready`, {
             method: 'POST',
@@ -87,6 +109,11 @@ export const PlayerWaitingPage = {
             console.log('🔙 Je suis prêt');
             
             this.iamReady();
+        });
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            console.log('🚀 Lancement de la partie');
+            this.launchCustomGame();
+
         });
     }
 };

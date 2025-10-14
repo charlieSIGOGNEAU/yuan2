@@ -54,3 +54,12 @@
   background: white;
 }
 
+#start-game-btn {
+  display: none;
+  background: #28a745;
+  color: white;
+}
+
+#start-game-btn:hover {
+  background: #218838;
+}

@@ -31,12 +31,12 @@ export const JoinQuickGamePage = {
             const data = await response.json();
             console.log('📥 Réponse du serveur:', data);
             
-            if (data.success) {
-                alert(`✅ Vous avez rejoint la partie ${code} !`);
-                // TODO: Rediriger vers la page de jeu
-            } else {
-                alert(`❌ Erreur: ${data.message}`);
-            }
+            // if (data.success) {
+            //     alert(`✅ Vous avez rejoint la partie ${code} !`);
+            //     // TODO: Rediriger vers la page de jeu
+            // } else {
+            //     alert(`❌ Erreur: ${data.message}`);
+            // }
         } catch (error) {
             console.error('❌ Erreur lors de la tentative de rejoindre:', error);
             alert('❌ Erreur de connexion au serveur');
@@ -61,17 +61,18 @@ export const JoinQuickGamePage = {
         document.getElementById('back-to-game-menu')?.addEventListener('click', () => {
             Router.goBack();
         });
+        
     },
 
     // Gestion de la soumission
-    async handleSubmit(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const code = formData.get('code');
+    // async handleSubmit(e) {
+    //     e.preventDefault();
+    //     const formData = new FormData(e.target);
+    //     const code = formData.get('code');
         
-        console.log('🎮 Rejoindre la partie avec le code:', code);
-        // TODO: Implémenter la logique de rejoindre une partie
-        alert(`Rejoindre la partie ${code} - À implémenter`);
-    }
+    //     console.log('🎮 Rejoindre la partie avec le code:', code);
+    //     // TODO: Implémenter la logique de rejoindre une partie
+    //     alert(`Rejoindre la partie ${code} - À implémenter`);
+    // }
 };
 

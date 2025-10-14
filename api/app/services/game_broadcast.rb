@@ -13,9 +13,11 @@ class GameBroadcast
     def self.user_broadcast_waiting_for_players(user_id, game_id)
         game = Game.find(game_id)
         user = User.find(user_id)
+        i_am_creator = user.id == game.creator_id
         waiting_players_count = game.waiting_players_count
         custom_code = game.custom_code
         ActionCable.server.broadcast "user_#{user_id}", {
+            i_am_creator: i_am_creator,
             type: 'waiting_for_players',
             game_id: game_id,
             waiting_players_count: waiting_players_count,
@@ -29,7 +31,9 @@ class GameBroadcast
         gameUsers = game.game_users.where(abandoned: false)
         custom_code = game.custom_code
         gameUsers.each do |gameUser|
+            i_am_creator = gameUser.user_id == game.creator_id
             ActionCable.server.broadcast "user_#{gameUser.user_id}", {
+                i_am_creator: i_am_creator,
                 type: 'waiting_for_players',
                 game_id: game_id,
                 waiting_players_count: gameUsers.count,
