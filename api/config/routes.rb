@@ -22,6 +22,7 @@ Rails.application.routes.draw do
       post 'games/startGameAfterTimeout', to: 'games#startGameAfterTimeout'
       post 'games/i_am_ready', to: 'games#i_am_ready'
       post 'games/startGameAfterDelay', to: 'games#startGameAfterDelay'
+      post 'games/give_up_game', to: 'games#give_up_game'
 
       # Routes de tiles
       resources :games do

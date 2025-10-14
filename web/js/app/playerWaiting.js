@@ -22,6 +22,7 @@ export const PlayerWaitingPage = {
         const waiting_message = document.getElementById('waiting-message');
         const already_confirmation = document.getElementById('already-confirmation');
         const start_game_btn = document.getElementById('start-game-btn');
+        const back_to_game_menu_btn = document.getElementById('back-to-game-menu-btn');
 
 
 
@@ -60,8 +61,6 @@ export const PlayerWaitingPage = {
             div_custom_code.style.display = 'none';
         }
 
-        
-
 
         this.setupEvents();
 
@@ -96,6 +95,25 @@ export const PlayerWaitingPage = {
         console.log('🎮 Données reçues:', data);
     },
 
+    async giveUpGame() {
+        const response = await fetch(`${ServerConfig.HTTP_BASE}/games/give_up_game`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Auth.authToken}`
+            },
+            body: JSON.stringify({
+                game_id: this.game_id,
+            })
+        });
+        const data = await response.json();
+        console.log('🎮 Données reçues:', data);
+        if (data.success) {
+            Router.navigateTo('game-menu');
+        } else {
+            alert('❌ Erreur de connexion au serveur');
+        }
+    },
 
 
 
@@ -103,7 +121,8 @@ export const PlayerWaitingPage = {
     setupEvents() {
         document.getElementById('back-to-game-menu-btn').addEventListener('click', () => {
             console.log('🔙 Retour au menu');
-            // Router.navigateTo('game-menu');
+            this.giveUpGame();
+            
         });
         document.getElementById('go-to-game').addEventListener('click', () => {
             console.log('🔙 Je suis prêt');

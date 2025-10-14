@@ -1,6 +1,6 @@
 class Api::V1::GamesController < ApplicationController
   before_action :authenticate_request
-  before_action :set_game, only: [:submit_victory, :i_am_ready, :startGameAfterDelay, :launch_custom_game]
+  before_action :set_game, only: [:submit_victory, :i_am_ready, :startGameAfterDelay, :launch_custom_game, :give_up_game]
   before_action :set_custom_code, only: [:join_game_custom]
 
   # POST /api/v1/games/quick_game
@@ -166,8 +166,8 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def startGameAfterDelay
-    result = @game.start_game_after_delay
 
+    result = @game.start_game_after_delay
     message = result[:message]
     if message == "game ready installation_phase"
       render json: { success: true, message: "Game ready installation_phase" }
@@ -183,6 +183,34 @@ class Api::V1::GamesController < ApplicationController
         GameBroadcast.user_broadcast_player_destroyed(@game.id, user.id)
       end
     end
+  end
+
+  def give_up_game
+    game = @game
+    game_user = game.game_users.find_by(user_id: current_user.id)
+    result = game.give_up_game(game_user)
+    message = result[:message]
+    case message
+    when "player give up"
+      render json: { success: true, message: "Player give up" }
+      if game.game_status == "waiting_for_players"
+      GameBroadcast.game_broadcast_waiting_for_players(game.id)
+      else
+        GameBroadcast.game_broadcast_ready_to_play(game.id)
+      end
+    when "player give up and game ready installation_phase"
+      render json: { success: true, message: "player give up and game ready installation_phase" }
+      GameBroadcast.game_broadcast_game_details(game.id)
+    when "player give up and game waiting for players"
+      render json: { success: true, message: "player give up and game waiting for players" }
+      GameBroadcast.game_broadcast_waiting_for_players(game.id)
+    when "player not found"
+      render json: { success: false, message: "Player not found" }
+    when "game destroyed"
+      render json: { success: true, message: "nothing player left, game destroyed" }
+    end
+
+
   end
 
   private

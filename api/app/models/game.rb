@@ -38,11 +38,6 @@ class Game < ApplicationRecord
     if game_users_ready_count >= 2
       transaction do
         self.lock!
-        p "1"*100
-        p self.updated_at<5
-        p "1"*100
-        p self.game_status
-        p "1"*100
         if (self.game_status == "waiting_for_confirmation_players") && (self.updated_at < 20.seconds.ago)
         game_users = self.game_users
           user_of_game_users_destroyed = []
@@ -107,8 +102,6 @@ class Game < ApplicationRecord
       end
     end
   end
-
-
 
   # verrifie si l'utilisateur a une partie en cours
   def self.ongoing_game(user)
@@ -344,6 +337,39 @@ class Game < ApplicationRecord
         else
           raise ActiveRecord::Rollback
         end
+      end
+    end
+  end
+
+  def give_up_game(game_user)
+    transaction do
+      self.lock!
+      if ((self.game_status == "waiting_for_players" || self.game_status == "waiting_for_confirmation_players") && game_user)
+        game_user.destroy
+        transaction do
+          self.lock!
+          self.waiting_players_count -= 1
+          self.save!
+        end
+        if self.waiting_players_count == 0
+          self.destroy
+          return {message: "game destroyed"}
+        elsif (GameUser.where(game_id: self.id).where(player_ready: true).count == self.waiting_players_count && self.waiting_players_count >=2)
+          # lancer la game
+          self.player_count = self.waiting_players_count
+          self.save!
+          self.start_installation_phase()
+          return {message: "player give up and game ready installation_phase"}
+        elsif (self.game_status == "waiting_for_confirmation_players") && (GameUser.where(game_id: self.id).where(player_ready: true).count < 2)
+          # re mettre en status waiting_for_players
+          self.game_status = "waiting_for_players"
+          self.save!
+          return {message: "player give up and game waiting for players"}
+        else
+          return {message: "player give up"}
+        end
+      else
+        return {message: "player not found"}
       end
     end
   end
