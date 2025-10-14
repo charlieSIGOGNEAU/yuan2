@@ -168,7 +168,7 @@ class Api::V1::GamesController < ApplicationController
   def startGameAfterDelay
 
     result = @game.start_game_after_delay
-    message = result[:message]
+    message = result&.[](:message)
     if message == "game ready installation_phase"
       render json: { success: true, message: "Game ready installation_phase" }
       GameBroadcast.game_broadcast_game_details(@game.id)

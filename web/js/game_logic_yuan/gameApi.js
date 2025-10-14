@@ -46,7 +46,7 @@ export const gameApi = {
             this.timer = setTimeout(() => {
                 methode();
                 this.timer = null;
-            }, 20000);
+            }, 21000);
     },
 
 
