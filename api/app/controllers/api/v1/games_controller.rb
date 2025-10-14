@@ -172,13 +172,13 @@ class Api::V1::GamesController < ApplicationController
     if message == "game ready installation_phase"
       render json: { success: true, message: "Game ready installation_phase" }
       GameBroadcast.game_broadcast_game_details(@game.id)
-    else message == "missing player, waiting for player"
+    elsif message == "missing player, waiting for player"
       render json: { success: false, message: "Missing player, waiting for player" }
+      GameBroadcast.game_broadcast_waiting_for_players(@game.id)
+    elsif message == "game destroyed"
+      render json: { success: false, message: "Game destroyed" }  
     end
     if result[:user_of_game_users_destroyed]
-      p "3"*100
-      p result[:user_of_game_users_destroyed]
-      p "3"*100
       result[:user_of_game_users_destroyed].each do |user|
         GameBroadcast.user_broadcast_player_destroyed(@game.id, user.id)
       end

@@ -40,35 +40,30 @@ class Game < ApplicationRecord
         self.lock!
         if (self.game_status == "waiting_for_confirmation_players") && (self.updated_at < 20.seconds.ago)
         game_users = self.game_users
-          user_of_game_users_destroyed = []
-          game_users.each do |game_user|
-            unless game_user.player_ready
-              game_user.lock!
-              user = game_user.user
-              user_of_game_users_destroyed << user
-              game_user.destroy
-              p "2"*100
-              p user
-              p "2"*100
-              p user_of_game_users_destroyed
-              p "3"*100
-            end
-          end
-          self.waiting_players_count = self.game_users.count
-          if self.waiting_players_count >= 2
-            self.start_installation_phase()   
-            return {message: "game ready installation_phase", user_of_game_users_destroyed: user_of_game_users_destroyed}
-          else
-            self.game_status = "waiting_for_confirmation_players"
+        user_of_game_users_destroyed = []
+        game_users.each do |game_user|
+          unless game_user.player_ready
+            game_user.lock!
+            user = game_user.user
+            user_of_game_users_destroyed << user
+            game_user.destroy
+            p "2"*100
+            p user
+            p "2"*100
+            p user_of_game_users_destroyed
+            p "3"*100
+            self.waiting_players_count -= 1
             self.save!
-            return {message: "missing player, waiting for player"}
           end
-          
-        else
-          return {message: "missing player, waiting for player"}
         end
+        self.player_count = self.waiting_players_count
+        self.save!
+        self.start_installation_phase()   
+        return {message: "game ready installation_phase", user_of_game_users_destroyed: user_of_game_users_destroyed}
       end
     else
+      self.game_status = "waiting_for_players"
+      self.save!
       return {message: "missing player, waiting for player"}
     end
   end
