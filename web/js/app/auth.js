@@ -1,6 +1,7 @@
 import { Router } from './router.js';
 import { WebSocketClient } from './websocket.js';
 import { i18n } from '../core/i18n.js';
+import { ServerConfig } from './config.js';
 
 // Module d'authentification simplifié
 export const Auth = {
@@ -10,7 +11,7 @@ export const Auth = {
     // Connexion (ancienne méthode - gardée pour compatibilité)
     async login(name) {
         try {
-            const response = await fetch('http://localhost:3000/api/v1/auth/login', {
+            const response = await fetch(`${ServerConfig.HTTP_BASE}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name })
@@ -44,7 +45,7 @@ export const Auth = {
     // Connexion avec email/password
     async loginWithEmail(email, password) {
         try {
-            const response = await fetch('http://localhost:3000/api/v1/auth/login_email', {
+            const response = await fetch(`${ServerConfig.HTTP_BASE}/auth/login_email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -73,7 +74,7 @@ export const Auth = {
     // Inscription
     async signup(email, password) {
         try {
-            const response = await fetch('http://localhost:3000/api/v1/auth/signup', {
+            const response = await fetch(`${ServerConfig.HTTP_BASE}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })

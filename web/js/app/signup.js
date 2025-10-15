@@ -1,5 +1,7 @@
 import { loadPartial, loadCSS } from '../simple.js';
 import { Router } from './router.js';
+import { ServerConfig } from './config.js';
+import { Auth } from './auth.js';
 
 // Page d'inscription
 export const SignupPage = {
