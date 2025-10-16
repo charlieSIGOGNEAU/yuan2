@@ -91,7 +91,9 @@ class GameBroadcast
 
 
     # comme game_broadcast_game_details mais pour un seul joueur
-    def self.user_broadcast_game_details(user_id, game_id, game_user_id)
+    def self.user_broadcast_game_details(user_id, game_id)
+        game_user = GameUser.find_by(user_id: user_id, game_id: game_id)
+       game_user_id = game_user&.id
         # Charger proprement le game avec toutes ses associations
         game = Game.includes(:game_users, :tiles, :actions, :clans, :biddings).find(game_id)
         
@@ -111,9 +113,6 @@ class GameBroadcast
     end
 
     def self.user_broadcast_player_destroyed(game_id, user_id)
-        p "4"*100
-        p user_id
-        p "4"*100
         ActionCable.server.broadcast "user_#{user_id}", {
             type: 'player_destroyed',
             game_id: game_id,

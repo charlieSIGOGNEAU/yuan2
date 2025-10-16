@@ -11,7 +11,6 @@ class Api::V1::GamesController < ApplicationController
     game_user = result[:game_user]
 
     if game
-      # GameBroadcast.user_broadcast_game_details(current_user.id, game, game_user.id)
       case message
       when "ongoing game"
         GameBroadcast.game_broadcast_game_details(game.id)
@@ -21,10 +20,8 @@ class Api::V1::GamesController < ApplicationController
         GameBroadcast.game_broadcast_ready_to_play( game.id) 
       when "waiting for players"
         GameBroadcast.game_broadcast_waiting_for_players( game.id) 
-        # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       when "new game"
         GameBroadcast.game_broadcast_waiting_for_players(game.id)
-        # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       end
       render json: { success: true, game_id: game.id }
     else
@@ -43,7 +40,7 @@ class Api::V1::GamesController < ApplicationController
 
     if message == "ongoing game"
       render json: { success: false, message: "You are already in a game", game_id: game.id, game_user_id: game_user.id, custom_code: game.custom_code, waiting_players_count: game.waiting_players_count }
-      GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
+      GameBroadcast.user_broadcast_game_details(current_user.id, game.id)
 
     elsif message == "new game"
       render json: { success: true, game_id: game.id, game_user_id: game_user.id, custom_code: result[:custom_code], waiting_players_count: game.waiting_players_count }
@@ -59,7 +56,6 @@ class Api::V1::GamesController < ApplicationController
       render json: { success: false, message: "You are already in a game" }
       game = result[:game]
       game_user = result[:game_user]
-      # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       GameBroadcast.game_broadcast_waiting_for_players(game.id)
 
     elsif message == "game not found"
@@ -68,7 +64,6 @@ class Api::V1::GamesController < ApplicationController
       game = result[:game]
       game_user = result[:game_user]
       render json: { success: true, game_id: game.id }
-      # GameBroadcast.user_broadcast_game_details(current_user.id, game.id, game_user.id)
       GameBroadcast.game_broadcast_waiting_for_players(game.id)
     elsif message == "joined game and game ready installation_phase"
     end

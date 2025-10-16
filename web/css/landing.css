@@ -73,3 +73,19 @@
     height: 24px;
 }
 
+/* Conteneur pour le bouton Google rendu par le SDK */
+.google-btn-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50px;
+}
+
+/* Centrer le bouton Google dans le conteneur */
+.google-btn-container > div {
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+}
+

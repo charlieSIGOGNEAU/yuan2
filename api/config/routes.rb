@@ -9,7 +9,11 @@ Rails.application.routes.draw do
       post 'auth/login', to: 'auth#login'
       post 'auth/login_email', to: 'auth#login_email'
       post 'auth/signup', to: 'auth#signup'
+      post 'auth/google_login', to: 'auth#google_login'
       get 'auth/me', to: 'auth#me'
+      
+      # Routes de configuration
+      get 'config/google_client_id', to: 'config#google_client_id'
       
       # Routes utilisateur
       patch 'user', to: 'users#update'

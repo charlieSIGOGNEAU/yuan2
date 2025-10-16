@@ -1,5 +1,5 @@
 class Api::V1::AuthController < ApplicationController
-  before_action :authenticate_request, except: [:login, :login_email, :signup]
+  before_action :authenticate_request, except: [:login, :login_email, :signup, :google_login]
   
   # POST /api/v1/auth/login (ancienne méthode - compatibilité)
   def login
@@ -130,6 +130,89 @@ class Api::V1::AuthController < ApplicationController
         message: "Erreur lors de l'inscription",
         errors: user.errors.full_messages
       }, status: :unprocessable_entity
+    end
+  end
+
+  # POST /api/v1/auth/google_login
+  def google_login
+    puts "🔐 Tentative de connexion Google"
+    
+    if params[:credential].blank?
+      puts "❌ Token Google manquant"
+      return render json: {
+        success: false,
+        message: "Token Google requis"
+      }, status: :bad_request
+    end
+
+    begin
+      # Vérifier le token Google
+      validator = GoogleIDToken::Validator.new
+      client_id = ENV['GOOGLE_CLIENT_ID']
+      
+      payload = validator.check(params[:credential], client_id)
+      
+      if payload.nil?
+        puts "❌ Token Google invalide"
+        return render json: {
+          success: false,
+          message: "Token Google invalide"
+        }, status: :unauthorized
+      end
+
+      email = payload['email']
+      name = payload['name'] || email.split('@').first
+      google_id = payload['sub']
+      
+      puts "✅ Token Google vérifié pour: #{email}"
+      
+      # Chercher ou créer l'utilisateur
+      user = User.find_by(email: email)
+      
+      if user.nil?
+        # Créer un nouvel utilisateur Google
+        user = User.new(
+          email: email,
+          name: name,
+          provider: 'google',
+          language: params[:language] || 'fr'
+        )
+        
+        if user.save
+          puts "✅ Nouvel utilisateur Google créé: #{user.email} (ID: #{user.id})"
+        else
+          puts "❌ Erreur création utilisateur Google: #{user.errors.full_messages}"
+          return render json: {
+            success: false,
+            message: "Erreur lors de la création de l'utilisateur",
+            errors: user.errors.full_messages
+          }, status: :unprocessable_entity
+        end
+      else
+        puts "✅ Utilisateur Google existant trouvé: #{user.email} (ID: #{user.id})"
+      end
+      
+      # Générer le token JWT
+      token = user.generate_jwt_token
+      
+      render json: {
+        success: true,
+        message: "Connexion Google réussie",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          language: user.language
+        },
+        token: token
+      }, status: :ok
+      
+    rescue => e
+      puts "❌ Erreur lors de la vérification du token Google: #{e.message}"
+      render json: {
+        success: false,
+        message: "Erreur lors de la vérification du token Google"
+      }, status: :internal_server_error
     end
   end
 

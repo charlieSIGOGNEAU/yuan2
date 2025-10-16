@@ -23,7 +23,7 @@ class UserChannel < ApplicationCable::Channel
         end
 
         if ["installation_phase", "initial_placement", "bidding_phase", "starting_spot_selection", "simultaneous_play"].include?(ongoing_game_result[:game].game_status)
-          GameBroadcast.user_broadcast_game_details(user_id, game_id, game_user_id)
+          GameBroadcast.user_broadcast_game_details(user_id, game_id)
         end
 
       end
