@@ -27,6 +27,7 @@ Rails.application.routes.draw do
       post 'games/i_am_ready', to: 'games#i_am_ready'
       post 'games/startGameAfterDelay', to: 'games#startGameAfterDelay'
       post 'games/give_up_game', to: 'games#give_up_game'
+      post 'games/confirm_game_details_reception', to: 'games#confirm_game_details_reception'
 
       # Routes de tiles
       resources :games do

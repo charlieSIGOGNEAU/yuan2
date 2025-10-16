@@ -76,6 +76,14 @@ export const gameApi = {
         }
         
         if (data.message && data.message.type === 'game_details' ) {
+
+            // Envoyer une confirmation de réception à l'API
+            const gameId = data.message.game?.id;
+            const myGameUserId = data.message.my_game_user_id;
+            if (gameId && myGameUserId) {
+                this.confirmGameDetailsReception(gameId, myGameUserId);
+            }
+
             // Mettre à jour le gameState avec les nouvelles données
             gameState.update({
                 ...data.message,
@@ -257,6 +265,36 @@ export const gameApi = {
 
     async wait(seconds) {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    },
+
+    // Confirmer la réception d'un broadcast game_details
+    async confirmGameDetailsReception(gameId, myGameUserId) {
+
+        try {
+            const response = await fetch(`${this.baseUrl}games/confirm_game_details_reception`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Auth.authToken}`
+                },
+                body: JSON.stringify({
+                    game_id: gameId,
+                    game_user_id: myGameUserId
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Confirmation de réception envoyée:', gameId, myGameUserId);
+            } else {
+                console.warn('⚠️ Erreur lors de la confirmation:', data.message);
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'envoi de la confirmation:', error);
+            // On ne fait pas d'alerte à l'utilisateur car ce n'est pas bloquant
+            // Le système de retry côté serveur s'en chargera
+        }
     },
     
     // Envoyer une tile à l'API

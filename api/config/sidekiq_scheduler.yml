@@ -1,0 +1,9 @@
+# Configuration Sidekiq Scheduler
+# Documentation: https://github.com/sidekiq-scheduler/sidekiq-scheduler
+
+broadcast_retry_job:
+  cron: '*/5 * * * * *'  # Toutes les 5 secondes (cron étendu avec secondes)
+  class: BroadcastRetryJob
+  description: "Vérifie et retente les broadcasts game_details non confirmés"
+  enabled: true
+

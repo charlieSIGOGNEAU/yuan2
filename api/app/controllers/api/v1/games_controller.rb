@@ -208,6 +208,38 @@ class Api::V1::GamesController < ApplicationController
 
   end
 
+  # POST /api/v1/games/confirm_game_details_reception
+  # Confirme la réception d'un broadcast game_details
+  def confirm_game_details_reception
+    game_user_id = params[:game_user_id]
+    game_id = params[:game_id]
+    
+    unless game_user_id && game_id
+      render json: { success: false, message: "Missing parameters" }, status: 400
+      return
+    end
+    
+    # Vérifier que le current_user correspond au game_user
+    game_user = GameUser.find_by(id: game_user_id)
+    
+    unless game_user && game_user.user_id == current_user.id
+      render json: { success: false, message: "Unauthorized" }, status: 403
+      return
+    end
+    
+    # Confirmer la réception
+    confirmed = BroadcastConfirmationService.confirm_reception(game_user_id)
+    
+    if confirmed
+      render json: { success: true, message: "Confirmation reçue" }
+    else
+      render json: { success: true, message: "Aucun broadcast en attente" }
+    end
+  rescue => e
+    Rails.logger.error "❌ Erreur lors de la confirmation: #{e.message}"
+    render json: { success: false, message: e.message }, status: 500
+  end
+
   private
   def set_player_count
     @player_count = params[:player_count]
