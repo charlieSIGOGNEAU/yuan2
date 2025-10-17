@@ -27,3 +27,5 @@ echo "2. Le serveur Python (Ctrl+C puis 'python3 -m http.server 8000')"
 echo "3. Rechargez la page dans le navigateur (Ctrl+Shift+R)"
 
 
+
+

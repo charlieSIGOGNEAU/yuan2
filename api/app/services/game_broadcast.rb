@@ -139,6 +139,12 @@ class GameBroadcast
         end
     end
 
+    def self.user_broadcast_game_destroyed(user_id)
+        ActionCable.server.broadcast "user_#{user_id}", {
+            type: 'game_destroyed',
+        }
+    end
+
 
 
 

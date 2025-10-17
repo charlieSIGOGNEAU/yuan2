@@ -227,28 +227,27 @@ export class OptionsMenu {
 
     // Gérer l'abandon de la partie
     async handleAbandonGame() {
-
-
         console.log('🚪 Demande d\'abandon de partie');
-        console.log('🔍 Auth.authToken:', Auth.authToken);
-        
+        console.log('🔍 Auth.authToken:', Auth.authToken);        
         // Demander confirmation
-        const confirmation = confirm(i18n.t('options.abandon_confirmation'));
-        
+        const confirmation = confirm(i18n.t('options.abandon_confirmation'));        
         if (!confirmation) {
             console.log('❌ Abandon annulé');
             return;
         }
 
-        console.log("faire l'action passer son tour");
-        const gameapi = await import('../game_logic_yuan/gameApi.js');
-        gameapi.gameApi.sendActionToApi({
-            position_q: null,
-            position_r: null,
-            development_level: 0,
-            fortification_level: 0,
-            militarisation_level: 0
-        }, false);
+        if (gameState.game.game_status === 'simultaneous_play') {
+            console.log("faire l'action passer son tour");
+            const gameapi = await import('../game_logic_yuan/gameApi.js');
+            gameapi.gameApi.sendActionToApi({
+                position_q: null,
+                position_r: null,
+                development_level: 0,
+                fortification_level: 0,
+                militarisation_level: 0
+            }, false);
+        }
+
 
 
         try {
@@ -258,15 +257,13 @@ export class OptionsMenu {
                 console.error('❌ Token non trouvé');
                 return;
             }
-
             const gameUserId = gameState.myGameUserId;
             const gameId = gameState.game.id;
             
             if (!gameUserId || !gameId) {
                 console.error('❌ Informations de jeu non trouvées');
                 return;
-            }
-            
+            }          
 
             // Envoyer la requête au serveur pour abandonner la partie
             const response = await fetch(`${this.baseUrl}games/${gameId}/game_users/${gameUserId}/abandon`, {
@@ -280,22 +277,20 @@ export class OptionsMenu {
             const data = await response.json();
 
             if (data.success) {
-                console.log('✅ Partie abandonnée avec succès');
-                
+                console.log('✅ Partie abandonnée avec succès');                
                 // Fermer le menu
-                this.close();
-                
+                this.close();                
                 // Afficher un message de confirmation
                 if (window.uiManager) {
                     window.uiManager.showTemporaryMessage(
                         i18n.t('options.game_abandoned'),
                         3000
                     );
-                }
-                
+                }                
                 // Rediriger vers le menu principal après 3 secondes
-                setTimeout(() => {
-                    // rediriger vers la le choix de partie. on est en mono page donc complique
+                setTimeout(async () => {
+                    const { SessionManager } = await import('../app/sessionManager.js');
+                    SessionManager.resetToGameMenu();
                 }, 3000);
             } else {
                 console.error('❌ Erreur lors de l\'abandon de la partie:', data);

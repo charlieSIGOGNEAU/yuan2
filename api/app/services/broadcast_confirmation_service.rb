@@ -54,7 +54,6 @@ class BroadcastConfirmationService
       pattern = "#{REDIS_KEY_PREFIX}:*"
       keys = redis.keys(pattern)
       
-      Rails.logger.info "🔍 Vérification de #{keys.length} broadcasts en attente"
       
       keys.each do |key|
         game_user_id = extract_game_user_id_from_key(key)

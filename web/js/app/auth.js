@@ -112,8 +112,28 @@ export const Auth = {
         Router.navigateTo('landing');
     },
 
-    // Initialisation : afficher la landing page
-    init() {
-        Router.navigateTo('landing');
+    // Initialisation : vérifier si session sauvegardée, sinon landing page
+    async init() {
+        // Vérifier s'il y a une session sauvegardée (après un reset complet)
+        const { SessionManager } = await import('./sessionManager.js');
+        const savedSession = SessionManager.checkSavedSession();
+        
+        if (savedSession) {
+            // Restaurer la session
+            this.authToken = savedSession.token;
+            this.currentUser = savedSession.user;
+            
+            console.log('🔄 Session restaurée:', this.currentUser.name);
+            
+            // Initialiser i18n et WebSocket
+            await i18n.initialize(this.currentUser.language);
+            await WebSocketClient.connect();
+            
+            // Naviguer vers la page demandée (généralement game-menu)
+            Router.navigateTo(savedSession.redirectTo);
+        } else {
+            // Pas de session sauvegardée, afficher la landing page
+            Router.navigateTo('landing');
+        }
     }
 }; 

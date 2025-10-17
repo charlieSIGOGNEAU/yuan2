@@ -20,25 +20,35 @@ class Api::V1::GameUsersController < ApplicationController
 
   # POST /api/v1/games/:game_id/game_users/:id/abandon
   def abandon
+    if @game.installation_phase? || @game.initial_placement? || @game.bidding_phase? || @game.starting_spot_selection?
+      # Broadcaster d'abord aux joueurs
+      game_users = @game.game_users.where(abandoned: false)
+      game_users.each do |game_user|
+        GameBroadcast.user_broadcast_game_destroyed(game_user.user_id)
+      end
+      
+      # Ensuite supprimer la game (les dépendances seront supprimées automatiquement)
+      Game.transaction do
+        @game.lock!
+        @game.destroy!
+      end
+      
+      # Enfin, rendre la réponse
+      render json: { success: true, message: "Game destroyed" }
+      return
+    end
     # Vérifier que le game_user appartient bien à l'utilisateur actuel
     if @game_user.user_id != current_user.id
       render json: { success: false, message: "Unauthorized" }, status: 403
       return
     end
-
     # Vérifier que la partie n'est pas déjà terminée
     if @game.completed? || @game.end_dispute?
       render json: { success: false, message: "Game already finished" }, status: 422
       return
     end
-
-
-
     # Marquer le game_user comme ayant abandonné
     if @game_user.update(abandoned: true)
-      # Optionnel : broadcaster l'information aux autres joueurs
-      # GameBroadcast.game_broadcast_player_abandoned(@game.id, @game_user.id)
-      
       render json: { 
         success: true, 
         message: "Game abandoned successfully"
@@ -53,7 +63,7 @@ class Api::V1::GameUsersController < ApplicationController
     GameBroadcast.user_broadcast_player_abandoned(@game.id, @game_user.id)
 
     # gerer le desabonement dans le model game_user
-    @game_user.unsubscribe_from_game(@game.id)
+    # @game_user.unsubscribe_from_game(@game.id)
 
     # Vérifier si la partie est terminée (0 ou 1 joueur actif restant)
     @game.check_game_completion_after_abandon

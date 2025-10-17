@@ -9,6 +9,7 @@ import { i18n } from '../core/i18n.js';
 import { simultaneousPlayPhase } from './phases/simultaneous-play-phase/simultaneous-play-phase.js';
 import { ServerConfig } from '../app/config.js';
 import { Router } from '../app/router.js';
+import { SessionManager } from '../app/sessionManager.js';
 
 // Fonctions pour l'API
 export const gameApi = {
@@ -67,6 +68,7 @@ export const gameApi = {
         }
 
         if (data.message && data.message.type === 'ready_to_play') {
+            console.log('🎯🎯🎯 ready_to_play test ');
             this.startDelay(() => this.startGameAfterDelay(data.message.game_id));
         }
 
@@ -118,6 +120,7 @@ export const gameApi = {
                     
                     // ici on peut rajouter des information entre les guimets qui s'aficheron par decu le game board3d
                     uiManager.updateInfoPanel('');
+                    uiManager.showMenuOnlyBar();
                     
                 } catch (error) {
                     console.error('❌ Erreur lors du chargement de l\'interface UI:', error);
@@ -188,11 +191,22 @@ export const gameApi = {
         } 
 
         if (data.message && data.message.type === 'player_abandoned') {
-            console.log('🚫 Joueur abandonné:', data.message.game_user_id);
-            const gameUser = gameState.game.game_users.find(gameUser => gameUser.id === data.message.game_user_id);
-            console.log('🔍 GameUser:', gameUser);
-            const clan = gameState.game.clans.find(clan => clan.id === gameUser.clan_id);
-            uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.player_abandoned', { colorHex: clan.color }));
+            if (gameState.game.game_status === 'simultaneous_play') {
+                console.log('🚫 Joueur abandonné:', data.message.game_user_id);
+                const gameUser = gameState.game.game_users.find(gameUser => gameUser.id === data.message.game_user_id);
+                console.log('🔍 GameUser:', gameUser);
+                const clan = gameState.game.clans.find(clan => clan.id === gameUser.clan_id);
+                uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.player_abandoned', { colorHex: clan.color }));
+            }
+        }
+
+        if (data.message && data.message.type === 'game_destroyed') {
+            console.log('🚫 Partie détruite');
+            uiManager.updateInfoPanel(i18n.t('game.game_destroyed'));
+            setTimeout(() => {
+                SessionManager.resetToGameMenu();
+              }, 5000); // 5000 ms = 5 secondes
+            return;
         }
 
         // Gestion du désabonnement d'un joueur du channel de la game
@@ -220,47 +234,49 @@ export const gameApi = {
     
 
     async startGameAfterDelay(game_id) {
-        console.log('🎯🎯🎯 startGameAfterDelay');
-        const maxRetries = 10;
-        const timeoutDuration = 10000; // 10 secondes
-    
-        const sendRequest = async (attempt = 1) => {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), timeoutDuration);
-    
-            try {
-                const response = await fetch(`${this.baseUrl}games/startGameAfterDelay`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${Auth.authToken}`
-                    },
-                    body: JSON.stringify({
-                        game_id: game_id,
-                    }),
-                    signal: controller.signal
-                });
-    
-                clearTimeout(timeout);
-                const data = await response.json();
-                console.log('🎯🎯🎯 data:', data);
-                
-                if (!data) throw new Error('Réponse API invalide');
-                return data;
-    
-            } catch (error) {
-                clearTimeout(timeout);
-                if (attempt < maxRetries) {
-                    console.warn(`⚠️ Tentative ${attempt} échouée, nouvel essai...`);
-                    return await sendRequest(attempt + 1);
-                } else {
-                    console.error('❌ Échec après 10 tentatives:', error);
-                    return null;
+        if (gameState && gameState.game && gameState.game.game_status === 'waiting_for_confirmation_players') {
+            console.log('🎯🎯🎯 startGameAfterDelay');
+            const maxRetries = 10;
+            const timeoutDuration = 10000; // 10 secondes
+        
+            const sendRequest = async (attempt = 1) => {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), timeoutDuration);
+        
+                try {
+                    const response = await fetch(`${this.baseUrl}games/startGameAfterDelay`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${Auth.authToken}`
+                        },
+                        body: JSON.stringify({
+                            game_id: game_id,
+                        }),
+                        signal: controller.signal
+                    });
+        
+                    clearTimeout(timeout);
+                    const data = await response.json();
+                    console.log('🎯🎯🎯 data:', data);
+                    
+                    if (!data) throw new Error('Réponse API invalide');
+                    return data;
+        
+                } catch (error) {
+                    clearTimeout(timeout);
+                    if (attempt < maxRetries && error.message === 'Réponse API invalide') {
+                        console.warn(`⚠️ Tentative ${attempt} échouée, nouvel essai...`);
+                        return await sendRequest(attempt + 1);
+                    } else {
+                        console.error('❌ Échec après 10 tentatives:', error);
+                        return null;
+                    }
                 }
-            }
-        };
-    
-        return await sendRequest();
+            };
+        
+            return await sendRequest();
+        }
     },
 
     async wait(seconds) {
@@ -269,7 +285,7 @@ export const gameApi = {
 
     // Confirmer la réception d'un broadcast game_details
     async confirmGameDetailsReception(gameId, myGameUserId) {
-
+        console.log('🔍 Confirmation de réception:', gameId, myGameUserId);
         try {
             const response = await fetch(`${this.baseUrl}games/confirm_game_details_reception`, {
                 method: 'POST',

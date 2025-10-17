@@ -161,22 +161,25 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def startGameAfterDelay
-
-    result = @game.start_game_after_delay
-    message = result&.[](:message)
-    if message == "game ready installation_phase"
-      render json: { success: true, message: "Game ready installation_phase" }
-      GameBroadcast.game_broadcast_game_details(@game.id)
-    elsif message == "missing player, waiting for player"
-      render json: { success: false, message: "Missing player, waiting for player" }
-      GameBroadcast.game_broadcast_waiting_for_players(@game.id)
-    elsif message == "game destroyed"
-      render json: { success: false, message: "Game destroyed" }  
-    end
-    if result[:user_of_game_users_destroyed]
-      result[:user_of_game_users_destroyed].each do |user|
-        GameBroadcast.user_broadcast_player_destroyed(@game.id, user.id)
+    if @game.game_status == "waiting_for_confirmation_players"
+      result = @game.start_game_after_delay
+      message = result&.[](:message)
+      if message == "game ready installation_phase"
+        render json: { success: true, message: "Game ready installation_phase" }
+        GameBroadcast.game_broadcast_game_details(@game.id)
+      elsif message == "missing player, waiting for player"
+        render json: { success: false, message: "Missing player, waiting for player" }
+        GameBroadcast.game_broadcast_waiting_for_players(@game.id)
+      elsif message == "game destroyed"
+        render json: { success: false, message: "Game destroyed" }  
       end
+      if result&.[](:user_of_game_users_destroyed)
+        result[:user_of_game_users_destroyed].each do |user|
+          GameBroadcast.user_broadcast_player_destroyed(@game.id, user.id)
+        end
+      end
+    else
+      render json: { success: false, message: "Game not in waiting_for_confirmation_players" }
     end
   end
 

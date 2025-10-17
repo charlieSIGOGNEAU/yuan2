@@ -1,5 +1,6 @@
 {
   "game": {
+    "game_destroyed": "Un joueur a abandonné la partie. Désolé pour le dérangement.",
     "help": {
       "Developpement": "Développement se sépare en 2 types :<br><br>{{aide:Colonisation:Colonisation}} : Si cible une province libre<br>(si niv.1-2 doit etre connecté, si niv.3 sans condition).<br><br>{{aide:Expansion:Expansion}} : Si cible une province possédé.<br><br>Conflits :<br>- Si 2 clans veulent la même province adjacent : elle reste neutre.<br>- Si 2 clans visent le même province : le clan avec le plus d'honneur cède et reçoit 6 Chao pour compenser.<br><br>{{tableau:honneur}}",
       "Colonisation": "Colonisation :<br>Récupère le territoire vise et ses adjacents.<br>niv. 2-3 : +2 chao.",
