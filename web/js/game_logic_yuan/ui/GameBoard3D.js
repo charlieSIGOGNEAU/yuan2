@@ -3,11 +3,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { meepleManager } from '../pieces/MeepleManager.js';
+import { createShadowManager } from './ShadowManager.js';
+import { createMeshMerger } from './MeshMerger.js';
 
 export class GameBoard3D {
     constructor(containerId) {
         
-
         this.container = document.getElementById(containerId);
         // Désactiver les comportements tactiles par défaut
         this.container.style.touchAction = 'none';
@@ -20,6 +21,7 @@ export class GameBoard3D {
         this.isDragging = false;
         this.dragStart = null;
         this.workplaneStartPosition = null;
+        this.workplaneTargetPosition = null; // Position cible pour le lissage
         this.activePointerId = null; // Pour suivre le doigt actif
         
         // Propriétés pour le drag and drop des villes
@@ -35,6 +37,14 @@ export class GameBoard3D {
         this.tileTemp = null;
         this.gltfLoader = new GLTFLoader(); // Ajouter le loader GLB
         this.meepleManager = meepleManager; // Référence au gestionnaire de meeples
+        
+        // Limitation FPS
+        this.targetFPS = 20; // FPS cible (peut être modifié via setFPS) - Défaut: 5 FPS
+        this.frameInterval = 1000 / this.targetFPS; // Intervalle entre frames en ms
+        this.lastFrameTime = 0; // Timestamp de la dernière frame rendue
+        
+        // Lissage du déplacement (pan)
+        this.panSmoothingFactor = 0.5; // 0 = pas de lissage, 1 = lissage maximal (0.5 = moyenne)
         
         // Remettre les propriétés liées à l'eau
         this.waterMesh = null; // Mesh de référence pour l'eau
@@ -112,43 +122,34 @@ export class GameBoard3D {
         this.scene.add(ambientLight);
         
         const directionalLight = new THREE.DirectionalLight(0xffffff, 3); // intensité de la lumière, augmente le contrast, Crée les ombres et les zones claires/sombres
-        directionalLight.position.set(5, 10, 5); //direction de la source de lumiere
-        directionalLight.castShadow = true;
+        directionalLight.position.set(-10, 4, -3); //direction de la source de lumiere
         this.scene.add(directionalLight);
         
-
+        // Ajouter le target de la lumière à la scène (nécessaire pour setLightOnSphere)
+        this.scene.add(directionalLight.target);
         
         this.workplane = new THREE.Group();
         this.scene.add(this.workplane);
 
-
-        // Après avoir créé la scène et le workplane
-
-
-        // Patch pour activer automatiquement les ombres sur tous les Mesh ajoutés dans la scène
-        const enableShadowsOnAdd = (parent) => {
-            const originalAdd = parent.add;
-            parent.add = (...objects) => {
-                objects.forEach(obj => {
-                    if (obj.isMesh) {
-                        obj.castShadow = true;
-                        obj.receiveShadow = true;
-                    }
-                    // Si le mesh contient des enfants
-                    obj.traverse(child => {
-                        if (child.isMesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                        }
-                    });
-                });
-                originalAdd.apply(parent, objects);
-            };
-        };
-
-        // Appliquer sur la scène et le workplane
-        enableShadowsOnAdd(this.scene);
-        enableShadowsOnAdd(this.workplane);
+        // Initialiser le gestionnaire d'ombres
+        this.shadowManager = createShadowManager(this.renderer, directionalLight, this.camera, this.workplane);
+        this.shadowManager.enableShadowsOnContainer(this.scene);
+        this.shadowManager.enableShadowsOnContainer(this.workplane);
+        
+        // Initialiser le gestionnaire de fusion de meshes
+        this.meshMerger = createMeshMerger(this.workplane, this.shadowManager);
+        
+        // Exposer globalement pour l'accès console
+        window.shadowManager = this.shadowManager;
+        window.meshMerger = this.meshMerger;
+        
+        // Exposer les fonctions FPS globalement
+        window.setFPS = (fps) => this.setFPS(fps);
+        window.getFPS = () => this.getFPS();
+        
+        // Exposer les fonctions de lissage du déplacement globalement
+        window.setPanSmoothing = (factor) => this.setPanSmoothing(factor);
+        window.getPanSmoothing = () => this.getPanSmoothing();
 
             
         // Maintenant précharger les modèles
@@ -186,6 +187,10 @@ export class GameBoard3D {
         this.updateCameraAngleForZoom();
         // Initialiser les bornes des tuiles
         this.calculateTileBounds();
+        // Optimiser la shadow box initiale
+        if (this.shadowManager) {
+            this.shadowManager.optimizeShadowBox(2);
+        }
         this.animate();
     }
 
@@ -236,6 +241,9 @@ export class GameBoard3D {
                     const woodFloor = new THREE.Mesh(geometry, material);
                     woodFloor.rotation.x = -Math.PI / 2; // Parallèle au plan XZ
                     woodFloor.position.set(0, -0.2, 0);
+                    
+                    // Marquer le sol pour qu'il reçoive des ombres
+                    woodFloor.userData = { type: 'floor' };
 
                     this.workplane.add(woodFloor);
                     this.woodFloor = woodFloor;
@@ -309,6 +317,9 @@ export class GameBoard3D {
             
             // L'eau est positionnée relativement à la tuile, donc position (0,0,0) par rapport à son parent
             waterInstance.position.set(0, 0, 0);
+            
+            // Marquer l'eau pour qu'elle ne projette pas d'ombres
+            waterInstance.userData = { tileType: 'eau' };
             
             return waterInstance;
         }
@@ -444,11 +455,19 @@ export class GameBoard3D {
                         tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
                         // Les modèles sont déjà à la bonne taille (3 unités)
                         
+                        // Marquer la tuile avec son type
+                        const tileType = modelUrl.includes('eau.glb') ? 'eau' : 'tile';
+                        tile.userData = { tileType: tileType };
+                        
                         // Utiliser le MeepleManager pour l'eau
                         this.createWaterInstanceAsync().then(waterInstance => {
                             if (waterInstance) {
                                 // Attacher l'eau comme enfant de la tuile
                                 tile.add(waterInstance);
+                                // Appliquer les paramètres d'ombres à l'eau
+                                if (this.shadowManager) {
+                                    this.shadowManager.enableShadowsOnObject(waterInstance);
+                                }
                             }
                         }).catch(error => {
                         });
@@ -462,6 +481,12 @@ export class GameBoard3D {
                         
             this.workplane.add(tile);
             this.tiles.push(tile); // Stocke la référence de la tuile
+            
+            // NOTE: Fusion désactivée pour préserver les matériaux et textures
+            // TODO: Implémenter une fusion qui gère les matériaux multiples
+            // if (tileType !== 'eau' && this.meshMerger) {
+            //     this.meshMerger.addTileToMerge(tile, true);
+            // }
             
             // Recalculer les bornes après ajout d'une tuile
             this.calculateTileBounds();
@@ -525,12 +550,19 @@ export class GameBoard3D {
             tile.rotation.y = rotation * Math.PI / 3; // Rotation sur l'axe Y pour les modèles 3D
             // Le modèle est déjà à la bonne taille
             
+            // Marquer la tuile temporaire avec son type
+            const tileType = modelUrl.includes('eau.glb') ? 'eau' : 'tile';
+            tile.userData = { tileType: tileType };
+            
             // Utiliser le MeepleManager pour l'eau
             this.createWaterInstanceAsync().then(waterInstance => {
                 if (waterInstance) {
                     // Attacher l'eau comme enfant de la tuile temporaire
                     tile.add(waterInstance);
-
+                    // Appliquer les paramètres d'ombres à l'eau
+                    if (this.shadowManager) {
+                        this.shadowManager.enableShadowsOnObject(waterInstance);
+                    }
                 }
             }).catch(error => {
             });
@@ -719,6 +751,12 @@ export class GameBoard3D {
             
             // Ajouter au workplane
             this.workplane.add(meepleInstance);
+            
+            // NOTE: Fusion désactivée pour préserver les matériaux et textures
+            // TODO: Implémenter une fusion qui gère les matériaux multiples
+            // if (type === 'temple' && this.meshMerger) {
+            //     this.meshMerger.addTempleToMerge(meepleInstance, true);
+            // }
             
             return meepleInstance;
         }
@@ -944,6 +982,7 @@ export class GameBoard3D {
             this.activePointerId = e.pointerId;
             this.dragStart = result.point;
             this.workplaneStartPosition = this.workplane.position.clone();
+            this.workplaneTargetPosition = this.workplane.position.clone(); // Initialiser la cible à la position actuelle
             
             // Recalculer les bornes basées sur les tuiles au début du déplacement
             this.calculateTileBounds();
@@ -951,7 +990,7 @@ export class GameBoard3D {
             // Capturer les événements pointer
             this.container.setPointerCapture(e.pointerId);
         }
-
+        // deplacement du plan
         onPointerMove(e) {
             // Ne traiter que les événements du pointer actif
             if ((!this.isDragging && !this.isDraggingCity) || e.pointerId !== this.activePointerId) return;
@@ -976,7 +1015,9 @@ export class GameBoard3D {
             
             // Contraindre la position dans les limites
             this.constrainPosition(newPosition);
-            this.workplane.position.copy(newPosition);
+            
+            // Stocker la position cible pour le lissage progressif dans animate()
+            this.workplaneTargetPosition = newPosition;
         }
         
         // Calcule les bornes basées sur les tuiles posées
@@ -1161,6 +1202,9 @@ export class GameBoard3D {
                 }
             }
 
+            // Si on vient de finir un drag du workplane, optimiser la shadow box
+            const wasDragging = this.isDragging;
+            
             this.isDragging = false;
             this.activePointerId = null;
             this.clickStartPosition = null;
@@ -1168,6 +1212,11 @@ export class GameBoard3D {
             
             // Libérer la capture du pointer
             this.container.releasePointerCapture(e.pointerId);
+            
+            // Optimiser la shadow box après le pan
+            if (wasDragging && this.shadowManager) {
+                this.shadowManager.optimizeShadowBox(2);
+            }
         }
 
         handleObjectClick(object) {
@@ -1224,49 +1273,54 @@ export class GameBoard3D {
             this.animateTileTempRotation(this.tempTileRotation * Math.PI / 3);
         }
 
-        onWheel(e) {
-            e.preventDefault();
-            
-            const groundPointBefore = this.getMouseOnGround(e);
-            if (!groundPointBefore) return;
+    onWheel(e) {
+        e.preventDefault();
+        
+        const groundPointBefore = this.getMouseOnGround(e);
+        if (!groundPointBefore) return;
 
-            const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9;
+        const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9;
 
-            // Calcul de l'échelle bornée
-            const currentScale = this.workplane.scale.x; // uniforme
-            const proposedScale = currentScale * scaleFactor;
-            const clampedScale = Math.max(this.minScale, Math.min(this.maxScale, proposedScale));
-            if (clampedScale === currentScale) {
-                return; // déjà aux bornes
-            }
-
-            // Coords locales du point d'ancrage AVANT zoom
-            const localAnchor = new THREE.Vector3(
-                (groundPointBefore.x - this.workplane.position.x) / currentScale,
-                0,
-                (groundPointBefore.z - this.workplane.position.z) / currentScale
-            );
-
-            // Appliquer la nouvelle échelle (autour de l'origine du workplane)
-            this.workplane.scale.setScalar(clampedScale);
-
-            // Mettre à jour l'angle caméra selon le zoom
-            this.updateCameraAngleForZoom();
-
-            // Recalculer la position du point d'ancrage en MONDE avec la nouvelle échelle
-            const worldFromLocal = new THREE.Vector3(
-                this.workplane.position.x + localAnchor.x * clampedScale,
-                0,
-                this.workplane.position.z + localAnchor.z * clampedScale
-            );
-
-            // Corriger la position du workplane pour que le point reste sous la souris
-            const deltaWorld = new THREE.Vector3().subVectors(worldFromLocal, groundPointBefore);
-            this.workplane.position.sub(new THREE.Vector3(deltaWorld.x, 0, deltaWorld.z));
-
-            // Contraindre la position après réglages
-            this.constrainPosition(this.workplane.position);
+        // Calcul de l'échelle bornée
+        const currentScale = this.workplane.scale.x; // uniforme
+        const proposedScale = currentScale * scaleFactor;
+        const clampedScale = Math.max(this.minScale, Math.min(this.maxScale, proposedScale));
+        if (clampedScale === currentScale) {
+            return; // déjà aux bornes
         }
+
+        // Coords locales du point d'ancrage AVANT zoom
+        const localAnchor = new THREE.Vector3(
+            (groundPointBefore.x - this.workplane.position.x) / currentScale,
+            0,
+            (groundPointBefore.z - this.workplane.position.z) / currentScale
+        );
+
+        // Appliquer la nouvelle échelle (autour de l'origine du workplane)
+        this.workplane.scale.setScalar(clampedScale);
+
+        // Mettre à jour l'angle caméra selon le zoom
+        this.updateCameraAngleForZoom();
+
+        // Recalculer la position du point d'ancrage en MONDE avec la nouvelle échelle
+        const worldFromLocal = new THREE.Vector3(
+            this.workplane.position.x + localAnchor.x * clampedScale,
+            0,
+            this.workplane.position.z + localAnchor.z * clampedScale
+        );
+
+        // Corriger la position du workplane pour que le point reste sous la souris
+        const deltaWorld = new THREE.Vector3().subVectors(worldFromLocal, groundPointBefore);
+        this.workplane.position.sub(new THREE.Vector3(deltaWorld.x, 0, deltaWorld.z));
+
+        // Contraindre la position après réglages
+        this.constrainPosition(this.workplane.position);
+        
+        // Optimiser la shadow box après le zoom
+        if (this.shadowManager) {
+            this.shadowManager.optimizeShadowBox(2);
+        }
+    }
 
         onResize() {
             // Utiliser la taille du container au lieu de window
@@ -1276,17 +1330,60 @@ export class GameBoard3D {
         this.updateFovByOrientation();
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(containerRect.width, containerRect.height);
+            
+            // Optimiser la shadow box après le resize
+            if (this.shadowManager) {
+                this.shadowManager.optimizeShadowBox(2);
+            }
         }
 
         animate() {
             requestAnimationFrame(this.animate.bind(this));
             
-            // Gestion des animations
+            // Limitation FPS : vérifier si assez de temps s'est écoulé
             const currentTime = performance.now();
+            const elapsed = currentTime - this.lastFrameTime;
+            
+            if (elapsed < this.frameInterval) {
+                // Pas assez de temps écoulé, skip ce frame
+                return;
+            }
+            
+            // Enregistrer le temps de ce frame
+            this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
+            
+            // Lissage du déplacement du workplane (pan smoothing)
+            if (this.workplaneTargetPosition) {
+                // Calculer le facteur de lerp : plus le smoothing est élevé, plus le mouvement est lent
+                // panSmoothingFactor = 0 : mouvement instantané (lerp factor = 1)
+                // panSmoothingFactor = 0.5 : moyenne (lerp factor = 0.5)
+                // panSmoothingFactor = 1 : très lent (lerp factor = 0)
+                const lerpFactor = 1 - this.panSmoothingFactor;
+                
+                // Interpoler progressivement vers la position cible
+                this.workplane.position.lerp(this.workplaneTargetPosition, lerpFactor);
+                
+                // Si on est très proche de la cible (< 0.01 unité), on snap à la position exacte
+                const distance = this.workplane.position.distanceTo(this.workplaneTargetPosition);
+                if (distance < 0.01) {
+                    this.workplane.position.copy(this.workplaneTargetPosition);
+                    // Si on n'est plus en train de draguer, on peut effacer la cible
+                    if (!this.isDragging) {
+                        this.workplaneTargetPosition = null;
+                    }
+                }
+            }
+            
+            // Mise à jour des ombres (gestion de la limitation si activée)
+            if (this.shadowManager) {
+                this.shadowManager.update(currentTime);
+            }
+            
+            // Gestion des animations
             for (let i = this.animations.length - 1; i >= 0; i--) {
                 const animation = this.animations[i];
-                const elapsed = currentTime - animation.startTime;
-                const progress = Math.min(elapsed / animation.duration, 1);
+                const animElapsed = currentTime - animation.startTime;
+                const progress = Math.min(animElapsed / animation.duration, 1);
                 
                 if (animation.property === 'rotationZ') {
                     // Animation de rotation Z (sprites 2D)
@@ -1309,6 +1406,40 @@ export class GameBoard3D {
             }
             
             this.renderer.render(this.scene, this.camera);
+        }
+
+        // Définir les FPS cible (appelable depuis la console)
+        setFPS(fps) {
+            this.targetFPS = Math.max(1, Math.min(144, fps)); // Limité entre 1 et 144 FPS
+            this.frameInterval = 1000 / this.targetFPS;
+            console.log(`🎬 FPS limité à: ${this.targetFPS} FPS (${this.frameInterval.toFixed(2)}ms par frame)`);
+        }
+
+        // Obtenir les FPS actuels
+        getFPS() {
+            console.log(`🎬 FPS cible: ${this.targetFPS} FPS`);
+            return this.targetFPS;
+        }
+
+        // Définir le facteur de lissage du déplacement (pan)
+        setPanSmoothing(factor) {
+            this.panSmoothingFactor = Math.max(0, Math.min(1, factor)); // Limité entre 0 et 1
+            const percentage = Math.round((1 - this.panSmoothingFactor) * 100);
+            console.log(`🎯 Lissage du déplacement: ${this.panSmoothingFactor.toFixed(2)} (réactivité à ${percentage}%)`);
+            if (this.panSmoothingFactor === 0) {
+                console.log(`   → Pas de lissage (mouvement direct)`);
+            } else if (this.panSmoothingFactor === 0.5) {
+                console.log(`   → Moyenne entre ancienne et nouvelle position`);
+            } else if (this.panSmoothingFactor >= 0.8) {
+                console.log(`   → Lissage très important (mouvement lent)`);
+            }
+        }
+
+        // Obtenir le facteur de lissage actuel
+        getPanSmoothing() {
+            const percentage = Math.round((1 - this.panSmoothingFactor) * 100);
+            console.log(`🎯 Lissage du déplacement: ${this.panSmoothingFactor.toFixed(2)} (réactivité à ${percentage}%)`);
+            return this.panSmoothingFactor;
         }
 
     

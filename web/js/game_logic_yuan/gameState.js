@@ -436,17 +436,17 @@ class Territory {
         // Créer l'animation selon le type de rempart
         if (this.rempart === 'indestruible') {
             // Animation dramatique pour les remparts indestructibles
-            this.animateRempartFall(mesh, pos, 4.0, 1200); // Plus haut et plus long
+            this.animateRempartFall(mesh, pos, 4.0, 1200, gameBoard); // Plus haut et plus long
         } else {
             // Animation plus douce pour les remparts fortifiés
-            this.animateRempartFall(mesh, pos, 2.0, 800); // Plus bas et plus court
+            this.animateRempartFall(mesh, pos, 2.0, 800, gameBoard); // Plus bas et plus court
         }
         
         console.log(`✅ Rempart ${this.rempart} créé et animation démarrée`);
     }
 
     // Animer la chute du rempart avec un effet d'écrasement
-    animateRempartFall(mesh, targetPosition, startHeight, duration) {
+    animateRempartFall(mesh, targetPosition, startHeight, duration, gameBoard = null) {
         const startY = startHeight; // Position de départ en hauteur
         const targetY = targetPosition.y; // Position finale
         const startTime = Date.now();
@@ -490,6 +490,8 @@ class Territory {
                 // Finaliser la position et rotation
                 mesh.position.y = targetY;
                 mesh.rotation.y = 0;
+                
+                // Note: Les remparts ne sont pas fusionnés, donc pas besoin d'ajouter à la fusion
             }
         };
         
@@ -526,19 +528,24 @@ class Territory {
             
             // Créer l'animation de chute si demandé, sinon le positionner directement
             if (shouldAnimate) {
-                this.animateTempleFall(mesh, pos);
+                this.animateTempleFall(mesh, pos, gameBoard);
             } else {
                 mesh.position.set(pos.x, pos.y, pos.z);
                 mesh.rotation.y = 0;
+                
+                // Ajouter à la fusion immédiatement si elle est activée (pas d'animation)
+                if (gameBoard.meshMerger && gameBoard.meshMerger.mergingEnabled) {
+                    gameBoard.meshMerger.addTempleToMerge(mesh, true);
+                }
             }
         }
     }
 
     // Animer la chute du temple avec un effet d'écrasement esthétique
-    animateTempleFall(mesh, targetPosition) {
+    animateTempleFall(mesh, targetPosition, gameBoard = null) {
         const startY = 5; // Position de départ en hauteur
         const targetY = targetPosition.y; // Position finale
-        const duration = 1000; // Durée en ms
+        const duration = 1000; // Durée en ms (1 seconde)
         const startTime = Date.now();
         
         // Positionner le temple en hauteur au début
@@ -580,6 +587,12 @@ class Territory {
                 // Finaliser la position et rotation
                 mesh.position.y = targetY;
                 mesh.rotation.y = 0;
+                
+                // Ajouter à la fusion APRÈS l'animation si elle est activée
+                if (gameBoard && gameBoard.meshMerger && gameBoard.meshMerger.mergingEnabled) {
+                    console.log('🔨 Ajout du temple à la fusion après animation');
+                    gameBoard.meshMerger.addTempleToMerge(mesh, true);
+                }
             }
         };
         

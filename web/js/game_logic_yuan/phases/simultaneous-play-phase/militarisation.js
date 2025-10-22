@@ -13,19 +13,13 @@ export const militarisation = {
         this.actionsOfTurn = gameState.game.actions.filter(action => action.turn === processedTurns);
         this.assigneMilitarisation(this.actionsOfTurn);
         await this.realiseRecrutements(this.actionsOfTurn.filter(action => action.militarisation_type === "recrutement"));
-        // if (this.animation) {
-        //     uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.recrutement_complete'));
-        //     await uiManager.waitForNext();
-        // }
+
         if ((this.animation) && (this.actionsOfTurn.filter(action => action.militarisation_type === "recrutement").length > 0)) {
             this.wait(1000);
         }
         console.log("🔄 debut attaques" , this.actionsOfTurn.filter(action => action.militarisation_type === "attaque"));
         await this.realiseAttaques(this.actionsOfTurn.filter(action => action.militarisation_type === "attaque"));
-        // if (this.animation) {
-        //     uiManager.updateInfoPanel(i18n.t('game.phases.simultaneous_play.attaque_complete'));
-        //     await uiManager.waitForNext();
-        // }
+
         if ((this.animation) && (this.actionsOfTurn.filter(action => action.militarisation_type === "attaque").length > 0)) {
             this.wait(1000);
         }

@@ -726,7 +726,8 @@ export const developpementAndMore = {
                 
                 try {
                     if (this.gameBoard && this.gameBoard.meepleManager) {
-                        const templePromise = territory.createTemple(this.gameBoard, this.gameBoard.meepleManager);
+                        // Activer l'animation selon la propriété this.animation
+                        const templePromise = territory.createTemple(this.gameBoard, this.gameBoard.meepleManager, this.animation);
                         templeCreationPromises.push(templePromise);
                     }
                 } catch (error) {
