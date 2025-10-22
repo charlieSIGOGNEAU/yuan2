@@ -7,6 +7,7 @@ import { developpementAndMore } from './developpement.js';
 import { fortification } from './fortification.js';
 import { militarisation } from './militarisation.js';
 import { arrowManager } from '../../gameplay/arrowManager.js';
+// import { ShadowManager } from '../../ui/ShadowManager.js';
 
 
 export const simultaneousPlayPhase = {
@@ -111,6 +112,9 @@ export const simultaneousPlayPhase = {
             await this.createActionCircles(gameBoard);
 
             uiManager.showNextBar();
+
+            // limite les calcule des ombres a 12 fois par duree du tour
+            shadowManager.setShadowUpdateLimited(true, shadowManager.duration * 1000 / 12);
 
             console.log('🔄 debut developpement');
             await developpementAndMore.developpement(gameBoard, this.processedTurns);

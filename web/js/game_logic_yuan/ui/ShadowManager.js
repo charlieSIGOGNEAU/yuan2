@@ -18,6 +18,9 @@ export class ShadowManager {
         this.startTime = 0;
         this.startSunAnimation();
 
+
+
+        // this.setShadowUpdateLimited(true, this.duration * 1000 / 12)
         //pour avoir le calcule des ombre toutes les secondes.
         // shadowManager.setShadowUpdateLimited(true, 1000)
     }
@@ -35,8 +38,8 @@ export class ShadowManager {
         this.directionalLight.castShadow = true;
         
         // Configuration de la shadow map
-        this.directionalLight.shadow.mapSize.width = 1024;
-        this.directionalLight.shadow.mapSize.height = 1024;
+        this.directionalLight.shadow.mapSize.width = 2048;
+        this.directionalLight.shadow.mapSize.height = 2048;
         
         // Zone de projection des ombres - Réduite pour plus de précision
         const shadowSize = 5;

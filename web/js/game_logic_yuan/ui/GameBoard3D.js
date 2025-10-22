@@ -19,10 +19,14 @@ export class GameBoard3D {
         this.animations = []; // Stocke les animations en cours
         this.initialPlacementCities = []; // Stocke les villes du placement initial
         this.isDragging = false;
-        this.dragStart = null;
-        this.workplaneStartPosition = null;
-        this.workplaneTargetPosition = null; // Position cible pour le lissage
+        this.dragStart = null; // Point d'intersection au début du drag (sur le plan y=0)
+        this.cameraStartPosition = null; // Position de la caméra au début du drag
+        this.cameraTargetPosition = null; // Position cible de la caméra pour le lissage
         this.activePointerId = null; // Pour suivre le doigt actif
+        
+        // Raycaster pour le nouveau système de déplacement caméra
+        this.raycaster = new THREE.Raycaster();
+        this.groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Plan au sol (y=0)
         
         // Propriétés pour le drag and drop des villes
         this.isDraggingCity = false;
@@ -53,9 +57,9 @@ export class GameBoard3D {
         this.waterLoaded = false; // État du chargement de l'eau
         this.waterLoadPromise = null; // Promise pour attendre le chargement
         
-        // Limites de zoom (scale du workplane)
-        this.minScale = 0.7; // Zoom min
-        this.maxScale = 3; // Zoom max
+        // Limites de zoom (hauteur Y de la caméra)
+        this.minCameraY = 3; // Zoom max (caméra proche)
+        this.maxCameraY = 9; // Zoom min (caméra loin)
         
         // Limites de déplacement du workplane (basées sur les tuiles)
         this.tileBounds = { minX: 0, maxX: 0, minZ: 0, maxZ: 0 }; // Bornes calculées dynamiquement
@@ -183,8 +187,6 @@ export class GameBoard3D {
     init() {
         // Seulement les événements et l'animation
         this.setupEvents();
-        // Ajuster l'angle caméra selon le zoom initial
-        this.updateCameraAngleForZoom();
         // Initialiser les bornes des tuiles
         this.calculateTileBounds();
         // Optimiser la shadow box initiale
@@ -206,17 +208,6 @@ export class GameBoard3D {
         }
     }
 
-    // Met à jour l'angle de la caméra en fonction du zoom (scale du workplane)
-    updateCameraAngleForZoom() {
-        if (!this.camera || !this.workplane) return;
-        const scale = this.workplane.scale?.x || 1;
-        const minScale = 1;
-        const maxScale = 3;
-        const clamped = Math.max(minScale, Math.min(maxScale, scale));
-        const t = (clamped - minScale) / (maxScale - minScale); // 0..1
-        const angleDeg = -60 + (30 * t); // -60° à -30°
-        this.camera.rotation.set(THREE.MathUtils.degToRad(angleDeg), 0, 0);
-    }
 
     // Ajoute un plan texturé bois sur le workplane
     addWoodFloor() {
@@ -977,15 +968,27 @@ export class GameBoard3D {
                 return;
             }
 
-            // Sinon, on commence le glisser-déposer du workplane
+            // Sinon, on commence le glisser-déposer de la caméra
             this.isDragging = true;
             this.activePointerId = e.pointerId;
-            this.dragStart = result.point;
-            this.workplaneStartPosition = this.workplane.position.clone();
-            this.workplaneTargetPosition = this.workplane.position.clone(); // Initialiser la cible à la position actuelle
             
-            // Recalculer les bornes basées sur les tuiles au début du déplacement
-            this.calculateTileBounds();
+            // Calculer le point d'intersection avec le plan au sol via raycaster
+            const mouse = new THREE.Vector2();
+            mouse.x = (e.clientX / this.container.clientWidth) * 2 - 1;
+            mouse.y = -(e.clientY / this.container.clientHeight) * 2 + 1;
+            
+            this.raycaster.setFromCamera(mouse, this.camera);
+            const intersectPoint = new THREE.Vector3();
+            this.raycaster.ray.intersectPlane(this.groundPlane, intersectPoint);
+            
+            if (intersectPoint) {
+                this.dragStart = intersectPoint.clone();
+                this.cameraStartPosition = this.camera.position.clone();
+                this.cameraTargetPosition = this.camera.position.clone(); // Initialiser la cible
+                
+                // Recalculer les bornes basées sur les tuiles au début du déplacement
+                this.calculateTileBounds();
+            }
             
             // Capturer les événements pointer
             this.container.setPointerCapture(e.pointerId);
@@ -1009,15 +1012,37 @@ export class GameBoard3D {
                 return;
             }
 
-            // Sinon, déplacer le workplane normalement
-            const delta = new THREE.Vector3().subVectors(this.dragStart, result.point);
-            const newPosition = this.workplaneStartPosition.clone().sub(delta);
+            // Sinon, déplacer la caméra
+            if (!this.dragStart || !this.cameraStartPosition) return;
             
-            // Contraindre la position dans les limites
-            this.constrainPosition(newPosition);
+            // IMPORTANT : Créer une caméra temporaire à la position de DÉPART pour le raycaster
+            // Cela évite que le raycaster utilise la position actuelle (qui a déjà bougé)
+            const tempCamera = this.camera.clone();
+            tempCamera.position.copy(this.cameraStartPosition);
+            tempCamera.updateMatrixWorld();
             
-            // Stocker la position cible pour le lissage progressif dans animate()
-            this.workplaneTargetPosition = newPosition;
+            // Calculer le point d'intersection avec le plan au sol depuis la position de départ
+            const mouse = new THREE.Vector2();
+            mouse.x = (e.clientX / this.container.clientWidth) * 2 - 1;
+            mouse.y = -(e.clientY / this.container.clientHeight) * 2 + 1;
+            
+            this.raycaster.setFromCamera(mouse, tempCamera);
+            const currentPoint = new THREE.Vector3();
+            this.raycaster.ray.intersectPlane(this.groundPlane, currentPoint);
+            
+            if (currentPoint) {
+                // Calculer le delta entre le point de départ et le point actuel
+                const delta = new THREE.Vector3().subVectors(this.dragStart, currentPoint);
+                
+                // Appliquer le delta à la position de départ de la caméra
+                const newCameraPosition = this.cameraStartPosition.clone().add(delta);
+                
+                // Contraindre la position de la caméra dans les limites
+                this.constrainCameraPosition(newCameraPosition);
+                
+                // Appliquer directement la position (pas de lissage)
+                this.cameraTargetPosition = newCameraPosition;
+            }
         }
         
         // Calcule les bornes basées sur les tuiles posées
@@ -1054,37 +1079,62 @@ export class GameBoard3D {
 
         }
 
-        // Méthode pour contraindre la position du workplane dans les limites des tuiles
-        constrainPosition(position) {
-            const scale = this.workplane.scale.x; // Le scale est uniforme
-            
-            // Calculer les limites effectives en tenant compte du scale
-            // Plus le scale est grand (zoom in), plus on peut se déplacer loin
-            const effectiveMinX = this.tileBounds.minX * scale;
-            const effectiveMaxX = this.tileBounds.maxX * scale;
-            const effectiveMinZ = this.tileBounds.minZ * scale;
-            const effectiveMaxZ = this.tileBounds.maxZ * scale;
-
-            // Contraindre la position
+        // Méthode pour contraindre la position de la caméra dans les limites des tuiles
+        constrainCameraPosition(position) {
+            // Les bornes s'appliquent directement à la position de la caméra en coordonnées monde
+            // Contraindre la position X et Z de la caméra
             let constrained = false;
             
-            if (position.x < -effectiveMaxX) {
-                position.x = -effectiveMaxX;
+            if (position.x < this.tileBounds.minX) {
+                position.x = this.tileBounds.minX;
+                constrained = true;
+            } else if (position.x > this.tileBounds.maxX) {
+                position.x = this.tileBounds.maxX;
                 constrained = true;
             }
-            if (position.x > -effectiveMinX) {
-                position.x = -effectiveMinX;
+            
+            if (position.z < this.tileBounds.minZ) {
+                position.z = this.tileBounds.minZ;
+                constrained = true;
+            } else if (position.z > this.tileBounds.maxZ) {
+                position.z = this.tileBounds.maxZ;
                 constrained = true;
             }
-            if (position.z < -effectiveMaxZ) {
-                position.z = -effectiveMaxZ;
-                constrained = true;
-            }
-            if (position.z > -effectiveMinZ) {
-                position.z = -effectiveMinZ;
-                constrained = true;
-            }
+            
+            return constrained;
         }
+
+        // Méthode pour contraindre la position du workplane dans les limites des tuiles (ANCIEN SYSTÈME - peut-être obsolète)
+        // constrainPosition(position) {
+        //     const scale = this.workplane.scale.x; // Le scale est uniforme
+            
+        //     // Calculer les limites effectives en tenant compte du scale
+        //     // Plus le scale est grand (zoom in), plus on peut se déplacer loin
+        //     const effectiveMinX = this.tileBounds.minX * scale;
+        //     const effectiveMaxX = this.tileBounds.maxX * scale;
+        //     const effectiveMinZ = this.tileBounds.minZ * scale;
+        //     const effectiveMaxZ = this.tileBounds.maxZ * scale;
+
+        //     // Contraindre la position
+        //     let constrained = false;
+            
+        //     if (position.x < -effectiveMaxX) {
+        //         position.x = -effectiveMaxX;
+        //         constrained = true;
+        //     }
+        //     if (position.x > -effectiveMinX) {
+        //         position.x = -effectiveMinX;
+        //         constrained = true;
+        //     }
+        //     if (position.z < -effectiveMaxZ) {
+        //         position.z = -effectiveMaxZ;
+        //         constrained = true;
+        //     }
+        //     if (position.z > -effectiveMinZ) {
+        //         position.z = -effectiveMinZ;
+        //         constrained = true;
+        //     }
+        // }
 
         onPointerUp(e) {
             // Ne traiter que les événements du pointer actif
@@ -1202,13 +1252,14 @@ export class GameBoard3D {
                 }
             }
 
-            // Si on vient de finir un drag du workplane, optimiser la shadow box
+            // Si on vient de finir un drag de la caméra, optimiser la shadow box
             const wasDragging = this.isDragging;
             
             this.isDragging = false;
             this.activePointerId = null;
             this.clickStartPosition = null;
             this.clickStartTime = null;
+            this.cameraTargetPosition = null; // Réinitialiser la position cible
             
             // Libérer la capture du pointer
             this.container.releasePointerCapture(e.pointerId);
@@ -1273,61 +1324,53 @@ export class GameBoard3D {
             this.animateTileTempRotation(this.tempTileRotation * Math.PI / 3);
         }
 
-    onWheel(e) {
-        e.preventDefault();
-        
-        const groundPointBefore = this.getMouseOnGround(e);
-        if (!groundPointBefore) return;
-
-        const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9;
-
-        // Calcul de l'échelle bornée
-        const currentScale = this.workplane.scale.x; // uniforme
-        const proposedScale = currentScale * scaleFactor;
-        const clampedScale = Math.max(this.minScale, Math.min(this.maxScale, proposedScale));
-        if (clampedScale === currentScale) {
-            return; // déjà aux bornes
+        onWheel(e) {
+            e.preventDefault();
+            
+            // Calculer le point d'intersection du curseur avec le plan au sol
+            const mouse = new THREE.Vector2();
+            mouse.x = (e.clientX / this.container.clientWidth) * 2 - 1;
+            mouse.y = -(e.clientY / this.container.clientHeight) * 2 + 1;
+            
+            this.raycaster.setFromCamera(mouse, this.camera);
+            const targetPoint = new THREE.Vector3();
+            const intersected = this.raycaster.ray.intersectPlane(this.groundPlane, targetPoint);
+            
+            if (!intersected) return; // Pas d'intersection avec le plan
+            
+            // Calculer la direction de la caméra vers le point cible
+            const direction = new THREE.Vector3().subVectors(targetPoint, this.camera.position);
+            const distance = direction.length();
+            direction.normalize(); // Normaliser pour avoir un vecteur unitaire
+            
+            // Calculer la quantité de déplacement
+            const zoomDirection = e.deltaY < 0 ? 1 : -1; // 1 = zoom in (vers le point), -1 = zoom out (s'éloigner)
+            const zoomSpeed = 0.5; // Vitesse de zoom
+            const moveAmount = zoomDirection * zoomSpeed;
+            
+            // Nouvelle position de la caméra
+            const newPosition = this.camera.position.clone().add(direction.multiplyScalar(moveAmount));
+            
+            // Contraindre la hauteur Y entre les limites
+            if (newPosition.y < this.minCameraY || newPosition.y > this.maxCameraY) {
+                return; // Arrêter si on dépasse les limites
+            }
+            
+            // Appliquer la nouvelle position
+            this.camera.position.copy(newPosition);
+            
+            // Optimiser la shadow box après le zoom
+            if (this.shadowManager) {
+                this.shadowManager.optimizeShadowBox(2);
+            }
         }
-
-        // Coords locales du point d'ancrage AVANT zoom
-        const localAnchor = new THREE.Vector3(
-            (groundPointBefore.x - this.workplane.position.x) / currentScale,
-            0,
-            (groundPointBefore.z - this.workplane.position.z) / currentScale
-        );
-
-        // Appliquer la nouvelle échelle (autour de l'origine du workplane)
-        this.workplane.scale.setScalar(clampedScale);
-
-        // Mettre à jour l'angle caméra selon le zoom
-        this.updateCameraAngleForZoom();
-
-        // Recalculer la position du point d'ancrage en MONDE avec la nouvelle échelle
-        const worldFromLocal = new THREE.Vector3(
-            this.workplane.position.x + localAnchor.x * clampedScale,
-            0,
-            this.workplane.position.z + localAnchor.z * clampedScale
-        );
-
-        // Corriger la position du workplane pour que le point reste sous la souris
-        const deltaWorld = new THREE.Vector3().subVectors(worldFromLocal, groundPointBefore);
-        this.workplane.position.sub(new THREE.Vector3(deltaWorld.x, 0, deltaWorld.z));
-
-        // Contraindre la position après réglages
-        this.constrainPosition(this.workplane.position);
-        
-        // Optimiser la shadow box après le zoom
-        if (this.shadowManager) {
-            this.shadowManager.optimizeShadowBox(2);
-        }
-    }
 
         onResize() {
             // Utiliser la taille du container au lieu de window
             const containerRect = this.container.getBoundingClientRect();
             this.camera.aspect = containerRect.width / containerRect.height;
-        // Adapter le FOV à l'orientation
-        this.updateFovByOrientation();
+            // Adapter le FOV à l'orientation
+            this.updateFovByOrientation();
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(containerRect.width, containerRect.height);
             
@@ -1352,24 +1395,22 @@ export class GameBoard3D {
             // Enregistrer le temps de ce frame
             this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
             
-            // Lissage du déplacement du workplane (pan smoothing)
-            if (this.workplaneTargetPosition) {
-                // Calculer le facteur de lerp : plus le smoothing est élevé, plus le mouvement est lent
-                // panSmoothingFactor = 0 : mouvement instantané (lerp factor = 1)
-                // panSmoothingFactor = 0.5 : moyenne (lerp factor = 0.5)
-                // panSmoothingFactor = 1 : très lent (lerp factor = 0)
+            // Mise à jour de la position de la caméra
+            if (this.cameraTargetPosition) {
+                // Appliquer directement la position cible (pas de lissage pour éviter les glitches)
+                // this.camera.position.copy(this.cameraTargetPosition);
                 const lerpFactor = 1 - this.panSmoothingFactor;
                 
                 // Interpoler progressivement vers la position cible
-                this.workplane.position.lerp(this.workplaneTargetPosition, lerpFactor);
+                this.camera.position.lerp(this.cameraTargetPosition, lerpFactor);
                 
                 // Si on est très proche de la cible (< 0.01 unité), on snap à la position exacte
-                const distance = this.workplane.position.distanceTo(this.workplaneTargetPosition);
+                const distance = this.camera.position.distanceTo(this.cameraTargetPosition);
                 if (distance < 0.01) {
-                    this.workplane.position.copy(this.workplaneTargetPosition);
+                    this.camera.position.copy(this.cameraTargetPosition);
                     // Si on n'est plus en train de draguer, on peut effacer la cible
                     if (!this.isDragging) {
-                        this.workplaneTargetPosition = null;
+                        this.cameraTargetPosition = null;
                     }
                 }
             }
@@ -1498,45 +1539,45 @@ export class GameBoard3D {
         }
 
         // Méthode de démonstration pour le nouveau système Territory
-        async testTerritorySystem() {
-            try {
-                // Vérifier qu'on a des territoires
-                if (!window.gameState?.game?.territories?.length) {
-                    return;
-                }
+    //     async testTerritorySystem() {
+    //         try {
+    //             // Vérifier qu'on a des territoires
+    //             if (!window.gameState?.game?.territories?.length) {
+    //                 return;
+    //             }
                 
-                // Prendre le premier territoire disponible
-                const territory = window.gameState.game.territories[0];
+    //             // Prendre le premier territoire disponible
+    //             const territory = window.gameState.game.territories[0];
                 
-                // Configurer le territoire pour le test
-                territory.color = '#FF0000'; // Rouge pour test
-                territory.construction_type = 'ville';
-                territory.rempart = 'fortifiee';
+    //             // Configurer le territoire pour le test
+    //             territory.color = '#FF0000'; // Rouge pour test
+    //             territory.construction_type = 'ville';
+    //             territory.rempart = 'fortifiee';
                 
-                // Test 1: Créer une construction
-                territory.createConstruction(this, this.meepleManager);
+    //             // Test 1: Créer une construction
+    //             territory.createConstruction(this, this.meepleManager);
                 
-                // Test 2: Créer des guerriers (3 pour tester le positionnement)
-                setTimeout(() => {
-                    territory.createWarriors(this, this.meepleManager, 3);
+    //             // Test 2: Créer des guerriers (3 pour tester le positionnement)
+    //             setTimeout(() => {
+    //                 territory.createWarriors(this, this.meepleManager, 3);
                     
-                    // Test 3: Ajouter 2 guerriers supplémentaires après 2 secondes
-                    setTimeout(() => {
-                        territory.createWarriors(this, this.meepleManager, 2);
+    //                 // Test 3: Ajouter 2 guerriers supplémentaires après 2 secondes
+    //                 setTimeout(() => {
+    //                     territory.createWarriors(this, this.meepleManager, 2);
                         
-                        // Test 4: Nettoyage après 3 secondes
-                        setTimeout(() => {
-                            territory.removeAllMeshes(this);
+    //                     // Test 4: Nettoyage après 3 secondes
+    //                     setTimeout(() => {
+    //                         territory.removeAllMeshes(this);
                             
-                            // Réinitialiser le territoire
-                            territory.color = null;
-                            territory.construction_type = null;
-                            territory.rempart = null;
-                        }, 3000);
-                    }, 2000);
-                }, 1000);
+    //                         // Réinitialiser le territoire
+    //                         territory.color = null;
+    //                         territory.construction_type = null;
+    //                         territory.rempart = null;
+    //                     }, 3000);
+    //                 }, 2000);
+    //             }, 1000);
                 
-            } catch (error) {
-        }
-    }
+    //         } catch (error) {
+    //     }
+    // }
 } 
