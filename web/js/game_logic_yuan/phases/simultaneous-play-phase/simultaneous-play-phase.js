@@ -7,7 +7,7 @@ import { developpementAndMore } from './developpement.js';
 import { fortification } from './fortification.js';
 import { militarisation } from './militarisation.js';
 import { arrowManager } from '../../gameplay/arrowManager.js';
-// import { ShadowManager } from '../../ui/ShadowManager.js';
+
 
 
 export const simultaneousPlayPhase = {
@@ -22,14 +22,16 @@ export const simultaneousPlayPhase = {
 
     async simultaneousPlayPhase(gameBoard) {
         this.gameBoard = gameBoard;
-        if (this.processedTurns === 1) {
-
-            if (this.inProgress) {
+        if (this.inProgress) {
+            if (this.processedTurns + 1 !== gameState.game.simultaneous_play_turn) {
                 developpementAndMore.animation = false;
                 fortification.animation = false;
                 militarisation.animation = false;
-                return;
             }
+            return;
+        }
+        if (this.processedTurns === 1) {
+
             this.inProgress = true;
 
             // Exécuter getAdjacentTerritories pour tous les territoires
@@ -65,12 +67,8 @@ export const simultaneousPlayPhase = {
             this.updateAllClansResources();
             uiManager.updateSimultaneousPlayInfoBar();
 
-
-
         }
-        else {
-            
-        }
+
 
         if (this.processedTurns + 1 === gameState.game.simultaneous_play_turn) {
             developpementAndMore.animation = true;
@@ -87,6 +85,10 @@ export const simultaneousPlayPhase = {
         }
 
         if (this.processedTurns === gameState.game.simultaneous_play_turn) {
+            if (this.processedTurns === 1){
+                gameBoard.shadowManager.startSunAnimation();
+            }
+
             this.inProgress = false;
             // affiche la barre d'action a 6 cases
             uiManager.showPlayerActionBar();
@@ -113,8 +115,14 @@ export const simultaneousPlayPhase = {
 
             uiManager.showNextBar();
 
-            // limite les calcule des ombres a 12 fois par duree du tour
-            shadowManager.setShadowUpdateLimited(true, shadowManager.duration * 1000 / 12);
+
+            // lancer l'animation du soleil
+            if (gameBoard.shadowManager) {
+                gameBoard.shadowManager.startSunAnimation();
+            } else {
+                console.warn('⚠️ shadowManager n\'est pas encore prêt');
+            }
+
 
             console.log('🔄 debut developpement');
             await developpementAndMore.developpement(gameBoard, this.processedTurns);

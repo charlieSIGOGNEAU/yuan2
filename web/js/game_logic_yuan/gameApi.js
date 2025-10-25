@@ -93,6 +93,8 @@ export const gameApi = {
             });
             console.log('🎮 GameState mis à jour:', gameState);
 
+
+
             this.iAmACreator(data);
 
             if (this.checkAndRedirectToGameCreation(data)) {
@@ -116,7 +118,12 @@ export const gameApi = {
                     uiManager.initializeHelpSystem(i18n);
                     
                     // Récupérer le GameBoard3D depuis l'interface
-                    this.gameBoard = window.gameBoard;
+                    this.gameBoard = uiManager.gameBoard;
+                    
+                    // Attendre que le GameBoard3D soit complètement initialisé
+                    if (this.gameBoard && this.gameBoard.ready) {
+                        await this.gameBoard.ready;
+                    }
                     
                     // ici on peut rajouter des information entre les guimets qui s'aficheron par decu le game board3d
                     uiManager.updateInfoPanel('');
@@ -127,10 +134,25 @@ export const gameApi = {
                 } finally {
                     this.uiLoadingPromise = null;
                 }
+
+                console.log('🎮 data.message.game.turn_duration :', data.message.game.turn_duration );
+
+                this.gameBoard.shadowManager.turn_duration = data.message.game.turn_duration;
+                console.log('🎮 shadowManager.duration mis à jour:', gameBoard.shadowManager.turn_duration);
+
+
             } else if (this.uiLoadingPromise) {
                 await this.uiLoadingPromise;
+                // S'assurer que le gameBoard est prêt après le chargement
+                if (window.gameBoard && window.gameBoard.ready) {
+                    await window.gameBoard.ready;
+                }
             } else {
                 console.log('⏭️ Interface UI déjà chargée');
+                // S'assurer que le gameBoard est prêt même si l'UI est déjà chargée
+                if (window.gameBoard && window.gameBoard.ready) {
+                    await window.gameBoard.ready;
+                }
             }
             
             // Mise à jour des tiles 3D
@@ -174,18 +196,19 @@ export const gameApi = {
 
             // exécuter la phasse de simultaneous_play
             if (gameState.game.game_status === 'simultaneous_play' && window.gameBoard) {
-                console.log('🎯🎯🎯 ');
+                console.log('🎯🎯🎯 simultaneous_play ');
+
+                // démarrer le timer pour finir le tour de l'ensemble des joueurs
+                this.startDelayedTurnEndTimer();
                 // Nettoyer la phase précédente si elle existe
                 if (this.currentPhaseInstance) {
                     console.log('🧹 Nettoyage de la phase précédente...');
                     this.currentPhaseInstance.cleanup();
                     this.currentPhaseInstance = null;
                 }
-                
-                // Créer une nouvelle instance de phase (si simultaneousPlayPhase a aussi createPhaseInstance)
-                // this.currentPhaseInstance = simultaneousPlayPhase.createPhaseInstance();
-                
+
                 simultaneousPlayPhase.simultaneousPlayPhase(window.gameBoard);
+
             }
 
         } 
@@ -210,14 +233,14 @@ export const gameApi = {
         }
 
         // Gestion du désabonnement d'un joueur du channel de la game
-        if (data.message && data.message.type === 'unsubscribe_from_game') {
-            console.log('📤 Désabonnement du game channel:', data.message.game_id);
-            // Importer WebSocketClient dynamiquement pour éviter la dépendance circulaire
-            import('../app/websocket.js').then(module => {
-                module.WebSocketClient.unsubscribeFromGameChannel(data.message.game_id);
-                console.log('✅ Désabonné du game channel:', data.message.game_id);
-            });
-        }
+        // if (data.message && data.message.type === 'unsubscribe_from_game') {
+        //     console.log('📤 Désabonnement du game channel:', data.message.game_id);
+        //     // Importer WebSocketClient dynamiquement pour éviter la dépendance circulaire
+        //     import('../app/websocket.js').then(module => {
+        //         module.WebSocketClient.unsubscribeFromGameChannel(data.message.game_id);
+        //         console.log('✅ Désabonné du game channel:', data.message.game_id);
+        //     });
+        // }
 
         // Gestion de la victoire d'un joueur
         if (data.message && data.message.type === 'game_won') {
@@ -230,6 +253,59 @@ export const gameApi = {
     },
 
 
+    async startDelayedTurnEndTimer() {
+        const simultaneous_play_turn = gameState.game.simultaneous_play_turn;
+        const turn_duration = gameState.game.turn_duration;
+        await new Promise(resolve => setTimeout(resolve, turn_duration * 1000))
+        if (simultaneous_play_turn == gameState.game.simultaneous_play_turn && gameState.game.game_status === 'simultaneous_play') {
+            this.forceEndTurn(simultaneous_play_turn);
+        }
+    },
+
+    async forceEndTurn(simultaneous_play_turn) {
+        const maxRetries = 10;
+            const timeoutDuration = 10000; // 10 secondes
+        
+            const sendRequest = async (attempt = 1) => {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), timeoutDuration);
+
+                const gameId = gameState.game.id;
+                
+        
+                try {
+                    const response = await fetch(`${this.baseUrl}games/${gameId}/force_end_turn`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${Auth.authToken}`
+                        },
+                        body: JSON.stringify({
+                            simultaneous_play_turn: simultaneous_play_turn,
+                        }),
+                        signal: controller.signal
+                    });
+        
+                    clearTimeout(timeout);
+                    const data = await response.json();
+                    console.log('requette pour finir le tour envoye. 🎯🎯🎯 data:', data);
+                    
+                    if (!data) throw new Error('Réponse API invalide');
+                    return data;
+        
+                } catch (error) {
+                    clearTimeout(timeout);
+                    if (attempt < maxRetries && error.message === 'Réponse API invalide') {
+                        console.warn(`⚠️ Tentative ${attempt} échouée, nouvel essai...`);
+                        return await sendRequest(attempt + 1);
+                    } else {
+                        console.error('❌ Échec après 10 tentatives:', error);
+                        return null;
+                    }
+                }
+            };
+      return await sendRequest();
+    },
 
     
 
@@ -464,7 +540,9 @@ export const gameApi = {
                 if (data.success) {
                     console.log('✅ Clan et enchère envoyés avec succès:', data);
 
-                    uiManager.updateInfoPanel(i18n.t('game.phases.bidding.bid_confirmed'));
+                    if (!data.turn_completed) {
+                        uiManager.updateInfoPanel(i18n.t('game.phases.bidding.bid_confirmed'));
+                    }
                     
                     
                 } else {

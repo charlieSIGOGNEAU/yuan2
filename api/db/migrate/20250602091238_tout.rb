@@ -19,6 +19,8 @@ class Tout < ActiveRecord::Migration[7.2]
       t.integer :player_count
       t.string :clan_names
       t.integer :biddings_turn, default: 1, null: false
+      t.integer :turn_duration , default: 120, null: false
+
 
       t.timestamps
     end
@@ -65,6 +67,9 @@ class Tout < ActiveRecord::Migration[7.2]
 
       t.timestamps
     end
+
+    add_index :actions, [:game_user_id, :turn, :action], unique: true
+
 
     create_table :biddings do |t|
       t.references :game, null: false, foreign_key: true

@@ -264,9 +264,16 @@ export class UIManager {
             if (!window.gameBoard) {
                 // Importer et créer le GameBoard3D
                 const { GameBoard3D } = await import('../ui/GameBoard3D.js');
-                window.gameBoard = new GameBoard3D('game-board-container');
+                this.gameBoard = new GameBoard3D('game-board-container');
+                window.gameBoard =this.gameBoard;
+                // Attendre que l'initialisation asynchrone soit terminée
+                await window.gameBoard.ready;
+            } else if (window.gameBoard.ready) {
+                // Si gameBoard existe déjà, s'assurer qu'il est prêt
+                await window.gameBoard.ready;
             }
         } catch (error) {
+            console.error('Erreur lors du chargement de GameBoard3D:', error);
         }
     }
 

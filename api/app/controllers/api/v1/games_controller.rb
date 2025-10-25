@@ -1,6 +1,6 @@
 class Api::V1::GamesController < ApplicationController
   before_action :authenticate_request
-  before_action :set_game, only: [:submit_victory, :i_am_ready, :startGameAfterDelay, :launch_custom_game, :give_up_game]
+  before_action :set_game, only: [:submit_victory, :i_am_ready, :startGameAfterDelay, :launch_custom_game, :give_up_game, :force_end_turn]
   before_action :set_custom_code, only: [:join_game_custom]
 
   # POST /api/v1/games/quick_game
@@ -9,6 +9,9 @@ class Api::V1::GamesController < ApplicationController
     game = result[:game]
     message = result[:message]
     game_user = result[:game_user]
+
+    # a suprimer
+    game.update(turn_duration: 10)
 
     if game
       case message
@@ -241,6 +244,53 @@ class Api::V1::GamesController < ApplicationController
   rescue => e
     Rails.logger.error "❌ Erreur lors de la confirmation: #{e.message}"
     render json: { success: false, message: e.message }, status: 500
+  end
+
+  def force_end_turn
+    game = @game
+    # if game.nil?
+    #   puts "❌ Game non trouvé: #{params[:id]}"
+    #   render json: {
+    #     success: false,
+    #     message: "Game non trouvé"
+    #   }, status: :not_found
+    #   return
+    # end
+
+    if params[:simultaneous_play_turn].nil?
+      puts "⚠️ Paramètre manquant: simultaneous_play_turn"
+      render json: {
+        success: false,
+        message: "Paramètre 'simultaneous_play_turn' manquant"
+      }, status: :bad_request
+      return
+    end
+
+    if game.updated_at > game.turn_duration.seconds.ago
+      render json: {
+        success: false,
+        message: "Tour non forcément terminé"
+      }, status: :ok
+    elsif game.simultaneous_play_turn != params[:simultaneous_play_turn]
+      render json: {
+        success: false,
+        message: "Mauvais tour"
+      }, status: :ok
+    else
+      result = Action.force_end_turn(game,params[:simultaneous_play_turn])
+      if result == "some players did not play this turn"
+        render json: {
+          success: true,
+          message: result
+        }, status: :ok
+        GameBroadcast.game_broadcast_game_details(game.id)
+      else
+        render json: {
+          success: false,
+          message: result
+        }, status: :ok
+      end
+    end
   end
 
   private

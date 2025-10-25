@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { meepleManager } from '../pieces/MeepleManager.js';
 import { createShadowManager } from './ShadowManager.js';
-import { createMeshMerger } from './MeshMerger.js';
+// import { createMeshMerger } from './MeshMerger.js';
 
 export class GameBoard3D {
     constructor(containerId) {
@@ -23,6 +23,9 @@ export class GameBoard3D {
         this.cameraStartPosition = null; // Position de la caméra au début du drag
         this.cameraTargetPosition = null; // Position cible de la caméra pour le lissage
         this.activePointerId = null; // Pour suivre le doigt actif
+        
+        // Promise pour attendre que l'initialisation soit terminée
+        this.ready = null;
         
         // Raycaster pour le nouveau système de déplacement caméra
         this.raycaster = new THREE.Raycaster();
@@ -75,8 +78,9 @@ export class GameBoard3D {
             }
         });
 
-        // Démarrer l'initialisation asynchrone
-        this.initAsync().catch(error => {
+        // Démarrer l'initialisation asynchrone et stocker la Promise
+        this.ready = this.initAsync().catch(error => {
+            console.error('Erreur lors de l\'initialisation de GameBoard3D:', error);
         });
     }
 
@@ -87,7 +91,7 @@ export class GameBoard3D {
     // Niveau d'anisotropie souhaité (limité par le GPU)
     getAnisotropyLevel() {
         const max = this.renderer && this.renderer.capabilities ? this.renderer.capabilities.getMaxAnisotropy() : 1;
-        return Math.min(8, max || 1);
+        return Math.min(1, max || 1);
     }
     
     // Applique l'anisotropie à une texture si possible
@@ -95,6 +99,7 @@ export class GameBoard3D {
         try {
             if (texture && typeof texture === 'object') {
                 const level = this.getAnisotropyLevel();
+                console.log('anisotropy level', level);
                 if (typeof texture.anisotropy === 'number') {
                     texture.anisotropy = level;
                     texture.needsUpdate = true;
@@ -110,7 +115,7 @@ export class GameBoard3D {
         this.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100);
 
         this.camera.position.set(0, 9, 6);
-        this.camera.rotation.set(THREE.MathUtils.degToRad(-60), 0, 0);
+        this.camera.rotation.set(THREE.MathUtils.degToRad(-57), 0, 0);
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.outputColorSpace = THREE.SRGBColorSpace; 
         
@@ -122,11 +127,13 @@ export class GameBoard3D {
         this.updateFovByOrientation();
         
         // Ajout d'éclairage pour les modèles 3D
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4); //Éclaire uniformément toute la scène (pas d'ombres) 0 = noir total, 2 = très lumineux, Affecte la luminosité générale, réduit les contrastes
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); //Éclaire uniformément toute la scène (pas d'ombres) 0 = noir total, 2 = très lumineux, Affecte la luminosité générale, réduit les contrastes
+        this.ambientLight = ambientLight;
         this.scene.add(ambientLight);
         
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 3); // intensité de la lumière, augmente le contrast, Crée les ombres et les zones claires/sombres
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 4); // intensité de la lumière, augmente le contrast, Crée les ombres et les zones claires/sombres
         directionalLight.position.set(-10, 4, -3); //direction de la source de lumiere
+        this.directionalLight = directionalLight;
         this.scene.add(directionalLight);
         
         // Ajouter le target de la lumière à la scène (nécessaire pour setLightOnSphere)
@@ -136,16 +143,17 @@ export class GameBoard3D {
         this.scene.add(this.workplane);
 
         // Initialiser le gestionnaire d'ombres
-        this.shadowManager = createShadowManager(this.renderer, directionalLight, this.camera, this.workplane);
-        this.shadowManager.enableShadowsOnContainer(this.scene);
-        this.shadowManager.enableShadowsOnContainer(this.workplane);
+        this.shadowManager =await createShadowManager(this.renderer, directionalLight, this.camera, this.workplane);
+        // this.shadowManager.enableShadowsOnContainer(this.scene);
+        // this.shadowManager.enableShadowsOnContainer(this.workplane);
+        this.shadowManager.ambientLight = this.ambientLight;
         
         // Initialiser le gestionnaire de fusion de meshes
-        this.meshMerger = createMeshMerger(this.workplane, this.shadowManager);
+        // this.meshMerger = createMeshMerger(this.workplane, this.shadowManager);
         
         // Exposer globalement pour l'accès console
         window.shadowManager = this.shadowManager;
-        window.meshMerger = this.meshMerger;
+        // window.meshMerger = this.meshMerger;
         
         // Exposer les fonctions FPS globalement
         window.setFPS = (fps) => this.setFPS(fps);
@@ -159,26 +167,32 @@ export class GameBoard3D {
         // Maintenant précharger les modèles
         // Charger l'eau via le MeepleManager
         this.loadWaterMesh();
-        await this.meepleManager.preloadMeepleModel('ville');
-        await this.meepleManager.preloadMeepleModel('guerrier');
-        await this.meepleManager.preloadMeepleModel('fortification');
-        await this.meepleManager.preloadMeepleModel('temple');
-        await this.meepleManager.preloadMeepleModel('2villes');
+        const models = [
+            'ville',
+            'guerrier',
+            'fortification',
+            'temple',
+            '2villes'
+          ].map(name => this.meepleManager.preloadMeepleModel(name));
         
-
-        // Précharger les sprites
-        await this.meepleManager.preloadSpriteTexture('pathArrow');
-        await this.meepleManager.preloadSpriteTexture('pathDisc');
-        await this.meepleManager.preloadSpriteTexture('tax1Chao');
-        await this.meepleManager.preloadSpriteTexture('tax2Chao');
-        await this.meepleManager.preloadSpriteTexture('rotation');
-        await this.meepleManager.preloadSpriteTexture('buttonOk');
+          const sprites = [
+            'pathArrow',
+            'pathDisc',
+            'tax1Chao',
+            'tax2Chao',
+            'rotation',
+            'buttonOk'
+          ].map(name => this.meepleManager.preloadSpriteTexture(name));
         
-        // Précharger les cercles
-        await this.meepleManager.preloadCircle('selection');
-
-        // Ajouter le sol en bois (plan 90x90 avec texture répétée 30x30)
-        await this.addWoodFloor();
+          const circles = [
+            'selection'
+          ].map(name => this.meepleManager.preloadCircle(name));
+        
+          // attendre que tout soit chargé en parallèle
+          await Promise.all([...models, ...sprites, ...circles]);
+        
+          // sol en bois une fois les assets prêts
+          await this.addWoodFloor();
         
         // Continuer avec l'initialisation normale
         this.init();
@@ -463,10 +477,12 @@ export class GameBoard3D {
                         }).catch(error => {
                         });
                         
-                                // Désactiver les collisions pour cette tuile
+                                // Désactiver les collisions pour cette tuile et activer les ombres
                         tile.traverse((child) => {
                             if (child.isMesh) {
                                 child.raycast = function() {}; // Désactive le raycast
+                                child.castShadow = true; // Activer l'émission d'ombres
+                                child.receiveShadow = true; // Activer la réception d'ombres
                             }
                         });
                         
@@ -535,6 +551,9 @@ export class GameBoard3D {
                     });
                 }
             });
+
+            tile.castShadow = false;
+            console.log('🎮 tile.castShadow:', tile.castShadow);
                         
             const pos = this.hexToCartesian(position);
             tile.position.set(pos.x, 0.2, pos.z); // Hauteur fixée à 0.2

@@ -4,6 +4,7 @@ class Api::V1::ActionsController < ApplicationController
   before_action :find_game_user
 
   # POST /api/v1/games/:game_id/actions
+  # POST /api/v1/games/:game_id/actions
   def create  
     # Vérifier que le game_user_id correspond bien au joueur authentifié
     if action_params.key?(:game_user_id) && action_params[:game_user_id].present? && action_params[:game_user_id].to_i != @game_user.id
@@ -99,6 +100,48 @@ class Api::V1::ActionsController < ApplicationController
         message: error_msg,
         errors: action.errors.full_messages
       }, status: :unprocessable_entity
+    end
+  end
+
+  def force_end_turn
+    game = Game.find_by(id: params[:id])
+    if game.nil?
+      puts "❌ Game non trouvé: #{params[:id]}"
+      render json: {
+        success: false,
+        message: "Game non trouvé"
+      }, status: :not_found
+      return
+    end
+
+    if params[:simultaneous_play_turn].nil?
+      puts "⚠️ Paramètre manquant: simultaneous_play_turn"
+      render json: {
+        success: false,
+        message: "Paramètre 'simultaneous_play_turn' manquant"
+      }, status: :bad_request
+      return
+    end
+
+    if game.updated_at > game.turn_duration.seconds.ago
+      render json: {
+        success: false,
+        message: "Tour non forcément terminé"
+      }, status: :ok
+    else
+      result = Action.force_end_turn(game,params[:simultaneous_play_turn])
+      if result == "some players did not play this turn"
+        render json: {
+          success: true,
+          message: result
+        }, status: :ok
+        GameBroadcast.game_broadcast_game_details(game.id)
+      else
+        render json: {
+          success: false,
+          message: result
+        }, status: :ok
+      end
     end
   end
 

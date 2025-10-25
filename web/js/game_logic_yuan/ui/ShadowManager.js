@@ -14,13 +14,19 @@ export class ShadowManager {
         this.lastShadowUpdate = 0; // Timestamp du dernier calcul d'ombre
         
         this.setupShadows();
-        this.duration = 120; // 2 minutes
+        this.turn_duration = 10; // 2 minutes
         this.startTime = 0;
-        this.startSunAnimation();
+        this.animationStarted = false; // Flag pour savoir si l'animation a été démarrée
+        this.beginningOfAnimation = true;
+        
+        this.directionalLight; // Assignée depuis GameBoard3D (THREE.DirectionalLight)
+        this.ambientLight;     // Assignée depuis GameBoard3D (THREE.AmbientLight)
+        
 
 
 
-        // this.setShadowUpdateLimited(true, this.duration * 1000 / 12)
+
+        this.setShadowUpdateLimited(true, 1000)
         //pour avoir le calcule des ombre toutes les secondes.
         // shadowManager.setShadowUpdateLimited(true, 1000)
     }
@@ -50,9 +56,10 @@ export class ShadowManager {
         this.directionalLight.shadow.camera.near = 0.5;
         this.directionalLight.shadow.camera.far = 25;
         
-        // Qualité des ombres - Ajustement pour éviter shadow acne et artefacts
-        this.directionalLight.shadow.bias = -0.0001;
-        this.directionalLight.shadow.normalBias = 0.1;
+        // Qualité des ombres - Ajustement pour permettre les ombres entre tiles
+        // Un bias trop élevé empêche les ombres de s'afficher sur des surfaces plates
+        this.directionalLight.shadow.bias = 0.000; // Très légèrement positif, finalement 0 pour eviter les artophaque sur les androis non ombrage
+        this.directionalLight.shadow.normalBias = 0.02; // Réduit de 0.1 à 0.01 pour permettre les ombres entre tiles
     }
 
     // Active les ombres sur un objet selon son type
@@ -133,16 +140,16 @@ export class ShadowManager {
     }
 
     // Méthode utilitaire pour activer les ombres sur un Group ou Scene
-    enableShadowsOnContainer(container) {
-        // Patch pour activer automatiquement les ombres sur tous les objets ajoutés
-        const originalAdd = container.add.bind(container);
-        container.add = (...objects) => {
-            objects.forEach(obj => {
-                this.enableShadowsOnObject(obj);
-            });
-            originalAdd(...objects);
-        };
-    }
+    // enableShadowsOnContainer(container) {
+    //     // Patch pour activer automatiquement les ombres sur tous les objets ajoutés
+    //     const originalAdd = container.add.bind(container);
+    //     container.add = (...objects) => {
+    //         objects.forEach(obj => {
+    //             this.enableShadowsOnObject(obj);
+    //         });
+    //         originalAdd(...objects);
+    //     };
+    // }
 
     // Changer la direction de la lumière
     setLightDirection(x, y, z) {
@@ -153,6 +160,7 @@ export class ShadowManager {
     // Calculer le centre de la scène basé sur les tiles eau
     getSceneCenter() {
         const waterTiles = this.findWaterTiles();
+        // console.log('🔍 Recherche du centre de la scène...', waterTiles);
         
         if (waterTiles.length === 0) {
             console.log('❌ Aucune tile eau trouvée, utilisation du centre par défaut (0, 0, 0)');
@@ -162,14 +170,18 @@ export class ShadowManager {
         // Trouver les extrémités
         let minX = Infinity, maxX = -Infinity;
         let minZ = Infinity, maxZ = -Infinity;
+        
 
         waterTiles.forEach(tile => {
-            const pos = tile.position;
-            minX = Math.min(minX, pos.x);
-            maxX = Math.max(maxX, pos.x);
-            minZ = Math.min(minZ, pos.z);
-            maxZ = Math.max(maxZ, pos.z);
+            // Utiliser getWorldPosition pour obtenir les coordonnées monde (pas locales)
+            const worldPos = new THREE.Vector3();
+            tile.getWorldPosition(worldPos);
+            minX = Math.min(minX, worldPos.x);
+            maxX = Math.max(maxX, worldPos.x);
+            minZ = Math.min(minZ, worldPos.z);
+            maxZ = Math.max(maxZ, worldPos.z);
         });
+
 
         // Calculer le centre
         const centerX = (minX + maxX) / 2;
@@ -191,9 +203,11 @@ export class ShadowManager {
         let maxDistance = 0;
 
         waterTiles.forEach(tile => {
-            const pos = tile.position;
-            const dx = pos.x - center.x;
-            const dz = pos.z - center.z;
+            // Utiliser getWorldPosition pour obtenir les coordonnées monde (pas locales)
+            const worldPos = new THREE.Vector3();
+            tile.getWorldPosition(worldPos);
+            const dx = worldPos.x - center.x;
+            const dz = worldPos.z - center.z;
             const distance = Math.sqrt(dx * dx + dz * dz);
             maxDistance = Math.max(maxDistance, distance);
         });
@@ -210,6 +224,7 @@ export class ShadowManager {
         // Calculer le centre et le rayon de la scène
         const center = this.getSceneCenter();
         const radius = this.getSceneSphereRadius();
+        // console.log('🔍 Positionner la lumière sur la sphère...', center, radius);
 
         // Convertir les angles en radians
         const rxRad = THREE.MathUtils.degToRad(rx);
@@ -241,31 +256,71 @@ export class ShadowManager {
     }
 
     startSunAnimation() {
+        // Ne démarrer l'animation qu'une seule fois
         this.startTime = Date.now();
-        // this.duration = duration;
-        this.animateSun(); // lance la boucle
+        this.beginningOfAnimation = true;
+        if (this.animationStarted) {
+            console.log('🌞 Animation du soleil déjà démarrée');
+            this.setShadowUpdateLimited(true, this.turn_duration * 1000 / 12)
+            return;
+        }
+        else {
+            this.animateSun(); // lance la boucle
+        }
+        
     }
     
     animateSun() {
-        const sunrise = {rx: 90, ry: 10};
+        // soleil qui tourne
+        const sunrise = {rx: 90, ry: 20};
         const noon = {rx: -45, ry: 45};
         const sunset = {rx: -180, ry: 10};
-    
-        const progress = ((Date.now() - this.startTime) / this.duration / 1000) % 1; // boucle sur [0,1]
-    
+        const progress = ((Date.now() - this.startTime) / this.turn_duration / 1000) % 1; // boucle sur [0,1]
         let rx, ry;
         if (progress <= 0.5 ) { // matin → midi
             const t = progress * 2; // normalisé [0,1]
             rx = sunrise.rx * (1 - t) + noon.rx * t;
-            ry = sunrise.ry * (1 - t) + noon.ry * t;
+            ry = sunrise.ry * (1 - t**0.5) + noon.ry * t**0.5;
         } else { // midi → nuit
             const t = (progress - 0.5) * 2;
             rx = noon.rx * (1 - t) + sunset.rx * t;
-            ry = noon.ry * (1 - t) + sunset.ry * t;
-        }
-    
+            ry = noon.ry * (1 - t**2) + sunset.ry * t**2;
+        }   
         this.setLightOnSphere(rx, ry);
-    
+
+        //couleur du soleil    
+        if (this.ambientLight) {
+            const orange = new THREE.Color(0xff4500);
+            const white = new THREE.Color(0xffffff);
+
+            // calculer la distance à 0.5
+            const d = Math.abs(progress - 0.5) * 2; // d = 1 quand progress = 0 ou 1, d = 0 quand progress = 0.5
+
+            // interpoler
+            const color = white.clone().lerp(orange, d**4);
+            this.ambientLight.color.set(color);       
+        }
+
+        // clignotement de la lumière pour signaler fin du tour
+        let x = this.turn_duration - (Date.now() - this.startTime) / 1000;
+        const alarmDuration = 5
+        const alarmePeriod = 3
+
+        if (x < alarmDuration && x > 0 && this.ambientLight) {
+            const intensity = Math.sin(x / alarmDuration * Math.PI * alarmePeriod * 2 + Math.PI/2)  ; 
+            // this.ambientLight.intensity = 0.5 + intensity ;
+            this.directionalLight.intensity = 4 + intensity*2 ;
+        }
+        else {
+            // this.ambientLight.intensity = 0.5;
+            this.directionalLight.intensity = 4;
+        }
+
+        if (this.beginningOfAnimation) {
+            this.beginningOfAnimation = false;
+            this.setShadowUpdateLimited(true, this.turn_duration * 1000 / 12)
+        }
+
         requestAnimationFrame(() => this.animateSun());
     }
 
@@ -281,7 +336,7 @@ export class ShadowManager {
     //         const noon = {rx: -45, ry: 45};
     //         const sunset = {rx: -180, ry: 10};
     
-    //         const progress = ((now - this.startTime) / this.duration / 1000) % 1; // boucle sur [0,1]
+    //         const progress = ((now - this.startTime) / this.turn_duration / 1000) % 1; // boucle sur [0,1]
     
     //         let rx, ry;
     //         if (progress <= 0.5) { // matin → midi
@@ -364,6 +419,7 @@ export class ShadowManager {
 //     }
 
     // Activer ou désactiver le rendu des ombres
+    
     setShadowsEnabled(enabled) {
         this.shadowsEnabled = enabled;
         this.renderer.shadowMap.enabled = enabled;
@@ -439,47 +495,47 @@ export class ShadowManager {
     }
 
     // Ajuster la zone de projection des ombres (shadowSize)
-    setShadowSize(size) {
-        this.directionalLight.shadow.camera.left = -size;
-        this.directionalLight.shadow.camera.right = size;
-        this.directionalLight.shadow.camera.top = size;
-        this.directionalLight.shadow.camera.bottom = -size;
-        this.directionalLight.shadow.camera.updateProjectionMatrix();
-        console.log(`📐 Taille zone ombres changée: ${size}`);
-    }
+    // setShadowSize(size) {
+    //     this.directionalLight.shadow.camera.left = -size;
+    //     this.directionalLight.shadow.camera.right = size;
+    //     this.directionalLight.shadow.camera.top = size;
+    //     this.directionalLight.shadow.camera.bottom = -size;
+    //     this.directionalLight.shadow.camera.updateProjectionMatrix();
+    //     console.log(`📐 Taille zone ombres changée: ${size}`);
+    // }
 
     // Ajuster le bias des ombres
-    setShadowBias(bias, normalBias = null) {
-        this.directionalLight.shadow.bias = bias;
-        if (normalBias !== null) {
-            this.directionalLight.shadow.normalBias = normalBias;
-        }
-        console.log(`🎚️ Bias ombres changé: ${bias}, normalBias: ${this.directionalLight.shadow.normalBias}`);
-    }
+    // setShadowBias(bias, normalBias = null) {
+    //     this.directionalLight.shadow.bias = bias;
+    //     if (normalBias !== null) {
+    //         this.directionalLight.shadow.normalBias = normalBias;
+    //     }
+    //     console.log(`🎚️ Bias ombres changé: ${bias}, normalBias: ${this.directionalLight.shadow.normalBias}`);
+    // }
 
     // Afficher les paramètres actuels des ombres
-    getShadowSettings() {
-        const settings = {
-            mapSize: {
-                width: this.directionalLight.shadow.mapSize.width,
-                height: this.directionalLight.shadow.mapSize.height
-            },
-            shadowSize: this.directionalLight.shadow.camera.right,
-            bias: this.directionalLight.shadow.bias,
-            normalBias: this.directionalLight.shadow.normalBias,
-            lightPosition: this.directionalLight.position,
-            shadowCamera: {
-                left: this.directionalLight.shadow.camera.left,
-                right: this.directionalLight.shadow.camera.right,
-                top: this.directionalLight.shadow.camera.top,
-                bottom: this.directionalLight.shadow.camera.bottom,
-                near: this.directionalLight.shadow.camera.near,
-                far: this.directionalLight.shadow.camera.far
-            }
-        };
-        console.log('⚙️ Paramètres des ombres:', settings);
-        return settings;
-    }
+    // getShadowSettings() {
+    //     const settings = {
+    //         mapSize: {
+    //             width: this.directionalLight.shadow.mapSize.width,
+    //             height: this.directionalLight.shadow.mapSize.height
+    //         },
+    //         shadowSize: this.directionalLight.shadow.camera.right,
+    //         bias: this.directionalLight.shadow.bias,
+    //         normalBias: this.directionalLight.shadow.normalBias,
+    //         lightPosition: this.directionalLight.position,
+    //         shadowCamera: {
+    //             left: this.directionalLight.shadow.camera.left,
+    //             right: this.directionalLight.shadow.camera.right,
+    //             top: this.directionalLight.shadow.camera.top,
+    //             bottom: this.directionalLight.shadow.camera.bottom,
+    //             near: this.directionalLight.shadow.camera.near,
+    //             far: this.directionalLight.shadow.camera.far
+    //         }
+    //     };
+    //     console.log('⚙️ Paramètres des ombres:', settings);
+    //     return settings;
+    // }
 
     // Calculer les 4 points d'intersection entre le frustum de la caméra et le plan y=0
     getCameraFrustumGroundPoints(silent = true) {
@@ -636,101 +692,119 @@ export class ShadowManager {
         return waterTiles;
     }
 
-    // Obtenir la tile eau la plus à gauche (x minimum)
-    getLeftmostWaterTile() {
-        const waterTiles = this.findWaterTiles();
+    // // Obtenir la tile eau la plus à gauche (x minimum)
+    // getLeftmostWaterTile() {
+    //     const waterTiles = this.findWaterTiles();
         
-        if (waterTiles.length === 0) {
-            console.log('❌ Aucune tile eau trouvée');
-            return null;
-        }
+    //     if (waterTiles.length === 0) {
+    //         console.log('❌ Aucune tile eau trouvée');
+    //         return null;
+    //     }
 
-        let leftmost = waterTiles[0];
-        let minX = leftmost.position.x;
+    //     let leftmost = waterTiles[0];
+    //     const leftmostWorldPos = new THREE.Vector3();
+    //     leftmost.getWorldPosition(leftmostWorldPos);
+    //     let minX = leftmostWorldPos.x;
 
-        waterTiles.forEach(tile => {
-            if (tile.position.x < minX) {
-                minX = tile.position.x;
-                leftmost = tile;
-            }
-        });
+    //     waterTiles.forEach(tile => {
+    //         const worldPos = new THREE.Vector3();
+    //         tile.getWorldPosition(worldPos);
+    //         if (worldPos.x < minX) {
+    //             minX = worldPos.x;
+    //             leftmost = tile;
+    //             leftmostWorldPos.copy(worldPos);
+    //         }
+    //     });
 
-        console.log(`◀️ Tile eau la plus à gauche: (${leftmost.position.x.toFixed(2)}, ${leftmost.position.y.toFixed(2)}, ${leftmost.position.z.toFixed(2)})`);
-        return leftmost;
-    }
+    //     return leftmost;
+    // }
 
-    // Obtenir la tile eau la plus à droite (x maximum)
-    getRightmostWaterTile() {
-        const waterTiles = this.findWaterTiles();
+    // // Obtenir la tile eau la plus à droite (x maximum)
+    // getRightmostWaterTile() {
+    //     const waterTiles = this.findWaterTiles();
         
-        if (waterTiles.length === 0) {
-            console.log('❌ Aucune tile eau trouvée');
-            return null;
-        }
+    //     if (waterTiles.length === 0) {
+    //         console.log('❌ Aucune tile eau trouvée');
+    //         return null;
+    //     }
 
-        let rightmost = waterTiles[0];
-        let maxX = rightmost.position.x;
+    //     let rightmost = waterTiles[0];
+    //     const rightmostWorldPos = new THREE.Vector3();
+    //     rightmost.getWorldPosition(rightmostWorldPos);
+    //     let maxX = rightmostWorldPos.x;
 
-        waterTiles.forEach(tile => {
-            if (tile.position.x > maxX) {
-                maxX = tile.position.x;
-                rightmost = tile;
-            }
-        });
+    //     waterTiles.forEach(tile => {
+    //         const worldPos = new THREE.Vector3();
+    //         tile.getWorldPosition(worldPos);
+    //         if (worldPos.x > maxX) {
+    //             maxX = worldPos.x;
+    //             rightmost = tile;
+    //             rightmostWorldPos.copy(worldPos);
+    //         }
+    //     });
 
-        console.log(`▶️ Tile eau la plus à droite: (${rightmost.position.x.toFixed(2)}, ${rightmost.position.y.toFixed(2)}, ${rightmost.position.z.toFixed(2)})`);
-        return rightmost;
-    }
+    //     return rightmost;
+    // }
 
-    // Obtenir la tile eau la plus au fond (z minimum)
-    getBackmostWaterTile() {
-        const waterTiles = this.findWaterTiles();
+    // // Obtenir la tile eau la plus au fond (z minimum)
+    // getBackmostWaterTile() {
+    //     const waterTiles = this.findWaterTiles();
         
-        if (waterTiles.length === 0) {
-            console.log('❌ Aucune tile eau trouvée');
-            return null;
-        }
+    //     if (waterTiles.length === 0) {
+    //         console.log('❌ Aucune tile eau trouvée');
+    //         return null;
+    //     }
 
-        let backmost = waterTiles[0];
-        let minZ = backmost.position.z;
+    //     let backmost = waterTiles[0];
+    //     const backmostWorldPos = new THREE.Vector3();
+    //     backmost.getWorldPosition(backmostWorldPos);
+    //     let minZ = backmostWorldPos.z;
 
-        waterTiles.forEach(tile => {
-            if (tile.position.z < minZ) {
-                minZ = tile.position.z;
-                backmost = tile;
-            }
-        });
+    //     waterTiles.forEach(tile => {
+    //         const worldPos = new THREE.Vector3();
+    //         tile.getWorldPosition(worldPos);
+    //         if (worldPos.z < minZ) {
+    //             minZ = worldPos.z;
+    //             backmost = tile;
+    //             backmostWorldPos.copy(worldPos);
+    //         }
+    //     });
 
-        console.log(`🔼 Tile eau la plus au fond: (${backmost.position.x.toFixed(2)}, ${backmost.position.y.toFixed(2)}, ${backmost.position.z.toFixed(2)})`);
-        return backmost;
-    }
+    //     console.log(`🔼 Tile eau la plus au fond: (${backmostWorldPos.x.toFixed(2)}, ${backmostWorldPos.y.toFixed(2)}, ${backmostWorldPos.z.toFixed(2)})`);
+    //     return backmost;
+    // }
 
-    // Obtenir la tile eau la plus vers l'avant (z maximum)
-    getFrontmostWaterTile() {
-        const waterTiles = this.findWaterTiles();
+    // // Obtenir la tile eau la plus vers l'avant (z maximum)
+    // getFrontmostWaterTile() {
+    //     const waterTiles = this.findWaterTiles();
         
-        if (waterTiles.length === 0) {
-            console.log('❌ Aucune tile eau trouvée');
-            return null;
-        }
+    //     if (waterTiles.length === 0) {
+    //         console.log('❌ Aucune tile eau trouvée');
+    //         return null;
+    //     }
 
-        let frontmost = waterTiles[0];
-        let maxZ = frontmost.position.z;
+    //     let frontmost = waterTiles[0];
+    //     const frontmostWorldPos = new THREE.Vector3();
+    //     frontmost.getWorldPosition(frontmostWorldPos);
+    //     let maxZ = frontmostWorldPos.z;
 
-        waterTiles.forEach(tile => {
-            if (tile.position.z > maxZ) {
-                maxZ = tile.position.z;
-                frontmost = tile;
-            }
-        });
+    //     waterTiles.forEach(tile => {
+    //         const worldPos = new THREE.Vector3();
+    //         tile.getWorldPosition(worldPos);
+    //         if (worldPos.z > maxZ) {
+    //             maxZ = worldPos.z;
+    //             frontmost = tile;
+    //             frontmostWorldPos.copy(worldPos);
+    //         }
+    //     });
 
-        console.log(`🔽 Tile eau la plus vers l'avant: (${frontmost.position.x.toFixed(2)}, ${frontmost.position.y.toFixed(2)}, ${frontmost.position.z.toFixed(2)})`);
-        return frontmost;
-    }
+    //     console.log(`🔽 Tile eau la plus vers l'avant: (${frontmostWorldPos.x.toFixed(2)}, ${frontmostWorldPos.y.toFixed(2)}, ${frontmostWorldPos.z.toFixed(2)})`);
+    //     return frontmost;
+    // }
 }
 
 export function createShadowManager(renderer, directionalLight, camera = null, workplane = null) {
     return new ShadowManager(renderer, directionalLight, camera, workplane);
 }
 
-window.ShadowManager = ShadowManager;
+// window.ShadowManager = ShadowManager;

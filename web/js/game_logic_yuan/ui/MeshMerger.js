@@ -1,3 +1,5 @@
+// toute referance est passe en commentaire, donc suprimable. la fusion a pose des probleme de texture multiplee, mais je ne pense pas que ce sois le vrais probleme. vu que je suis passe a des calcule des ombre toute les 10s pour eviter les gish,il ni a plus besoind'optimiser le calcule des ombre
+
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 

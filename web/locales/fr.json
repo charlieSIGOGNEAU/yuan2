@@ -40,7 +40,7 @@
         "validate_clan_selection": "Valide pour choisir le clan {{color}}"
       },
       "simultaneous_play": {
-        "welcome_message": "Salutations {{playerName}},<br><br>Vous incarnez le clan <span class='clan-circle' style='background-color: {{colorHex}};'></span> <br><br>Choisissez un territoire, puis les niveaux de vos différentes actions avec les boutons du bas, et validez.<br><br>Des aides de jeu sont disponibles en haut.<br><br>Bonne partie !",
+        "welcome_message": "Salutations {{playerName}},<br><br>Vous incarnez le clan <span class='clan-circle' style='background-color: {{colorHex}};'></span> <br><br>Choisissez un territoire, puis les niveaux de vos différentes actions avec les boutons du bas, et validez, avant que le soleil se couche !<br><br>Des aides de jeu sont disponibles en haut.<br><br>Bonne partie !",
         "action_validated": "Action prise en compte, en attendant les autres joueurs, vous pouvez la modifier.",
         "colonization_targets": "Les colonisations ont pour cible",
         "clan_conflicts_territory": "Plusieurs clans veulent coloniser le même territoire. Les clans avec le plus d'honneur cèdent leur place et font l'action passer son tour (+6 chao)",

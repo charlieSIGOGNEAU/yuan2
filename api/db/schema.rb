@@ -23,6 +23,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
     t.integer "fortification_level"
     t.integer "militarisation_level"
     t.index ["game_id"], name: "index_actions_on_game_id"
+    t.index ["game_user_id", "turn"], name: "index_actions_on_game_user_id_and_turn_and_action", unique: true
     t.index ["game_user_id"], name: "index_actions_on_game_user_id"
   end
 
@@ -74,6 +75,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
     t.integer "player_count"
     t.string "clan_names"
     t.integer "biddings_turn", default: 1, null: false
+    t.integer "turn_duration", default: 120, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "simultaneous_play_turn", default: 0

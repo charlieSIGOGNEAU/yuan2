@@ -534,9 +534,9 @@ class Territory {
                 mesh.rotation.y = 0;
                 
                 // Ajouter à la fusion immédiatement si elle est activée (pas d'animation)
-                if (gameBoard.meshMerger && gameBoard.meshMerger.mergingEnabled) {
-                    gameBoard.meshMerger.addTempleToMerge(mesh, true);
-                }
+                // if (gameBoard.meshMerger && gameBoard.meshMerger.mergingEnabled) {
+                //     gameBoard.meshMerger.addTempleToMerge(mesh, true);
+                // }
             }
         }
     }
@@ -589,10 +589,10 @@ class Territory {
                 mesh.rotation.y = 0;
                 
                 // Ajouter à la fusion APRÈS l'animation si elle est activée
-                if (gameBoard && gameBoard.meshMerger && gameBoard.meshMerger.mergingEnabled) {
-                    console.log('🔨 Ajout du temple à la fusion après animation');
-                    gameBoard.meshMerger.addTempleToMerge(mesh, true);
-                }
+                // if (gameBoard && gameBoard.meshMerger && gameBoard.meshMerger.mergingEnabled) {
+                //     console.log('🔨 Ajout du temple à la fusion après animation');
+                //     gameBoard.meshMerger.addTempleToMerge(mesh, true);
+                // }
             }
         };
         
@@ -829,7 +829,6 @@ class Territory {
 
     // Fonction pour filtrer et stocker les provinces adjacentes (plain, forest, rice, mine)
     updateProvinceTerritories() {
-        console.log("updateProvinceTerritories", this);
         const adjacentTerritories = this.getAdjacentTerritories();
         this.adjacentProvinces = adjacentTerritories.filter(territory => 
             ['plain', 'forest', 'rice', 'mine'].includes(territory.type)
@@ -1042,6 +1041,7 @@ class Game {
         this.clan_names = data.clan_names || '';
         this.biddings_turn = data.biddings_turn || 0;
         this.simultaneous_play_turn = data.simultaneous_play_turn || 0;
+        this.turn_duration = data.turn_duration || 121;
 
         
         // Relations
@@ -1092,6 +1092,7 @@ class Game {
         this.clan_names = data.clan_names || this.clan_names;
         this.biddings_turn = data.biddings_turn || this.biddings_turn;
         this.simultaneous_play_turn = data.simultaneous_play_turn || this.simultaneous_play_turn;
+        this.turn_duration = data.turn_duration || this.turn_duration;
 
         // Mise à jour des game_users
         if (data.game_users) {

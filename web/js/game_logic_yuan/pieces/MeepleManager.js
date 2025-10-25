@@ -434,6 +434,14 @@ export class MeepleManager {
             ...userData
         };
 
+        // Activer les ombres sur tous les meshes de l'instance
+        instance.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+
         return instance;
     }
 
