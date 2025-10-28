@@ -103,47 +103,7 @@ class Api::V1::ActionsController < ApplicationController
     end
   end
 
-  def force_end_turn
-    game = Game.find_by(id: params[:id])
-    if game.nil?
-      puts "❌ Game non trouvé: #{params[:id]}"
-      render json: {
-        success: false,
-        message: "Game non trouvé"
-      }, status: :not_found
-      return
-    end
-
-    if params[:simultaneous_play_turn].nil?
-      puts "⚠️ Paramètre manquant: simultaneous_play_turn"
-      render json: {
-        success: false,
-        message: "Paramètre 'simultaneous_play_turn' manquant"
-      }, status: :bad_request
-      return
-    end
-
-    if game.updated_at > game.turn_duration.seconds.ago
-      render json: {
-        success: false,
-        message: "Tour non forcément terminé"
-      }, status: :ok
-    else
-      result = Action.force_end_turn(game,params[:simultaneous_play_turn])
-      if result == "some players did not play this turn"
-        render json: {
-          success: true,
-          message: result
-        }, status: :ok
-        GameBroadcast.game_broadcast_game_details(game.id)
-      else
-        render json: {
-          success: false,
-          message: result
-        }, status: :ok
-      end
-    end
-  end
+  
 
   private
 

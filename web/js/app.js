@@ -5,6 +5,7 @@ console.log('Chargement de l\'application...');
 import { Router } from './app/router.js';
 import { Auth } from './app/auth.js';
 import { WebSocketClient } from './app/websocket.js';
+import { i18n } from './core/i18n.js';
 
 // Pages d'authentification
 import { LandingPage } from './app/landing.js';
@@ -21,6 +22,7 @@ import { PlayerWaitingPage } from './app/playerWaiting.js';
 // Pages d'options
 import { OptionsPage } from './app/options.js';
 import { ChangeNamePage } from './app/changeName.js';
+import { ChangePasswordPage } from './app/changePassword.js';
 import { DeleteAccountPage } from './app/deleteAccount.js';
 
 // Enregistrer toutes les pages dans le router
@@ -33,6 +35,7 @@ Router.registerPage('join-quick-game', JoinQuickGamePage);
 Router.registerPage('create-quick-game', CreateQuickGamePage);
 Router.registerPage('options', OptionsPage);
 Router.registerPage('change-name', ChangeNamePage);
+Router.registerPage('change-password', ChangePasswordPage);
 Router.registerPage('delete-account', DeleteAccountPage);
 Router.registerPage('player-waiting', PlayerWaitingPage);
 
@@ -41,4 +44,11 @@ Router.init();
 
 // DEMARRER L'APPLICATION
 console.log('Application chargee ! Demarrage...');
-Auth.init(); 
+
+// Initialiser i18n avec la langue du navigateur avant de démarrer l'application
+(async () => {
+    console.log('🌍 Initialisation de i18n avec la langue du navigateur...');
+    await i18n.initializeWithBrowserLanguage();
+    console.log('✅ i18n initialisé, démarrage de l\'application...');
+    Auth.init();
+})(); 

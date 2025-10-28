@@ -54,12 +54,11 @@
   background: white;
 }
 
-#start-game-btn {
-  display: none;
+.submit-btn {
   background: #28a745;
   color: white;
 }
 
-#start-game-btn:hover {
+.submit-btn:hover {
   background: #218838;
 }

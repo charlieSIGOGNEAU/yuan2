@@ -91,7 +91,7 @@ export class GameBoard3D {
     // Niveau d'anisotropie souhaité (limité par le GPU)
     getAnisotropyLevel() {
         const max = this.renderer && this.renderer.capabilities ? this.renderer.capabilities.getMaxAnisotropy() : 1;
-        return Math.min(1, max || 1);
+        return Math.min(4, max || 1);
     }
     
     // Applique l'anisotropie à une texture si possible
@@ -116,7 +116,10 @@ export class GameBoard3D {
 
         this.camera.position.set(0, 9, 6);
         this.camera.rotation.set(THREE.MathUtils.degToRad(-57), 0, 0);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ antialias: false });
+        
+
+        this.renderer.setPixelRatio(window.devicePixelRatio**0.5);
         this.renderer.outputColorSpace = THREE.SRGBColorSpace; 
         
         // Utiliser la taille du container au lieu de window
@@ -249,6 +252,9 @@ export class GameBoard3D {
                     
                     // Marquer le sol pour qu'il reçoive des ombres
                     woodFloor.userData = { type: 'floor' };
+
+                    // Activer la réception des ombres
+                    woodFloor.receiveShadow = true;
 
                     this.workplane.add(woodFloor);
                     this.woodFloor = woodFloor;

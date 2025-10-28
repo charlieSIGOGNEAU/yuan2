@@ -1,22 +1,87 @@
 {
   "game": {
+    "game_destroyed": "A player has abandoned the game. Sorry for the inconvenience.",
+    "help": {
+      "Developpement": "Development is divided into 2 types:<br><br>{{aide:Colonisation:Colonization}}: If targeting a free province<br>(if lvl.1-2 must be connected, if lvl.3 no condition).<br><br>{{aide:Expansion:Expansion}}: If targeting an owned province.<br><br>Conflicts:<br>- If 2 clans want the same adjacent province: it remains neutral.<br>- If 2 clans target the same province: the clan with the most honor yields and receives 6 Chao as compensation.<br><br>{{tableau:honneur}}",
+      "Colonisation": "Colonization:<br>Recovers the targeted territory and its adjacent ones.<br>lvl. 2-3: +2 chao.",
+      "Expansion": "Expansion:<br>lvl 1-2: recovers territories adjacent to the targeted group.<br>lvl 2: +2 chao.<br>lvl 3: build a {{aide:Temple:temple}} (if absent) + steal 2 Chao from neighboring clans.",
+      "Fortification": "Fortification is divided into two types:<br><br>{{aide:Urbanisation:Urbanization}} if targeting an owned village.<br>{{aide:Renforcement:Reinforcement}} if targeting an owned city.",
+      "Urbanisation": "Urbanization:<br><br><br>Lvl.1: no effect.<br><br>Lvl.2: becomes a city.<br><br>Lvl.3: +1 army, becomes a fortified city (Protects the territory as if 2 additional armies were present.)",
+      "Renforcement": "Reinforcement:<br><br>Lvl.1: becomes a double city → counts as 2 territories of the same type for action cost reduction.<br><br>Lvl.2: becomes a fortified double city (Protects the territory as if 2 additional armies were present.)<br><br>Lvl.3: becomes an impregnable city + protects adjacent allied territories by 1; +1 army.",
+      "Militarisation": "Militarization is divided into 2 types:<br><br>{{aide:Recrutement:Recruitment}}: if the target is an owned city.<br><br>{{aide:Attaque:Attack}}: if the target is an enemy province.<br>⚠️ You must have at least one army connected to the target.",
+      "Recrutement": "Recruitment<br><br>Lvl.1: no effect<br><br>Lvl.2: +1 army<br><br>Lvl.3: +3 armies<br><br>👉 At the end of the turn, each province is limited to 3 armies max.",
+      "Attaque": "Attack<br><br>Lvl.1-2-3:<br> - All your connected armies attack.<br> - Armies cancel each other 1 for 1.<br> - If at least 1 army remains → province won.<br><br>Lvl.2-3: +1 army during the attack.<br><br>Lvl.3: if you win the battle, then perform a free strength 1 attack (without army) against all adjacent enemy provinces.",
+      "Temple": "Temple<br><br>You win the game if you own the indicated number of temples.<br><br>This number decreases by 1 every 2 turns.<br><br>In case of a tie, the clan with the most honor wins.<br><br>{{tableau:honneur}}",
+      "Chao": "Action costs:<br><br>Lvl.0 and Lvl.1: free<br>Lvl.2: 4 Chao<br>Lvl.3: 7 Chao<br><br>Reductions:<br>Each owned rice field reduces the cost of a {{aide:Developpement:development}} action by 1.<br>Each owned forest reduces the cost of a {{aide:Fortification:fortification}} action by 1.<br>Each owned mine reduces the cost of a {{aide:Militarisation:militarization}} action by 1.<br>A 'double city' doubles the reduction of the province on which it is placed.<br><br>All your owned provinces are indicated at the top of the screen."
+    },
     "phases": {
       "initial_placement": {
-        "instructions": "Move cities if needed, then validate.",
-        "title": "Initial placement phase"
+        "instructions": "Reposition cities if needed, then confirm.",
+        "title": "Initial Placement Phase"
+      },
+      "bidding": {
+        "instructions": "Choose your clan — with your 6 chaos, bid — the highest bidder gets the clan they chose.",
+        "waiting_for_others": "Waiting for other players to make their bids...",
+        "bid_on_clan": "You bid {{chao}} chao on the {{color}} clan",
+        "bid_confirmed": "Bid registered, while waiting for other players, you can modify it.",
+        "selection_clan": "Please select a clan"
       },
       "installation": {
-        "title": "Installation phase"
+        "title": "Installation Phase"
+      },
+      "starting_spot_selection": {
+        "winner_instructions": "Select your starting location among the circles, then confirm.",
+        "waiting_for_winner": "Waiting for player {{winnerName}} who won the bid with {{chao}} chao to choose their starting position",
+        "waiting_generic": "Waiting for starting position choice...",
+        "validate_clan_selection": "Confirm to choose the {{color}} clan"
+      },
+      "simultaneous_play": {
+        "welcome_message": "Greetings {{playerName}},<br><br>You embody the <span class='clan-circle' style='background-color: {{colorHex}};'></span> clan<br><br>Choose a territory, then the levels of your various actions with the buttons below, and confirm, before the sun sets!<br><br>Game aids are available at the top.<br><br>Have a good game!",
+        "action_validated": "Action registered, while waiting for other players, you can modify it.",
+        "colonization_targets": "Colonizations target",
+        "clan_conflicts_territory": "Multiple clans want to colonize the same territory. The clans with the most honor yield and skip their turn (+6 chao)",
+        "provinces_disputed": "Multiple clans are disputing the same provinces, so they remain neutral.",
+        "free_urbanization": "Following a colonization, one (or more) province is not viable, a free urbanization will be performed",
+        "conquest_phase_complete": "Neutral provinces conquest phase is complete.",
+        "temple_tax_complete": "Temple creation and related tax complete",
+        "revenue_collected": "Here are the revenues collected from the different clans",
+        "attaque_free_urbanization": "Following an attack, one (or more) province is not viable, a free urbanization will be performed",
+        "territory_not_found": "You cannot select actions without indicating the target province.",
+        "not_action": "You chose to pass your turn to get 6 chaos.",
+        "development_not_possible": "You cannot undertake a development action in an enemy province.",
+        "development_not_connected": "A level 1 or 2 expansion must be done on a connected province.",
+        "possible_urbanization": "Action validated, but a free urbanization may be possible.",
+        "enemy_fortification": "You cannot fortify an enemy province that you are not attacking.",
+        "recruitment_impossible": "Recruitment only allowed in a city or a territory that will be a city this turn.",
+        "not_chao": "You don't have enough chaos to perform these actions.",
+        "too_many_warriors": "Provinces cannot support more than 3 armies at the end of a turn.",
+        "your_victory": "You won the game!",
+        "other_victory": "The {{clanColor}} clan has triumphed and wins the game! 🏆",
+        "chao_error": "Normally impossible actions have been performed. The {{clansErrorString}} clans don't have enough chaos to perform these actions.",
+        "tour_debut": "Start of turn {{tour}}",
+        "player_abandoned": "The <span class='clan-circle' style='background-color: {{colorHex}};'></span> clan has abandoned the game.",
+        "victory_table": {
+          "title": "🏆 Final Ranking",
+          "rank": "Rank",
+          "clan": "Clan",
+          "temples": "Temples",
+          "honor": "Honor",
+          "winner_congratulations": "🎉 Congratulations! You won the victory!",
+          "temple_leader_message": "🏛️ You had the most temples but lost due to honor. Congratulations on your performance!",
+          "game_over_message": "Game over! Congratulations to the {{winnerClan}} clan for their victory! 🏆",
+          "lien_bgg": "If you enjoyed my game, I'd really appreciate it if you left a rating on <a href='https://boardgamegeek.com/boardgame/403280/yuan-lart-de-la-guerre-chine' target='_blank'>BGG</a>. Thank you!"
+        }
       }
     },
     "ui": {
       "loading": "Loading...",
       "waiting": "Waiting...",
+      "waiting_for_others": "Waiting for other players...",
       "your_turn": "Your turn",
       "game_over": "Game over"
     },
     "actions": {
-      "validate": "Validate",
+      "validate": "Confirm",
       "cancel": "Cancel",
       "place": "Place",
       "move": "Move"
@@ -33,20 +98,6 @@
     "save": "Save",
     "load": "Load"
   },
-  "options": {
-    "title": "Options",
-    "language": "Language",
-    "abandon_game": "Abandon Game",
-    "return_to_game": "Return to Game",
-    "abandon_confirmation": "Are you sure you want to abandon the game? It's not very nice for the other players...",
-    "language_updated": "Language updated successfully",
-    "game_abandoned": "You have abandoned the game",
-    "languages": {
-      "fr": "Français",
-      "en": "English",
-      "zh": "中文"
-    }
-  },
   "colors": {
     "black": "black",
     "red": "red",
@@ -56,5 +107,133 @@
     "blue": "blue",
     "purple": "purple",
     "yellow": "yellow"
+  },
+  "options": {
+    "title": "Options",
+    "language": "Language",
+    "abandon_game": "Abandon Game",
+    "leave_game": "Leave Game",
+    "return_to_game": "Return to Game",
+    "abandon_confirmation": "Are you sure you want to abandon the game? This is not nice for other players...",
+    "language_updated": "Language updated successfully",
+    "game_abandoned": "You have abandoned the game",
+    "languages": {
+      "fr": "Français",
+      "en": "English",
+      "zh": "中文"
+    },
+    "graphics_quality": "Target FPS",
+    "change_name": "Change Name",
+    "change_password": "Change Password",
+    "logout": "Logout",
+    "delete_account": "Delete Account"
+  },
+  "auth": {
+    "landing": {
+      "login": "Login",
+      "signup": "Sign Up"
+    },
+    "email_login": {
+      "title": "Email Login",
+      "email_label": "Email",
+      "email_placeholder": "your.email@example.com",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "submit_button": "Log In",
+      "back_button": "Back"
+    },
+    "signup": {
+      "title": "Sign Up",
+      "email_label": "Email",
+      "email_placeholder": "your.email@example.com",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "password_confirm_label": "Confirm Password",
+      "submit_button": "Sign Up",
+      "back_button": "Back"
+    },
+    "google_login": {
+      "title": "Login with Google",
+      "button": "Sign in with Google",
+      "info": "Click the button above to sign in with your Google account. All your information will be automatically filled.",
+      "back_button": "Back"
+    },
+    "logout_confirm": "Do you really want to log out?"
+  },
+  "menu": {
+    "welcome": "Welcome",
+    "connection_status": {
+      "connected": "connected",
+      "disconnected": "disconnected"
+    },
+    "quick_game": "Quick Game",
+    "join_custom_game": "Join Custom Game",
+    "create_custom_game": "Create Custom Game",
+    "options": "Options"
+  },
+  "game_setup": {
+    "join": {
+      "title": "Join Quick Game",
+      "code_label": "Game Code",
+      "code_placeholder": "Enter code",
+      "submit_button": "Join",
+      "back_button": "Back"
+    },
+    "create": {
+      "code_label": "Game Code:",
+      "players_label": "Connected Players:",
+      "start_button": "Start Game",
+      "delete_button": "Delete Game",
+      "back_button": "Back"
+    },
+    "waiting": {
+      "players_count": "Number of players in your game:",
+      "game_code": "Game code:",
+      "waiting_message": "Please wait, a \"I'm ready\" button will appear when there are enough players.",
+      "confirmation_message": "other players are confirming and we will start the game.",
+      "quit_message": "If you want to leave the game, please click the \"Leave Game\" button so as not to disturb other players.",
+      "game_duration_label": "Game Duration",
+      "game_duration_placeholder": "in seconds",
+      "start_button": "Start Game",
+      "ready_button": "I'm Ready",
+      "quit_button": "Leave Game"
+    }
+  },
+  "account": {
+    "change_name": {
+      "title": "Change Name",
+      "current_name_label": "Current Name",
+      "new_name_label": "New Name",
+      "new_name_placeholder": "Enter your new name",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "submit_button": "Confirm",
+      "back_button": "Previous",
+      "success": "Name changed successfully!",
+      "error": "Unable to change name"
+    },
+    "change_password": {
+      "title": "Change Password",
+      "current_password_label": "Current Password",
+      "new_password_label": "New Password",
+      "confirm_password_label": "Confirm New Password",
+      "password_placeholder": "••••••••",
+      "submit_button": "Confirm",
+      "back_button": "Previous",
+      "success": "Password changed successfully!",
+      "error": "Unable to change password"
+    },
+    "delete_account": {
+      "title": "Delete Account",
+      "warning": "⚠️ Warning: This action is irreversible!",
+      "warning_details": "All your data will be permanently deleted.",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "submit_button": "Delete My Account",
+      "back_button": "Previous",
+      "confirmation": "⚠️ Are you really sure you want to delete your account? This action is irreversible!",
+      "success": "Account deleted successfully. Goodbye!",
+      "error": "Unable to delete account"
+    }
   }
-} 
+}

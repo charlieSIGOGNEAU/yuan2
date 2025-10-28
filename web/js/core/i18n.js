@@ -93,6 +93,35 @@ export class I18nManager {
         this.setLanguage(language);
         await this.loadLanguage(language);
     }
+
+    // Détecter la langue du navigateur et fallback sur les langues supportées
+    detectBrowserLanguage() {
+        const supportedLanguages = ['fr', 'en', 'zh', 'ja', 'ko', 'de', 'es', 'pt', 'ru', 'it'];
+        
+        // Récupérer la langue du navigateur
+        const browserLang = navigator.language || navigator.userLanguage;
+        console.log('🌍 Langue du navigateur détectée:', browserLang);
+        
+        // Extraire le code langue (ex: "fr-FR" -> "fr")
+        const langCode = browserLang.split('-')[0].toLowerCase();
+        
+        // Vérifier si la langue est supportée
+        if (supportedLanguages.includes(langCode)) {
+            console.log('✅ Langue supportée:', langCode);
+            return langCode;
+        }
+        
+        // Fallback sur l'anglais
+        console.log('🔄 Langue non supportée, fallback vers anglais');
+        return 'en';
+    }
+
+    // Initialiser avec la langue du navigateur (pour les pages d'authentification)
+    async initializeWithBrowserLanguage() {
+        const language = this.detectBrowserLanguage();
+        console.log('🚀 Initialisation i18n avec la langue du navigateur:', language);
+        await this.initialize(language);
+    }
 }
 
 // Instance unique du gestionnaire de traductions

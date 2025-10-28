@@ -22,14 +22,19 @@
 }
 
 .option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 20px;
-    padding: 15px;
-    background: #f8f9fa;
+    padding: 8px;
+    background: #caddc0;
+    box-shadow: inset 2px 2px 4px rgba(50, 61, 50, 0.1), inset -2px -2px 4px rgba(50, 61, 50, 0.2);
     border-radius: 8px;
-    border: 2px solid #dee2e6;
+    border: 0px solid #93a18c;
 }
 
 .option-item label {
+    margin: 0;
     display: block;
     margin-bottom: 8px;
     color: #333;
@@ -41,9 +46,10 @@
     width: 100%;
     padding: 12px;
     font-size: 16px;
-    border: 2px solid #ddd;
+    box-shadow: inset 2px 2px 4px rgba(50, 61, 50, 0.1), inset -2px -2px 4px rgba(50, 61, 50, 0.2);
+    border: 0px solid #ddd;
     border-radius: 6px;
-    background: white;
+    background: #c5d5bc;
     cursor: pointer;
     transition: border-color 0.3s ease;
 }
@@ -53,48 +59,10 @@
     border-color: #007bff;
 }
 
-/* Checkbox */
-.checkbox-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-}
 
-.checkbox-item label {
-    display: flex;
-    align-items: center;
-    margin: 0;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.option-checkbox {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-    cursor: pointer;
-}
 
 /* Boutons d'options */
-.option-btn {
-    width: 100%;
-    padding: 15px;
-    margin-bottom: 15px;
-    font-size: 16px;
-    font-weight: 600;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
 
-.option-btn:hover {
-    background: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
-}
 
 .logout-btn {
     background: #ffc107;
@@ -122,7 +90,7 @@
 }
 
 .settings-form .form-group {
-    margin-bottom: 20px;
+    /* margin-bottom: 20px; */
 }
 
 .settings-form .form-group label {
@@ -157,8 +125,7 @@
 
 /* Message d'avertissement */
 .warning-message {
-    padding: 20px;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     background: #fff3cd;
     border: 2px solid #ffc107;
     border-radius: 8px;
@@ -187,22 +154,22 @@
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
 
-/* Bouton retour */
-.back-btn {
-    width: 100%;
-    padding: 12px;
-    font-size: 14px;
-    background: transparent;
-    color: #666;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
 
-.back-btn:hover {
-    background: #f8f9fa;
-    border-color: #bbb;
-    color: #333;
-}
+@media (max-height: 650px) {
+    .titre-image {
+      display: none;
+    }
+    .back-options-btn {
+        margin-top: 0px;
+    }
+    #options-title {
+        display: none;
+    }
+    #delete-account-title {
+        display: none;
+    }
+    #change-name-title {
+        display: none;
+    }
+  }
 

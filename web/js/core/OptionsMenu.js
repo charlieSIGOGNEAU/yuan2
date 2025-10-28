@@ -3,6 +3,7 @@ import { i18n } from './i18n.js';
 import { gameState } from '../game_logic_yuan/gameState.js';
 import { ServerConfig } from '../app/config.js';
 import { Auth } from '../app/auth.js';
+import { handleLanguageChange as changeLanguage } from '../app/options.js';
 
 export class OptionsMenu {
     constructor() {
@@ -10,10 +11,12 @@ export class OptionsMenu {
         this.menuElement = null;
         this.overlayElement = null;
         this.baseUrl = ServerConfig.HTTP_BASE;
+        this.text_button_abandon = "";
     }
 
     // Paramètres du menu d'options
     getMenuParams() {
+        
         return {
             title: i18n.t('options.title'),
             sections: [
@@ -22,16 +25,23 @@ export class OptionsMenu {
                     label: i18n.t('options.language'),
                     id: 'language-select',
                     options: [
-                        { value: 'fr', label: i18n.t('options.languages.fr') },
-                        { value: 'en', label: i18n.t('options.languages.en') },
-                        { value: 'zh', label: i18n.t('options.languages.zh') }
+                        { value: 'fr', label: 'Français' },
+                        { value: 'en', label: 'English' },
+                        { value: 'zh', label: '中文' },
+                        { value: 'ja', label: '日本語' },
+                        { value: 'ko', label: '한국어' },
+                        { value: 'de', label: 'Deutsch' },
+                        { value: 'es', label: 'Español' },
+                        { value: 'pt', label: 'Português' },
+                        { value: 'ru', label: 'Русский' },
+                        { value: 'it', label: 'Italiano' }
                     ],
                     currentValue: i18n.getLanguage(),
                     onChange: this.handleLanguageChange.bind(this)
                 },
                 {
                     type: 'button',
-                    label: i18n.t('options.abandon_game'),
+                    label: this.text_button_abandon,
                     id: 'abandon-game-btn',
                     onClick: this.handleAbandonGame.bind(this),
                     style: 'danger'
@@ -49,6 +59,13 @@ export class OptionsMenu {
 
     // Ouvrir le menu d'options
     open() {
+        let text_button_abandon = ""
+        if (gameState.game.game_status === 'installation_phase' || gameState.game.game_status === 'initial_placement' || gameState.game.game_status === 'bidding_phase' || gameState.game.game_status === 'starting_spot_selection' || gameState.game.game_status === 'simultaneous_play') {
+            text_button_abandon = i18n.t('options.abandon_game');
+        } else {
+            text_button_abandon = i18n.t('options.leave_game');
+        }
+        this.text_button_abandon = text_button_abandon;
         console.log('🔧 Ouverture du menu d\'options');
         
         if (this.isOpen) {
@@ -161,47 +178,10 @@ export class OptionsMenu {
         return container;
     }
 
-    // Gérer le changement de langue
+    // Gérer le changement de langue (utilise la fonction partagée depuis options.js)
     async handleLanguageChange(newLanguage) {
-        console.log(`🌍 Changement de langue vers: ${newLanguage}`);
-        
-        const currentLanguage = i18n.getLanguage();
-        
-        // Ne rien faire si c'est la même langue
-        if (newLanguage === currentLanguage) {
-            console.log('⚠️ Langue identique, pas de changement');
-            return;
-        }
-
-        try {
-            // Récupérer le token d'authentification
-            const token =  Auth.authToken;
-            if (!token) {
-                console.error('❌ Token non trouvé');
-                return;
-            }
-
-            // Envoyer la requête au serveur pour mettre à jour la langue de l'utilisateur
-            const response = await fetch(`${this.baseUrl}user`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${Auth.authToken}`
-                },
-                body: JSON.stringify({
-                    language: newLanguage
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                console.log('✅ Langue mise à jour sur le serveur');
-                
-                // Charger la nouvelle langue
-                await i18n.loadLanguage(newLanguage);
-                i18n.setLanguage(newLanguage);
-                
+        await changeLanguage(newLanguage, {
+            onSuccess: () => {
                 // Fermer le menu
                 this.close();
                 
@@ -209,20 +189,11 @@ export class OptionsMenu {
                 setTimeout(() => {
                     this.open();
                 }, 100);
-                
-                // Afficher un message de confirmation dans l'info panel
-                if (window.uiManager) {
-                    window.uiManager.showTemporaryMessage(
-                        i18n.t('options.language_updated'),
-                        2000
-                    );
-                }
-            } else {
-                console.error('❌ Erreur lors de la mise à jour de la langue:', data);
+            },
+            onError: (error) => {
+                console.error('❌ Erreur lors du changement de langue:', error);
             }
-        } catch (error) {
-            console.error('❌ Erreur lors du changement de langue:', error);
-        }
+        });
     }
 
     // Gérer l'abandon de la partie
@@ -230,16 +201,17 @@ export class OptionsMenu {
         console.log('🚪 Demande d\'abandon de partie');
         console.log('🔍 Auth.authToken:', Auth.authToken);        
         // Demander confirmation
-        const confirmation = confirm(i18n.t('options.abandon_confirmation'));        
-        if (!confirmation) {
-            console.log('❌ Abandon annulé');
-            return;
-        }
-
         if (gameState.game.game_status === 'simultaneous_play') {
+            // Demander confirmation
+            const confirmation = confirm(i18n.t('options.abandon_confirmation'));  
+            if (!confirmation) {
+                console.log('❌ Abandon annulé');
+                return;
+            }
+        
             console.log("faire l'action passer son tour");
             const gameapi = await import('../game_logic_yuan/gameApi.js');
-            gameapi.gameApi.sendActionToApi({
+            await gameapi.gameApi.sendActionToApi({
                 position_q: null,
                 position_r: null,
                 development_level: 0,
@@ -247,7 +219,7 @@ export class OptionsMenu {
                 militarisation_level: 0
             }, false);
         }
-
+        
 
 
         try {
@@ -287,18 +259,18 @@ export class OptionsMenu {
                         3000
                     );
                 }                
-                // Rediriger vers le menu principal après 3 secondes
+                // Rediriger vers le menu principal après 1.5 secondes
                 setTimeout(async () => {
                     const { SessionManager } = await import('../app/sessionManager.js');
                     SessionManager.resetToGameMenu();
-                }, 3000);
+                }, 1500);
             } else {
-                console.error('❌ Erreur lors de l\'abandon de la partie:', data);
-                alert('Erreur lors de l\'abandon de la partie');
+                console.error('❌ Erreur1 lors de l\'abandon de la partie:', data);
+                
             }
         } catch (error) {
-            console.error('❌ Erreur lors de l\'abandon de la partie:', error);
-            alert('Erreur lors de l\'abandon de la partie');
+            console.error('❌ Erreur2 lors de l\'abandon de la partie:', error);
+            
         }
     }
 }

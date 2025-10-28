@@ -1,5 +1,6 @@
-import { loadPartial, loadCSS } from '../simple.js';
+import { loadCSS } from '../simple.js';
 import { Router } from './router.js';
+import { i18n } from '../core/i18n.js';
 
 // Page pour créer une partie rapide
 export const CreateQuickGamePage = {
@@ -8,7 +9,7 @@ export const CreateQuickGamePage = {
 
     // Afficher la page
     async show(data = {}) {
-        const html = await loadPartial('partials/create-quick-game.html');
+        const html = this.renderHTML();
         document.getElementById('app').innerHTML = html;
         loadCSS('css/game.css');
         
@@ -20,6 +21,32 @@ export const CreateQuickGamePage = {
         }
         
         this.setupEvents();
+    },
+
+    // Générer le HTML avec les traductions
+    renderHTML() {
+        return `
+            <div class="create-quick-game-page">
+                <div class="game-info">
+                    <div class="info-item">
+                        <label>${i18n.t('game_setup.create.code_label')}</label>
+                        <div id="game-code-display" class="code-display">-</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label>${i18n.t('game_setup.create.players_label')}</label>
+                        <div id="players-count" class="players-count">0/4</div>
+                    </div>
+                </div>
+                
+                <div class="game-actions">
+                    <button id="start-game-btn" class="action-btn start-btn">${i18n.t('game_setup.create.start_button')}</button>
+                    <button id="delete-game-btn" class="action-btn delete-btn">${i18n.t('game_setup.create.delete_button')}</button>
+                </div>
+                
+                <button id="back-to-game-menu" class="back-btn">${i18n.t('game_setup.create.back_button')}</button>
+            </div>
+        `;
     },
 
     // Configurer les événements

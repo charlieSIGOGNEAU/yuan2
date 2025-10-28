@@ -65,10 +65,26 @@ p {
     margin-top: 5px;
     margin-bottom: 5px;
     padding: 10px;
+    color: #222c26;
+    box-shadow: inset 2px 2px 4px rgba(50, 61, 50, 0.1), inset -2px -2px 4px rgba(50, 61, 50, 0.2);
+    background: #caddc0;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
 
     font-size: 16px;
     font-weight: 600;
-    border: none;
+    border: 0px groove #93a18c;
     border-radius: 8px;
     cursor: pointer;
+}
+
+.back-btn {
+    padding: 5px;
+    margin-top: 25px;
+}
+
+.btn:hover {
+
+    transform: translateY(-2px);
+    background: rgb(171, 186, 163);
+    box-shadow: inset 2px 2px 4px rgba(50, 61, 50, 0.1), inset 1px 1px 2px rgba(50, 61, 50, 0.3);
 }

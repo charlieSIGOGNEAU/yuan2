@@ -20,19 +20,17 @@ export const simultaneousPlayPhase = {
 
     
 
-    async simultaneousPlayPhase(gameBoard) {
-        this.gameBoard = gameBoard;
+    simultaneousPlayPhase(gameBoard) {
         if (this.inProgress) {
-            if (this.processedTurns + 1 !== gameState.game.simultaneous_play_turn) {
-                developpementAndMore.animation = false;
-                fortification.animation = false;
-                militarisation.animation = false;
-            }
             return;
         }
-        if (this.processedTurns === 1) {
+        this.gameBoard = gameBoard;
+        this.inProgress = true;
+        this.simultaneousPlayPhaseRecursive();
+    },
 
-            this.inProgress = true;
+    async simultaneousPlayPhaseRecursive(){
+        if (this.processedTurns === 1) {
 
             // Exécuter getAdjacentTerritories pour tous les territoires
             console.log('🔄 Initialisation des territoires adjacents...');
@@ -71,6 +69,7 @@ export const simultaneousPlayPhase = {
 
 
         if (this.processedTurns + 1 === gameState.game.simultaneous_play_turn) {
+
             developpementAndMore.animation = true;
             fortification.animation = true;
             militarisation.animation = true;
@@ -85,19 +84,7 @@ export const simultaneousPlayPhase = {
         }
 
         if (this.processedTurns === gameState.game.simultaneous_play_turn) {
-            if (this.processedTurns === 1){
-                gameBoard.shadowManager.startSunAnimation();
-            }
-
-            this.inProgress = false;
-            // affiche la barre d'action a 6 cases
-            uiManager.showPlayerActionBar();
-
-            // Activer la détection de clic sur les territoires
-            this.setupTerritoryClickDetection(gameBoard);
-
-            // mes le chois des action a zero
-            uiManager.setActionChoicesToZero();
+            this.actionsOfPlayer()
         }
         else {
             
@@ -114,15 +101,6 @@ export const simultaneousPlayPhase = {
             await this.createActionCircles(gameBoard);
 
             uiManager.showNextBar();
-
-
-            // lancer l'animation du soleil
-            if (gameBoard.shadowManager) {
-                gameBoard.shadowManager.startSunAnimation();
-            } else {
-                console.warn('⚠️ shadowManager n\'est pas encore prêt');
-            }
-
 
             console.log('🔄 debut developpement');
             await developpementAndMore.developpement(gameBoard, this.processedTurns);
@@ -155,8 +133,22 @@ export const simultaneousPlayPhase = {
             this.processedTurns +=1;
             console.log('🔄 processedTurns:', this.processedTurns);
             console.log('🔄 gameState.game.simultaneous_play_turn:', gameState.game.simultaneous_play_turn);
-            await this.simultaneousPlayPhase(gameBoard);
+            await this.simultaneousPlayPhaseRecursive();
         }
+
+    },
+
+    actionsOfPlayer(){
+        this.inProgress = false;
+
+        // affiche la barre d'action a 6 cases
+        uiManager.showPlayerActionBar();
+
+        // Activer la détection de clic sur les territoires
+        this.setupTerritoryClickDetection(gameBoard);
+
+        // mes le chois des action a zero
+        uiManager.setActionChoicesToZero();
     },
 
 

@@ -55,6 +55,8 @@ class Game < ApplicationRecord
           self.save!
           self.start_installation_phase()   
           return {message: "game ready installation_phase", user_of_game_users_destroyed: user_of_game_users_destroyed}
+        else
+          return {message: "unexpired timeout"}
         end
       end
     elsif self.waiting_players_count == 0
@@ -146,7 +148,8 @@ class Game < ApplicationRecord
         player_count: 3,
         game_status: :waiting_for_players,
         game_type: :quick_game,
-        waiting_players_count: 1
+        waiting_players_count: 1,
+        turn_duration: 120
       )
       game_user = game.game_users.create(user: user)
       return {game: game, game_user: game_user, message: "new game"}
@@ -252,6 +255,9 @@ class Game < ApplicationRecord
       unless game
         return {message: "game not found"}
       else
+        if game.game_status != "waiting_for_players"
+          return {message: "game not in waiting_for_players"}
+        end
         success = false
         Game.transaction do
           game.lock!
@@ -280,7 +286,7 @@ class Game < ApplicationRecord
     end
   end
 
-  def launch_custom_game()
+  def launch_custom_game(game_duration)
     place_available = 0
     success = false
     Game.transaction do
@@ -303,6 +309,7 @@ class Game < ApplicationRecord
     player_count = GameUser.where(game_id: self.id).count
     self.player_count = player_count
     self.waiting_players_count = player_count
+    self.turn_duration = [game_duration, 15].max
     self.save!
     return {game: self, message: "go ready to play"}
 
@@ -499,6 +506,8 @@ class Game < ApplicationRecord
       return false
     end
   end
+
+
 
 
 

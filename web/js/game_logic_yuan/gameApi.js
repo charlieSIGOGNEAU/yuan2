@@ -69,6 +69,7 @@ export const gameApi = {
 
         if (data.message && data.message.type === 'ready_to_play') {
             console.log('🎯🎯🎯 ready_to_play test ');
+            gameState.game.game_status = 'waiting_for_confirmation_players';
             this.startDelay(() => this.startGameAfterDelay(data.message.game_id));
         }
 
@@ -208,6 +209,12 @@ export const gameApi = {
                 }
 
                 simultaneousPlayPhase.simultaneousPlayPhase(window.gameBoard);
+                // lancer l'animation du soleil
+                if (gameBoard.shadowManager) {
+                    gameBoard.shadowManager.startSunAnimation();
+                } else {
+                    console.warn('⚠️ shadowManager n\'est pas encore prêt');
+                }
 
             }
 
@@ -232,15 +239,7 @@ export const gameApi = {
             return;
         }
 
-        // Gestion du désabonnement d'un joueur du channel de la game
-        // if (data.message && data.message.type === 'unsubscribe_from_game') {
-        //     console.log('📤 Désabonnement du game channel:', data.message.game_id);
-        //     // Importer WebSocketClient dynamiquement pour éviter la dépendance circulaire
-        //     import('../app/websocket.js').then(module => {
-        //         module.WebSocketClient.unsubscribeFromGameChannel(data.message.game_id);
-        //         console.log('✅ Désabonné du game channel:', data.message.game_id);
-        //     });
-        // }
+
 
         // Gestion de la victoire d'un joueur
         if (data.message && data.message.type === 'game_won') {
@@ -256,7 +255,7 @@ export const gameApi = {
     async startDelayedTurnEndTimer() {
         const simultaneous_play_turn = gameState.game.simultaneous_play_turn;
         const turn_duration = gameState.game.turn_duration;
-        await new Promise(resolve => setTimeout(resolve, turn_duration * 1000))
+        await new Promise(resolve => setTimeout(resolve, (turn_duration + 0.5) * 1000))
         if (simultaneous_play_turn == gameState.game.simultaneous_play_turn && gameState.game.game_status === 'simultaneous_play') {
             this.forceEndTurn(simultaneous_play_turn);
         }
@@ -264,7 +263,7 @@ export const gameApi = {
 
     async forceEndTurn(simultaneous_play_turn) {
         const maxRetries = 10;
-            const timeoutDuration = 10000; // 10 secondes
+            const timeoutDuration = 10000;
         
             const sendRequest = async (attempt = 1) => {
                 const controller = new AbortController();
@@ -307,9 +306,12 @@ export const gameApi = {
       return await sendRequest();
     },
 
-    
 
+
+
+    // fonctions d'envoi de requettes vers l'api pour la partie
     async startGameAfterDelay(game_id) {
+        console.log('🎯🎯🎯 startGameAfterDelay game_id:', game_id);
         if (gameState && gameState.game && gameState.game.game_status === 'waiting_for_confirmation_players') {
             console.log('🎯🎯🎯 startGameAfterDelay');
             const maxRetries = 10;

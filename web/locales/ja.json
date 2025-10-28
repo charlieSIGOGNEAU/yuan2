@@ -1,0 +1,240 @@
+{
+  "game": {
+    "game_destroyed": "プレイヤーがゲームを放棄しました。ご迷惑をおかけして申し訳ございません。",
+    "help": {
+      "Developpement": "開発は2つのタイプに分かれています：<br><br>{{aide:Colonisation:植民}}：自由な地方を対象とする場合<br>（レベル1-2は接続が必要、レベル3は条件なし）。<br><br>{{aide:Expansion:拡張}}：所有している地方を対象とする場合。<br><br>紛争：<br>- 2つの一族が同じ隣接地方を望む場合：中立のままとなります。<br>- 2つの一族が同じ地方を狙う場合：名誉の高い一族が譲歩し、補償として6混沌を受け取ります。<br><br>{{tableau:honneur}}",
+      "Colonisation": "植民：<br>対象の領土とその隣接領土を取得。<br>レベル2-3：+2混沌。",
+      "Expansion": "拡張：<br>レベル1-2：対象グループに隣接する領土を取得。<br>レベル2：+2混沌。<br>レベル3：{{aide:Temple:神殿}}を建設（存在しない場合）+ 隣接する一族から2混沌を奪う。",
+      "Fortification": "防御は2つのタイプに分かれています：<br><br>{{aide:Urbanisation:都市化}}所有している村を対象とする場合。<br>{{aide:Renforcement:強化}}所有している都市を対象とする場合。",
+      "Urbanisation": "都市化：<br><br><br>レベル1：効果なし。<br><br>レベル2：都市になる。<br><br>レベル3：+1軍隊、要塞都市になる（2つの追加軍隊がいるかのように領土を保護）。",
+      "Renforcement": "強化：<br><br>レベル1：二重都市になる→行動コスト削減のために同じタイプの2つの領土として数えられる。<br><br>レベル2：要塞二重都市になる（2つの追加軍隊がいるかのように領土を保護）。<br><br>レベル3：難攻不落の都市になる+隣接する同盟領土を1保護；+1軍隊。",
+      "Militarisation": "軍事化は2つのタイプに分かれています：<br><br>{{aide:Recrutement:募兵}}：対象が所有している都市の場合。<br><br>{{aide:Attaque:攻撃}}：対象が敵の地方の場合。<br>⚠️ 対象に接続された少なくとも1つの軍隊が必要です。",
+      "Recrutement": "募兵<br><br>レベル1：効果なし<br><br>レベル2：+1軍隊<br><br>レベル3：+3軍隊<br><br>👉 ターン終了時、各地方は最大3軍隊に制限されます。",
+      "Attaque": "攻撃<br><br>レベル1-2-3：<br> - 接続されたすべての軍隊が攻撃。<br> - 軍隊は1対1で相殺。<br> - 少なくとも1軍隊が残れば→地方を獲得。<br><br>レベル2-3：攻撃時に+1軍隊。<br><br>レベル3：戦闘に勝利した場合、すべての隣接敵地方に対して無料の力1攻撃（軍隊なし）を実行。",
+      "Temple": "神殿<br><br>指定された数の神殿を所有するとゲームに勝ちます。<br><br>この数は2ターンごとに1減少します。<br><br>同点の場合、最も名誉の高い一族が勝ちます。<br><br>{{tableau:honneur}}",
+      "Chao": "行動コスト：<br><br>レベル0とレベル1：無料<br>レベル2：4混沌<br>レベル3：7混沌<br><br>削減：<br>所有している水田ごとに{{aide:Developpement:開発}}行動のコストが1削減されます。<br>所有している森林ごとに{{aide:Fortification:防御}}行動のコストが1削減されます。<br>所有している鉱山ごとに{{aide:Militarisation:軍事化}}行動のコストが1削減されます。<br>'二重都市'はその配置された地方の削減を2倍にします。<br><br>所有しているすべての地方は画面上部に表示されます。"
+    },
+    "phases": {
+      "initial_placement": {
+        "instructions": "必要に応じて都市を再配置し、確認してください。",
+        "title": "初期配置フェーズ"
+      },
+      "bidding": {
+        "instructions": "一族を選択—6混沌で入札—最高入札者が選んだ一族を獲得。",
+        "waiting_for_others": "他のプレイヤーの入札を待っています...",
+        "bid_on_clan": "{{color}}一族に{{chao}}混沌で入札しました",
+        "bid_confirmed": "入札が登録されました。他のプレイヤーを待つ間、変更できます。",
+        "selection_clan": "一族を選択してください"
+      },
+      "installation": {
+        "title": "設置フェーズ"
+      },
+      "starting_spot_selection": {
+        "winner_instructions": "円の中から開始位置を選択し、確認してください。",
+        "waiting_for_winner": "{{chao}}混沌で入札に勝ったプレイヤー{{winnerName}}が開始位置を選択するのを待っています",
+        "waiting_generic": "開始位置の選択を待っています...",
+        "validate_clan_selection": "{{color}}一族を選択することを確認"
+      },
+      "simultaneous_play": {
+        "welcome_message": "こんにちは{{playerName}}、<br><br>あなたは<span class='clan-circle' style='background-color: {{colorHex}};'></span>一族を体現します<br><br>領土を選択し、下のボタンでさまざまな行動のレベルを選択し、日が沈む前に確認してください！<br><br>ゲームのヘルプは上部で利用できます。<br><br>楽しいゲームを！",
+        "action_validated": "行動が登録されました。他のプレイヤーを待つ間、変更できます。",
+        "colonization_targets": "植民の対象",
+        "clan_conflicts_territory": "複数の一族が同じ領土を植民したがっています。最も名誉の高い一族が譲歩し、ターンをスキップします（+6混沌）",
+        "provinces_disputed": "複数の一族が同じ地方を争っているため、中立のままです。",
+        "free_urbanization": "植民の後、1つ（または複数）の地方が実行不可能であり、無料の都市化が実行されます",
+        "conquest_phase_complete": "中立地方の征服フェーズが完了しました。",
+        "temple_tax_complete": "神殿の建設と関連税が完了",
+        "revenue_collected": "これがさまざまな一族から集められた収入です",
+        "attaque_free_urbanization": "攻撃の後、1つ（または複数）の地方が実行不可能であり、無料の都市化が実行されます",
+        "territory_not_found": "対象地方を指定せずに行動を選択できません。",
+        "not_action": "ターンをスキップして6混沌を獲得することを選択しました。",
+        "development_not_possible": "敵の地方で開発行動を行うことはできません。",
+        "development_not_connected": "レベル1または2の拡張は接続された地方で行う必要があります。",
+        "possible_urbanization": "行動が検証されましたが、無料の都市化が可能かもしれません。",
+        "enemy_fortification": "攻撃していない敵の地方を防御することはできません。",
+        "recruitment_impossible": "募兵は都市またはこのターンで都市になる領土でのみ許可されます。",
+        "not_chao": "これらの行動を実行するのに十分な混沌がありません。",
+        "too_many_warriors": "ターン終了時、地方は3軍隊以上をサポートできません。",
+        "your_victory": "ゲームに勝ちました！",
+        "other_victory": "{{clanColor}}一族が勝利し、ゲームに勝ちました！🏆",
+        "chao_error": "通常不可能な行動が実行されました。{{clansErrorString}}一族はこれらの行動を実行するのに十分な混沌がありません。",
+        "tour_debut": "ターン{{tour}}開始",
+        "player_abandoned": "<span class='clan-circle' style='background-color: {{colorHex}};'></span>一族がゲームを放棄しました。",
+        "victory_table": {
+          "title": "🏆 最終ランキング",
+          "rank": "ランク",
+          "clan": "一族",
+          "temples": "神殿",
+          "honor": "名誉",
+          "winner_congratulations": "🎉 おめでとうございます！勝利を収めました！",
+          "temple_leader_message": "🏛️ 最も多くの神殿を持っていましたが、名誉のために負けました。素晴らしいパフォーマンスでした！",
+          "game_over_message": "ゲーム終了！{{winnerClan}}一族の勝利おめでとうございます！🏆",
+          "lien_bgg": "私のゲームを楽しんでいただけたなら、<a href='https://boardgamegeek.com/boardgame/403280/yuan-lart-de-la-guerre-chine' target='_blank'>BGG</a>で評価を残していただけると本当に嬉しいです。ありがとうございます！"
+        }
+      }
+    },
+    "ui": {
+      "loading": "読み込み中...",
+      "waiting": "待機中...",
+      "waiting_for_others": "他のプレイヤーを待っています...",
+      "your_turn": "あなたのターン",
+      "game_over": "ゲーム終了"
+    },
+    "actions": {
+      "validate": "確認",
+      "cancel": "キャンセル",
+      "place": "配置",
+      "move": "移動"
+    }
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "キャンセル",
+    "yes": "はい",
+    "no": "いいえ",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "save": "保存",
+    "load": "読み込み"
+  },
+  "colors": {
+    "black": "黒",
+    "red": "赤",
+    "green": "緑",
+    "orange": "オレンジ",
+    "white": "白",
+    "blue": "青",
+    "purple": "紫",
+    "yellow": "黄"
+  },
+  "options": {
+    "title": "オプション",
+    "language": "言語",
+    "abandon_game": "ゲームを放棄",
+    "leave_game": "ゲームを退出",
+    "return_to_game": "ゲームに戻る",
+    "abandon_confirmation": "本当にゲームを放棄しますか？他のプレイヤーに対して良くありません...",
+    "language_updated": "言語が正常に更新されました",
+    "game_abandoned": "ゲームを放棄しました",
+    "languages": {
+      "fr": "Français",
+      "en": "English",
+      "zh": "中文"
+    },
+    "graphics_quality": "目標FPS",
+    "change_name": "名前を変更",
+    "change_password": "パスワードを変更",
+    "logout": "ログアウト",
+    "delete_account": "アカウントを削除"
+  },
+  "auth": {
+    "landing": {
+      "login": "ログイン",
+      "signup": "サインアップ"
+    },
+    "email_login": {
+      "title": "メールでログイン",
+      "email_label": "メール",
+      "email_placeholder": "your.email@example.com",
+      "password_label": "パスワード",
+      "password_placeholder": "••••••••",
+      "submit_button": "ログイン",
+      "back_button": "戻る"
+    },
+    "signup": {
+      "title": "サインアップ",
+      "email_label": "メール",
+      "email_placeholder": "your.email@example.com",
+      "password_label": "パスワード",
+      "password_placeholder": "••••••••",
+      "password_confirm_label": "パスワードの確認",
+      "submit_button": "サインアップ",
+      "back_button": "戻る"
+    },
+    "google_login": {
+      "title": "Googleでログイン",
+      "button": "Googleでサインイン",
+      "info": "上のボタンをクリックしてGoogleアカウントでサインインしてください。すべての情報が自動的に入力されます。",
+      "back_button": "戻る"
+    },
+    "logout_confirm": "本当にログアウトしますか？"
+  },
+  "menu": {
+    "welcome": "ようこそ",
+    "connection_status": {
+      "connected": "接続済み",
+      "disconnected": "未接続"
+    },
+    "quick_game": "クイックゲーム",
+    "join_custom_game": "カスタムゲームに参加",
+    "create_custom_game": "カスタムゲームを作成",
+    "options": "オプション"
+  },
+  "game_setup": {
+    "join": {
+      "title": "クイックゲームに参加",
+      "code_label": "ゲームコード",
+      "code_placeholder": "コードを入力",
+      "submit_button": "参加",
+      "back_button": "戻る"
+    },
+    "create": {
+      "code_label": "ゲームコード：",
+      "players_label": "接続済みプレイヤー：",
+      "start_button": "ゲーム開始",
+      "delete_button": "ゲームを削除",
+      "back_button": "戻る"
+    },
+    "waiting": {
+      "players_count": "あなたのゲームのプレイヤー数：",
+      "game_code": "ゲームコード：",
+      "waiting_message": "お待ちください。十分なプレイヤーがいる場合、「準備完了」ボタンが表示されます。",
+      "confirmation_message": "他のプレイヤーが確認中で、ゲームを開始します。",
+      "quit_message": "ゲームを退出したい場合は、他のプレイヤーを妨げないように「ゲームを退出」ボタンをクリックしてください。",
+      "game_duration_label": "ゲーム時間",
+      "game_duration_placeholder": "秒単位",
+      "start_button": "ゲーム開始",
+      "ready_button": "準備完了",
+      "quit_button": "ゲームを退出"
+    }
+  },
+  "account": {
+    "change_name": {
+      "title": "名前を変更",
+      "current_name_label": "現在の名前",
+      "new_name_label": "新しい名前",
+      "new_name_placeholder": "新しい名前を入力",
+      "password_label": "パスワード",
+      "password_placeholder": "••••••••",
+      "submit_button": "確認",
+      "back_button": "前へ",
+      "success": "名前が正常に変更されました！",
+      "error": "名前を変更できません"
+    },
+    "change_password": {
+      "title": "パスワードを変更",
+      "current_password_label": "現在のパスワード",
+      "new_password_label": "新しいパスワード",
+      "confirm_password_label": "新しいパスワードの確認",
+      "password_placeholder": "••••••••",
+      "submit_button": "確認",
+      "back_button": "前へ",
+      "success": "パスワードが正常に変更されました！",
+      "error": "パスワードを変更できません"
+    },
+    "delete_account": {
+      "title": "アカウントを削除",
+      "warning": "⚠️ 警告：この操作は取り消せません！",
+      "warning_details": "すべてのデータが完全に削除されます。",
+      "password_label": "パスワード",
+      "password_placeholder": "••••••••",
+      "submit_button": "アカウントを削除",
+      "back_button": "前へ",
+      "confirmation": "⚠️ 本当にアカウントを削除しますか？この操作は取り消せません！",
+      "success": "アカウントが正常に削除されました。さようなら！",
+      "error": "アカウントを削除できません"
+    }
+  }
+}
+

@@ -1,133 +1,19 @@
-/* Pages de gestion des parties */
-.join-quick-game-page,
-.create-quick-game-page {
-    width: 100%;
-    max-width: 400px;
-    padding: 20px;
-}
-
-.join-quick-game-page h2,
-.create-quick-game-page h2 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 30px;
-    font-size: 24px;
-}
-
-/* Formulaire de rejoindre une partie */
-.game-form {
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-/* Informations de la partie */
-.game-info {
-    width: 100%;
-    margin-bottom: 30px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 2px solid #dee2e6;
-}
-
-.info-item {
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;    /* aligne verticalement les éléments */
-}
-
-.info-item:last-child {
-    margin-bottom: 0;
-}
-
-.info-item label {
-    /* display: block; */
-    display: flex;
-    /* margin-bottom: 8px; */
-    color: #666;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.code-display {
-    font-size: 20px;
-    font-weight: 700;
-    color: #007bff;
-    text-align: center;
-    /* padding: 15px; */
-    /* background: white; */
-    border-radius: 6px;
-    letter-spacing: 4px;
-}
-
-.players-count {
-    font-size: 28px;
-    font-weight: 700;
-    color: #28a745;
-    text-align: center;
+#game-code {
     padding: 15px;
-    background: white;
-    border-radius: 6px;
+    border: 0px solid #ddd;
 }
 
-/* Actions de la partie */
-.game-actions {
+.form-group {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
+    align-items: center; /* aligne label et input verticalement */
+    gap: 8px; /* espace entre label et input */
+    justify-content: flex-start; /* ou center si tu veux centrer horizontalement le groupe */
+    white-space: nowrap; /* empêche le retour à la ligne */
 }
+  
+  .form-group input {
+    flex: 1; /* prend tout l’espace disponible */
+    min-width: 0;        /* permet à flex de réduire la largeur si nécessaire */
+  }
 
-.action-btn {
-    width: 100%;
-    padding: 15px;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.start-btn {
-    background: #28a745;
-    color: white;
-}
-
-.start-btn:hover {
-    background: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-}
-
-.delete-btn {
-    background: #dc3545;
-    color: white;
-}
-
-.delete-btn:hover {
-    background: #c82333;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
-}
-
-/* Bouton retour */
-.back-btn {
-    width: 100%;
-    padding: 12px;
-    margin-top: 15px;
-    font-size: 14px;
-    background: transparent;
-    color: #666;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.back-btn:hover {
-    background: #f8f9fa;
-    border-color: #bbb;
-    color: #333;
-}
-
+  

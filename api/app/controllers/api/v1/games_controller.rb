@@ -1,6 +1,7 @@
 class Api::V1::GamesController < ApplicationController
   before_action :authenticate_request
   before_action :set_game, only: [:submit_victory, :i_am_ready, :startGameAfterDelay, :launch_custom_game, :give_up_game, :force_end_turn]
+  before_action :set_game_duration, only: [:launch_custom_game]
   before_action :set_custom_code, only: [:join_game_custom]
 
   # POST /api/v1/games/quick_game
@@ -9,9 +10,7 @@ class Api::V1::GamesController < ApplicationController
     game = result[:game]
     message = result[:message]
     game_user = result[:game_user]
-
-    # a suprimer
-    game.update(turn_duration: 10)
+  
 
     if game
       case message
@@ -68,28 +67,40 @@ class Api::V1::GamesController < ApplicationController
       game_user = result[:game_user]
       render json: { success: true, game_id: game.id }
       GameBroadcast.game_broadcast_waiting_for_players(game.id)
-    elsif message == "joined game and game ready installation_phase"
+    else
+      render json: { success: false, message: message }
     end
   end
 
   def launch_custom_game
     game = @game
+    game_duration = @game_duration
     user = current_user
     creator = game.creator
+    p "0"*100
+    p game_duration
+    p user.id
+    p creator.id
+    p game.game_status
+    p "0"*100
     if (user.id == creator.id && game.game_status == "waiting_for_players")
-    result = game.launch_custom_game
-
-    p "1"*100
-    p result
-    p "2"*100
+      result = game.launch_custom_game(game_duration)
+      p "1"*100
+      p result
+      p "2"*100
+    
+      if result[:message] == "go ready to play"
+        render json: { success: true, game_id: game.id }
+        game_user = game.game_users.find_by(user_id: user.id)
+        game_user.update(player_ready: true)
+        GameBroadcast.game_broadcast_ready_to_play(game.id)
+      
+      else
+        render json: { success: false, message: result[:message]}
+      end
+    else
+      render json: { success: false, message: "Game not in waiting_for_players"}
     end
-    if result[:message] == "go ready to play"
-      render json: { success: true, game_id: game.id }
-      game_user = game.game_users.find_by(user_id: user.id)
-      game_user.update(player_ready: true)
-      GameBroadcast.game_broadcast_ready_to_play(game.id)
-    end
-
   end
 
   def i_am_ready
@@ -164,6 +175,9 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def startGameAfterDelay
+    p "4"*100
+    p @game.game_status
+    p "4"*100
     if @game.game_status == "waiting_for_confirmation_players"
       result = @game.start_game_after_delay
       message = result&.[](:message)
@@ -248,14 +262,6 @@ class Api::V1::GamesController < ApplicationController
 
   def force_end_turn
     game = @game
-    # if game.nil?
-    #   puts "❌ Game non trouvé: #{params[:id]}"
-    #   render json: {
-    #     success: false,
-    #     message: "Game non trouvé"
-    #   }, status: :not_found
-    #   return
-    # end
 
     if params[:simultaneous_play_turn].nil?
       puts "⚠️ Paramètre manquant: simultaneous_play_turn"
@@ -266,16 +272,25 @@ class Api::V1::GamesController < ApplicationController
       return
     end
 
-    if game.updated_at > game.turn_duration.seconds.ago
-      render json: {
-        success: false,
-        message: "Tour non forcément terminé"
-      }, status: :ok
-    elsif game.simultaneous_play_turn != params[:simultaneous_play_turn]
+    if game.simultaneous_play_turn != params[:simultaneous_play_turn]
+      p "1"*100
       render json: {
         success: false,
         message: "Mauvais tour"
       }, status: :ok
+      return
+    end
+
+    if game.updated_at > (game.turn_duration ).seconds.ago
+      p "2"*100
+      p game.updated_at
+      p game.turn_duration.seconds.ago
+      p "2"*100
+      render json: {
+        success: false,
+        message: "Tour non forcément terminé"
+      }, status: :ok
+    
     else
       result = Action.force_end_turn(game,params[:simultaneous_play_turn])
       if result == "some players did not play this turn"
@@ -309,6 +324,10 @@ class Api::V1::GamesController < ApplicationController
 
   def set_custom_code
     @custom_code = params[:custom_code]
+  end
+
+  def set_game_duration
+    @game_duration = params[:game_duration].to_i || 120
   end
 
 end 

@@ -72,7 +72,8 @@
           "honor": "Honneur",
           "winner_congratulations": "🎉 Félicitations ! Vous avez remporté la victoire !",
           "temple_leader_message": "🏛️ Vous aviez le plus de temples mais avez perdu à cause de l'honneur. Félicitations pour votre performance !",
-          "game_over_message": "Fin de partie ! Félicitations au clan {{winnerClan}} pour sa victoire ! 🏆"
+          "game_over_message": "Fin de partie ! Félicitations au clan {{winnerClan}} pour sa victoire ! 🏆",
+          "lien_bgg": "Si tu as aimé mon jeu, ça me ferait vraiment plaisir que tu laisses une note sur <a href='https://boardgamegeek.com/boardgame/403280/yuan-lart-de-la-guerre-chine' target='_blank'>BGG</a>. Merci !"
         }
 
 
@@ -117,6 +118,7 @@
     "title": "Options",
     "language": "Langue",
     "abandon_game": "Abandonner la partie",
+    "leave_game": "Quitter la partie",
     "return_to_game": "Revenir à la partie",
     "abandon_confirmation": "Êtes-vous sûr de vouloir abandonner la partie ? Ce n'est pas très sympa pour les autres joueurs...",
     "language_updated": "Langue mise à jour avec succès",
@@ -125,6 +127,119 @@
       "fr": "Français",
       "en": "English",
       "zh": "中文"
+    },
+    "graphics_quality": "FPS cible",
+    "change_name": "Changer de nom",
+    "change_password": "Changer de mot de passe",
+    "logout": "Déconnexion",
+    "delete_account": "Supprimer le compte"
+  },
+  "auth": {
+    "landing": {
+      "login": "Connexion",
+      "signup": "Inscription"
+    },
+    "email_login": {
+      "title": "Connexion par Email",
+      "email_label": "Identifiant (Email)",
+      "email_placeholder": "votre.email@exemple.com",
+      "password_label": "Mot de passe",
+      "password_placeholder": "••••••••",
+      "submit_button": "Se connecter",
+      "back_button": "Retour"
+    },
+    "signup": {
+      "title": "Inscription",
+      "email_label": "Email",
+      "email_placeholder": "votre.email@exemple.com",
+      "password_label": "Mot de passe",
+      "password_placeholder": "••••••••",
+      "password_confirm_label": "Confirmation du mot de passe",
+      "submit_button": "S'inscrire",
+      "back_button": "Retour"
+    },
+    "google_login": {
+      "title": "Connexion avec Google",
+      "button": "Se connecter avec Google",
+      "info": "Cliquez sur le bouton ci-dessus pour vous connecter avec votre compte Google. Toutes vos informations seront automatiquement remplies.",
+      "back_button": "Retour"
+    },
+    "logout_confirm": "Voulez-vous vraiment vous déconnecter ?"
+  },
+  "menu": {
+    "welcome": "Bienvenue",
+    "connection_status": {
+      "connected": "connecté",
+      "disconnected": "déconnecté"
+    },
+    "quick_game": "Partie Rapide",
+    "join_custom_game": "Rejoindre une partie personnalisée",
+    "create_custom_game": "Créer une partie personnalisée",
+    "options": "Options"
+  },
+  "game_setup": {
+    "join": {
+      "title": "Rejoindre une partie rapide",
+      "code_label": "Code de la partie",
+      "code_placeholder": "Entrez le code",
+      "submit_button": "Rejoindre",
+      "back_button": "Retour"
+    },
+    "create": {
+      "code_label": "Code de la partie :",
+      "players_label": "Joueurs connectés :",
+      "start_button": "Lancer la partie",
+      "delete_button": "Supprimer la partie",
+      "back_button": "Retour"
+    },
+    "waiting": {
+      "players_count": "Nombre de joueurs dans votre partie :",
+      "game_code": "Code de la partie :",
+      "waiting_message": "Merci de patienter, un bouton \"Je suis prêt\" apparaitra lorsque qu'il y aura assez de joueurs.",
+      "confirmation_message": "les autre joueurs valident et on commencera la partie.",
+      "quit_message": "Si vous voulez quitter la partie, merci de le faire en cliquant sur le bouton \"Quitter la partie\" pour ne pas perturber les autres joueurs.",
+      "game_duration_label": "Durée de la partie",
+      "game_duration_placeholder": "en secondes",
+      "start_button": "Lancer la partie",
+      "ready_button": "Je suis prêt",
+      "quit_button": "Quitter la partie"
+    }
+  },
+  "account": {
+    "change_name": {
+      "title": "Changer de nom",
+      "current_name_label": "Nom actuel",
+      "new_name_label": "Nouveau nom",
+      "new_name_placeholder": "Entrez votre nouveau nom",
+      "password_label": "Mot de passe",
+      "password_placeholder": "••••••••",
+      "submit_button": "Confirmer",
+      "back_button": "Précédent",
+      "success": "Nom changé avec succès !",
+      "error": "Impossible de changer le nom"
+    },
+    "change_password": {
+      "title": "Changer de mot de passe",
+      "current_password_label": "Mot de passe actuel",
+      "new_password_label": "Nouveau mot de passe",
+      "confirm_password_label": "Confirmer le nouveau mot de passe",
+      "password_placeholder": "••••••••",
+      "submit_button": "Confirmer",
+      "back_button": "Précédent",
+      "success": "Mot de passe changé avec succès !",
+      "error": "Impossible de changer le mot de passe"
+    },
+    "delete_account": {
+      "title": "Supprimer le compte",
+      "warning": "⚠️ Attention : Cette action est irréversible !",
+      "warning_details": "Toutes vos données seront définitivement supprimées.",
+      "password_label": "Mot de passe",
+      "password_placeholder": "••••••••",
+      "submit_button": "Supprimer mon compte",
+      "back_button": "Précédent",
+      "confirmation": "⚠️ Êtes-vous vraiment sûr de vouloir supprimer votre compte ? Cette action est irréversible !",
+      "success": "Compte supprimé avec succès. Au revoir !",
+      "error": "Impossible de supprimer le compte"
     }
   }
 } 

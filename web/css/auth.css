@@ -88,47 +88,27 @@
     border-color: #007bff;
 }
 
-.submit-btn {
-    width: 100%;
-    padding: 15px;
-    font-size: 16px;
-    font-weight: 600;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
 
-.submit-btn:hover {
-    background: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
-}
 
 /* Bouton retour */
 .back-btn {
-    width: 100%;
-    padding: 12px;
+    padding: 5px;
     margin-top: 15px;
-    font-size: 14px;
-    background: #66adad;
-    color: #ffffff;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
 }
 
-.back-btn:hover {
-    background: #f8f9fa;
-    border-color: #bbb;
-    color: #333;
-}
 
 @media (max-height: 550px) {
     .titre-image {
       display: none;
     }
+    #signup-page-title {
+        margin: 0px !important;
+    }
+    .signup-page {
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
   }
+
+
+

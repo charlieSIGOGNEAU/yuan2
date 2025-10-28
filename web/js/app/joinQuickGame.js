@@ -1,16 +1,37 @@
-import { loadPartial, loadCSS } from '../simple.js';
+import { loadCSS } from '../simple.js';
 import { Router } from './router.js';
 import { ServerConfig } from './config.js';
 import { Auth } from './auth.js';
+import { i18n } from '../core/i18n.js';
 
 // Page pour rejoindre une partie rapide
 export const JoinQuickGamePage = {
     // Afficher la page
     async show(data = {}) {
-        const html = await loadPartial('partials/join-quick-game.html');
+        const html = this.renderHTML();
         document.getElementById('app').innerHTML = html;
         loadCSS('css/game.css');
         this.setupEvents();
+    },
+
+    // Générer le HTML avec les traductions
+    renderHTML() {
+        return `
+            <div class="join-quick-game-page">
+                <h2>${i18n.t('game_setup.join.title')}</h2>
+                
+                <form id="join-game-form" class="game-form">
+                    <div class="form-group">
+                        <label for="game-code">${i18n.t('game_setup.join.code_label')}</label>
+                        <input type="text" id="game-code" name="code" placeholder="${i18n.t('game_setup.join.code_placeholder')}" required>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn btn">${i18n.t('game_setup.join.submit_button')}</button>
+                </form>
+                
+                <button id="back-to-game-menu" class="back-btn btn">${i18n.t('game_setup.join.back_button')}</button>
+            </div>
+        `;
     },
 
     async joinCustomGame(code) {

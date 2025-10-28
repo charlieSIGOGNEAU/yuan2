@@ -25,8 +25,13 @@ export const Auth = {
                 console.log('✅ Connexion réussie:', this.currentUser.name);
                 console.log('🌍 Langue utilisateur:', this.currentUser.language);
                 
-                // Initialiser le système de traductions avec la langue de l'utilisateur
-                await i18n.initialize(this.currentUser.language);
+                // Charger la langue de l'utilisateur si différente de la langue actuelle
+                if (this.currentUser.language && this.currentUser.language !== i18n.getLanguage()) {
+                    console.log('🌍 Changement de langue vers:', this.currentUser.language);
+                    await i18n.initialize(this.currentUser.language);
+                } else {
+                    console.log('✅ Langue identique, pas de rechargement');
+                }
                 
                 // Démarrer la connexion WebSocket après l'authentification
                 await WebSocketClient.connect();
@@ -58,7 +63,12 @@ export const Auth = {
                 this.currentUser = data.user;
                 console.log('✅ Connexion réussie:', this.currentUser.name);
                 
-                await i18n.initialize(this.currentUser.language);
+                // Charger la langue de l'utilisateur si différente de la langue actuelle
+                if (this.currentUser.language && this.currentUser.language !== i18n.getLanguage()) {
+                    console.log('🌍 Changement de langue vers:', this.currentUser.language);
+                    await i18n.initialize(this.currentUser.language);
+                }
+                
                 await WebSocketClient.connect();
                 
                 Router.navigateTo('game-menu');
@@ -74,10 +84,18 @@ export const Auth = {
     // Inscription
     async signup(email, password) {
         try {
+            // Récupérer la langue actuelle du navigateur
+            const currentLanguage = i18n.getLanguage();
+            console.log('🌍 Envoi de la langue pour le nouveau compte:', currentLanguage);
+            
             const response = await fetch(`${ServerConfig.HTTP_BASE}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ 
+                    email, 
+                    password,
+                    language: currentLanguage
+                })
             });
             
             const data = await response.json();
@@ -86,8 +104,14 @@ export const Auth = {
                 this.authToken = data.token;
                 this.currentUser = data.user;
                 console.log('✅ Inscription réussie:', this.currentUser.name);
+                console.log('✅ Langue enregistrée:', this.currentUser.language);
                 
-                await i18n.initialize(this.currentUser.language);
+                // Charger la langue de l'utilisateur si différente de la langue actuelle
+                if (this.currentUser.language && this.currentUser.language !== i18n.getLanguage()) {
+                    console.log('🌍 Changement de langue vers:', this.currentUser.language);
+                    await i18n.initialize(this.currentUser.language);
+                }
+                
                 await WebSocketClient.connect();
                 
                 Router.navigateTo('game-menu');
@@ -125,8 +149,12 @@ export const Auth = {
             
             console.log('🔄 Session restaurée:', this.currentUser.name);
             
-            // Initialiser i18n et WebSocket
-            await i18n.initialize(this.currentUser.language);
+            // Charger la langue de l'utilisateur si différente de la langue actuelle
+            if (this.currentUser.language && this.currentUser.language !== i18n.getLanguage()) {
+                console.log('🌍 Changement de langue vers:', this.currentUser.language);
+                await i18n.initialize(this.currentUser.language);
+            }
+            
             await WebSocketClient.connect();
             
             // Naviguer vers la page demandée (généralement game-menu)

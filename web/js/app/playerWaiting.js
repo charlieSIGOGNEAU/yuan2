@@ -1,16 +1,18 @@
-import { loadPartial, loadCSS } from '../simple.js';
+import { loadCSS } from '../simple.js';
 import { Router } from './router.js';
 import { Auth } from './auth.js';
 import { WebSocketClient } from './websocket.js';
 import { ServerConfig } from './config.js';
+import { i18n } from '../core/i18n.js';
 
 export const PlayerWaitingPage = {
     game_id: null,
     // Afficher la page
     async show(data = {}) {
+        Router.disableBack = true;
         console.log('🔙 Données reçues:', data);
         this.game_id = data.game_id;
-        const html = await loadPartial('partials/player-waiting.html');
+        const html = this.renderHTML();
         document.getElementById('app').innerHTML = html;
         loadCSS('css/player-waiting.css');
 
@@ -22,7 +24,7 @@ export const PlayerWaitingPage = {
         const waiting_message = document.getElementById('waiting-message');
         const already_confirmation = document.getElementById('already-confirmation');
         const start_game_btn = document.getElementById('start-game-btn');
-        const back_to_game_menu_btn = document.getElementById('back-to-game-menu-btn');
+        const start_game_form = document.getElementById('start-game-form');
 
 
 
@@ -46,11 +48,20 @@ export const PlayerWaitingPage = {
             already_confirmation.style.display = 'none';
         }
 
+        if (data.i_am_creator ) {
+            start_game_form.style.display = 'block';
+        } else {
+            start_game_form.style.display = 'none';
+        }
+
+
+
         if (data.i_am_creator && data.waiting_players_count >= 2) {
             start_game_btn.style.display = 'block';
         } else {
             start_game_btn.style.display = 'none';
         }
+        
 
 
         const div_custom_code = document.querySelector('.custom-code');
@@ -65,7 +76,37 @@ export const PlayerWaitingPage = {
         this.setupEvents();
 
     },
-    async launchCustomGame() {
+
+    // Générer le HTML avec les traductions
+    renderHTML() {
+        return `
+            <div class="player-waiting-page">
+                <div class="container-waiting-players">
+                    <p>${i18n.t('game_setup.waiting.players_count')} <span id="waiting-players-count">1</span></p>
+                </div>
+                <div class="custom-code">
+                    <p>${i18n.t('game_setup.waiting.game_code')} <span id="custom-code">123456</span></p>
+                </div>
+                <p id="waiting-message">${i18n.t('game_setup.waiting.waiting_message')}</p>
+                <p id="already-confirmation">${i18n.t('game_setup.waiting.confirmation_message')}</p>
+                <p>${i18n.t('game_setup.waiting.quit_message')}</p>
+
+                <form id="start-game-form" class="game-form">
+                    <div class="form-group">
+                        <label for="game-duration">${i18n.t('game_setup.waiting.game_duration_label')}</label>
+                        <input type="text" id="game-duration" name="game-duration" placeholder="${i18n.t('game_setup.waiting.game_duration_placeholder')}" >
+                    </div>
+                    
+                    <button id="start-game-btn" type="submit" class="submit-btn btn">${i18n.t('game_setup.waiting.start_button')}</button>
+                </form>
+
+                <button id="go-to-game" class="btn btn-ready-game">${i18n.t('game_setup.waiting.ready_button')}</button>
+                <button id="back-to-game-menu-btn" class="btn btn-quit-game">${i18n.t('game_setup.waiting.quit_button')}</button>
+            </div>
+        `;
+    },
+
+    async launchCustomGame(game_duration) {
         const response = await fetch(`${ServerConfig.HTTP_BASE}/games/launch_custom_game`, {
             method: 'POST',
             headers: {
@@ -74,6 +115,7 @@ export const PlayerWaitingPage = {
             },
             body: JSON.stringify({
                 game_id: this.game_id,
+                game_duration: game_duration,
             })
         });
         const data = await response.json();
@@ -121,6 +163,7 @@ export const PlayerWaitingPage = {
     setupEvents() {
         document.getElementById('back-to-game-menu-btn').addEventListener('click', () => {
             console.log('🔙 Retour au menu');
+            Router.disableBack = false;
             this.giveUpGame();
             
         });
@@ -129,10 +172,24 @@ export const PlayerWaitingPage = {
             
             this.iamReady();
         });
-        document.getElementById('start-game-btn').addEventListener('click', () => {
-            console.log('🚀 Lancement de la partie');
-            this.launchCustomGame();
+        // document.getElementById('start-game-btn').addEventListener('click', () => {
+        //     console.log('🚀 Lancement de la partie');
+        //     this.launchCustomGame();
+        // });
 
+        const form = document.getElementById('start-game-form');
+        form?.addEventListener('submit', (e) => {
+        e.preventDefault();
+            let game_duration = form.querySelector('input[name="game-duration"]').value.trim();
+            if (!game_duration ) {
+                game_duration = 120;
+            }
+            if (!game_duration || game_duration <= 15) {
+                game_duration = 15;
+            }
+            console.log('🎮 Durée de la partie :', game_duration);
+            this.launchCustomGame(game_duration);
         });
+
     }
 };

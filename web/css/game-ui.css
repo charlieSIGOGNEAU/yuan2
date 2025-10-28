@@ -221,6 +221,12 @@
     border: none;
     padding: 0;
 }
+/* Style spécifique pour next (menu) */
+.action-next {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
 
 .action-menu:hover {
     /* Pas d'animation */

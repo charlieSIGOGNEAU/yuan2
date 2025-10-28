@@ -2,13 +2,18 @@
 export const Router = {
     currentPage: null,
     pages: {}, // Sera rempli par les modules de pages
-    
+    disableBack: false, // true pour empêcher le retour en arrière
     // Initialiser le router
     init() {
+        this.disableBack = false;
         // Écouter les événements de navigation (bouton précédent/suivant)
         window.addEventListener('popstate', (e) => {
+            if (Router.disableBack) {
+                history.pushState(e.state, '', window.location.href); // reste sur la même page
+                return;
+            }
             if (e.state && e.state.page) {
-                this.showPage(e.state.page, e.state.data, false); // false = ne pas ajouter à l'historique
+                Router.showPage(e.state.page, e.state.data, false);
             }
         });
     },

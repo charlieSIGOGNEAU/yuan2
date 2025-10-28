@@ -11,6 +11,9 @@ Rails.application.routes.draw do
       post 'auth/signup', to: 'auth#signup'
       post 'auth/google_login', to: 'auth#google_login'
       get 'auth/me', to: 'auth#me'
+      post 'auth/change_name', to: 'auth#change_name'
+      post 'auth/change_password', to: 'auth#change_password'
+      delete 'auth/delete_account', to: 'auth#delete_account'
       
       # Routes de configuration
       get 'config/google_client_id', to: 'config#google_client_id'

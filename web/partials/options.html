@@ -1,5 +1,5 @@
 <div class="options-page">
-    <h2>Options</h2>
+    <h2 id="options-title">Options</h2>
     
     <div class="options-list">
         <div class="option-item">
@@ -7,35 +7,31 @@
             <select id="language-select" class="option-select">
                 <option value="fr">Français</option>
                 <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="de">Deutsch</option>
+                <option value="zh">中文</option>
             </select>
         </div>
         
-        <button id="change-name-btn" class="option-btn">Changer de nom</button>
+        
         
         <div class="option-item">
-            <label for="graphics-quality">Qualité graphique</label>
+            <label for="graphics-quality">FPS cible</label>
             <select id="graphics-quality" class="option-select">
-                <option value="low">Basse</option>
-                <option value="medium">Moyenne</option>
-                <option value="high">Haute</option>
-                <option value="ultra">Ultra</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+                
             </select>
         </div>
         
-        <div class="option-item checkbox-item">
-            <label for="enable-shadows">
-                <input type="checkbox" id="enable-shadows" class="option-checkbox">
-                Activer les ombres
-            </label>
-        </div>
+        <button id="change-name-btn" class="option-btn btn">Changer de nom</button>
         
-        <button id="logout-btn" class="option-btn logout-btn">Déconnexion</button>
+        <button id="change-password-btn" class="option-btn btn">Changer de mot de passe</button>
         
-        <button id="delete-account-btn" class="option-btn delete-account-btn">Supprimer le compte</button>
+        <button id="logout-btn" class="option-btn logout-btn btn">Déconnexion</button>
+        
+        <button id="delete-account-btn" class="option-btn delete-account-btn btn">Supprimer le compte</button>
     </div>
     
-    <button id="back-to-game-menu" class="back-btn">Précédent</button>
+    <button id="back-to-game-menu" class="back-options-btn btn">Précédent</button>
 </div>
 

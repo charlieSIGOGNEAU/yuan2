@@ -1,0 +1,240 @@
+{
+  "game": {
+    "game_destroyed": "Un giocatore ha abbandonato la partita. Ci scusiamo per l'inconveniente.",
+    "help": {
+      "Developpement": "Lo sviluppo si divide in 2 tipi:<br><br>{{aide:Colonisation:Colonizzazione}}: se l'obiettivo è una provincia libera<br>(livelli 1-2 devono essere connessi, livello 3 senza condizioni).<br><br>{{aide:Expansion:Espansione}}: se l'obiettivo è una provincia posseduta.<br><br>Conflitti:<br>- Se 2 clan vogliono la stessa provincia adiacente: rimane neutrale.<br>- Se 2 clan mirano alla stessa provincia: Il clan con maggiore onore cede e riceve 6 caos come compensazione.<br><br>{{tableau:honneur}}",
+      "Colonisation": "Colonizzazione:<br>Prende il territorio obiettivo e i territori adiacenti.<br>Livelli 2-3: +2 caos.",
+      "Expansion": "Espansione:<br>Livelli 1-2: Prende i territori adiacenti al gruppo obiettivo.<br>Livello 2: +2 caos.<br>Livello 3: Costruisce un {{aide:Temple:Tempio}} (se non presente) + ruba 2 caos dai clan adiacenti.",
+      "Fortification": "La difesa si divide in 2 tipi:<br><br>{{aide:Urbanisation:Urbanizzazione}} se l'obiettivo è un villaggio posseduto.<br>{{aide:Renforcement:Rafforzamento}} se l'obiettivo è una città posseduta.",
+      "Urbanisation": "Urbanizzazione:<br><br><br>Livello 1: Nessun effetto.<br><br>Livello 2: Diventa città.<br><br>Livello 3: +1 esercito, diventa città fortificata (protegge il territorio come se avesse 2 eserciti aggiuntivi).",
+      "Renforcement": "Rafforzamento:<br><br>Livello 1: Diventa città doppia→conta come 2 territori dello stesso tipo per la riduzione del costo delle azioni.<br><br>Livello 2: Diventa città doppia fortificata (protegge il territorio come se avesse 2 eserciti aggiuntivi).<br><br>Livello 3: Diventa città inespugnabile+protegge territori alleati adiacenti di 1; +1 esercito.",
+      "Militarisation": "La militarizzazione si divide in 2 tipi:<br><br>{{aide:Recrutement:Reclutamento}}: se l'obiettivo è una città posseduta.<br><br>{{aide:Attaque:Attacco}}: se l'obiettivo è una provincia nemica.<br>⚠️ Devi avere almeno 1 esercito connesso all'obiettivo.",
+      "Recrutement": "Reclutamento<br><br>Livello 1: Nessun effetto<br><br>Livello 2: +1 esercito<br><br>Livello 3: +3 eserciti<br><br>👉 Alla fine del turno, ogni provincia è limitata a un massimo di 3 eserciti.",
+      "Attaque": "Attacco<br><br>Livelli 1-2-3:<br> - Tutti gli eserciti connessi attaccano.<br> - Gli eserciti si annullano 1 a 1.<br> - Se rimane almeno 1 esercito→provincia conquistata.<br><br>Livelli 2-3: +1 esercito in attacco.<br><br>Livello 3: Se vince il combattimento, poi attacco gratuito di forza 1 su tutte le province nemiche adiacenti (senza eserciti).",
+      "Temple": "Tempio<br><br>Se possiedi il numero specificato di templi, vinci la partita.<br><br>Questo numero diminuisce di 1 ogni 2 turni.<br><br>In caso di parità, vince il clan con maggiore onore.<br><br>{{tableau:honneur}}",
+      "Chao": "Costo delle azioni:<br><br>Livello 0 e livello 1: Gratis<br>Livello 2: 4 caos<br>Livello 3: 7 caos<br><br>Riduzioni:<br>Per ogni risaia posseduta, il costo dell'azione {{aide:Developpement:Sviluppo}} si riduce di 1.<br>Per ogni foresta posseduta, il costo dell'azione {{aide:Fortification:Difesa}} si riduce di 1.<br>Per ogni miniera posseduta, il costo dell'azione {{aide:Militarisation:Militarizzazione}} si riduce di 1.<br>Una 'città doppia' raddoppia la riduzione della sua provincia.<br><br>Tutte le tue province possedute sono visualizzate nella parte superiore dello schermo."
+    },
+    "phases": {
+      "initial_placement": {
+        "instructions": "Riposiziona le città se necessario e conferma.",
+        "title": "Fase di posizionamento iniziale"
+      },
+      "bidding": {
+        "instructions": "Scegli il tuo clan—fai la tua offerta con i tuoi 6 caos—L'offerta più alta ottiene il clan scelto.",
+        "waiting_for_others": "In attesa delle offerte degli altri giocatori...",
+        "bid_on_clan": "Hai offerto {{chao}} caos per il clan {{color}}",
+        "bid_confirmed": "Offerta registrata, puoi modificarla mentre aspetti gli altri giocatori.",
+        "selection_clan": "Per favore, scegli un clan"
+      },
+      "installation": {
+        "title": "Fase di installazione"
+      },
+      "starting_spot_selection": {
+        "winner_instructions": "Scegli la tua posizione di partenza nel cerchio e conferma.",
+        "waiting_for_winner": "In attesa del giocatore {{winnerName}}, che ha vinto l'asta con {{chao}} caos, per scegliere la posizione di partenza",
+        "waiting_generic": "In attesa della scelta della posizione di partenza...",
+        "validate_clan_selection": "Confermare la scelta del clan {{color}}"
+      },
+      "simultaneous_play": {
+        "welcome_message": "Saluti {{playerName}},<br><br>Incarni il clan <span class='clan-circle' style='background-color: {{colorHex}};'></span><br><br>Scegli un territorio, poi con i pulsanti qui sotto, il livello delle varie azioni, e conferma prima del tramonto!<br><br>L'aiuto di gioco è disponibile in alto.<br><br>Buon divertimento!",
+        "action_validated": "Azione registrata, puoi modificarla mentre aspetti gli altri giocatori.",
+        "colonization_targets": "Obiettivi di colonizzazione",
+        "clan_conflicts_territory": "Più clan vogliono colonizzare lo stesso territorio. Il clan con maggiore onore cede e salta il turno (+6 caos)",
+        "provinces_disputed": "Più clan si contendono le stesse province, quindi rimangono neutrali.",
+        "free_urbanization": "Dopo la colonizzazione, una (o più) provincia non è vitale, verrà eseguita un'urbanizzazione gratuita",
+        "conquest_phase_complete": "Fase di conquista delle province neutrali completata.",
+        "temple_tax_complete": "Costruzione dei templi e tasse associate completate",
+        "revenue_collected": "Questi sono i ricavi raccolti dai vari clan",
+        "attaque_free_urbanization": "Dopo l'attacco, una (o più) provincia non è vitale, verrà eseguita un'urbanizzazione gratuita",
+        "territory_not_found": "Non puoi scegliere un'azione senza specificare una provincia obiettivo.",
+        "not_action": "Hai scelto di saltare il turno per ottenere 6 caos.",
+        "development_not_possible": "Non puoi eseguire un'azione di sviluppo su una provincia nemica.",
+        "development_not_connected": "L'espansione di livello 1 o 2 deve essere effettuata su una provincia connessa.",
+        "possible_urbanization": "Azione convalidata, ma potrebbe essere possibile un'urbanizzazione gratuita.",
+        "enemy_fortification": "Non puoi difendere una provincia nemica che non hai attaccato.",
+        "recruitment_impossible": "Il reclutamento è consentito solo in città o territori che diventeranno città in questo turno.",
+        "not_chao": "Non hai abbastanza caos per eseguire queste azioni.",
+        "too_many_warriors": "Alla fine del turno, una provincia non può supportare più di 3 eserciti.",
+        "your_victory": "Hai vinto la partita!",
+        "other_victory": "Il clan {{clanColor}} vince e ha vinto la partita! 🏆",
+        "chao_error": "È stata eseguita un'azione normalmente impossibile. Il clan {{clansErrorString}} non ha abbastanza caos per eseguire queste azioni.",
+        "tour_debut": "Inizia il turno {{tour}}",
+        "player_abandoned": "Il clan <span class='clan-circle' style='background-color: {{colorHex}};'></span> ha abbandonato la partita.",
+        "victory_table": {
+          "title": "🏆 Classifica finale",
+          "rank": "Posizione",
+          "clan": "Clan",
+          "temples": "Templi",
+          "honor": "Onore",
+          "winner_congratulations": "🎉 Congratulazioni! Hai ottenuto la vittoria!",
+          "temple_leader_message": "🏛️ Avevi il maggior numero di templi ma hai perso per l'onore. Ottima prestazione!",
+          "game_over_message": "Partita terminata! Congratulazioni al clan {{winnerClan}} per la vittoria! 🏆",
+          "lien_bgg": "Se ti è piaciuto il mio gioco, sarei molto grato se lasciassi una valutazione su <a href='https://boardgamegeek.com/boardgame/403280/yuan-lart-de-la-guerre-chine' target='_blank'>BGG</a>. Grazie!"
+        }
+      }
+    },
+    "ui": {
+      "loading": "Caricamento...",
+      "waiting": "In attesa...",
+      "waiting_for_others": "In attesa degli altri giocatori...",
+      "your_turn": "Il tuo turno",
+      "game_over": "Partita terminata"
+    },
+    "actions": {
+      "validate": "Confermare",
+      "cancel": "Annullare",
+      "place": "Posizionare",
+      "move": "Spostare"
+    }
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Annulla",
+    "yes": "Sì",
+    "no": "No",
+    "back": "Indietro",
+    "next": "Avanti",
+    "previous": "Precedente",
+    "save": "Salva",
+    "load": "Carica"
+  },
+  "colors": {
+    "black": "Nero",
+    "red": "Rosso",
+    "green": "Verde",
+    "orange": "Arancione",
+    "white": "Bianco",
+    "blue": "Blu",
+    "purple": "Viola",
+    "yellow": "Giallo"
+  },
+  "options": {
+    "title": "Opzioni",
+    "language": "Lingua",
+    "abandon_game": "Abbandona partita",
+    "leave_game": "Esci dalla partita",
+    "return_to_game": "Ritorna alla partita",
+    "abandon_confirmation": "Vuoi davvero abbandonare la partita? Non è corretto verso gli altri giocatori...",
+    "language_updated": "Lingua aggiornata con successo",
+    "game_abandoned": "Hai abbandonato la partita",
+    "languages": {
+      "fr": "Français",
+      "en": "English",
+      "zh": "中文"
+    },
+    "graphics_quality": "FPS target",
+    "change_name": "Cambia nome",
+    "change_password": "Cambia password",
+    "logout": "Disconnetti",
+    "delete_account": "Elimina account"
+  },
+  "auth": {
+    "landing": {
+      "login": "Accedi",
+      "signup": "Registrati"
+    },
+    "email_login": {
+      "title": "Accedi con email",
+      "email_label": "Email",
+      "email_placeholder": "tua.email@esempio.it",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "submit_button": "Accedi",
+      "back_button": "Indietro"
+    },
+    "signup": {
+      "title": "Registrati",
+      "email_label": "Email",
+      "email_placeholder": "tua.email@esempio.it",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "password_confirm_label": "Conferma password",
+      "submit_button": "Registrati",
+      "back_button": "Indietro"
+    },
+    "google_login": {
+      "title": "Accedi con Google",
+      "button": "Accedi con Google",
+      "info": "Clicca sul pulsante sopra per accedere con il tuo account Google. Tutte le informazioni saranno compilate automaticamente.",
+      "back_button": "Indietro"
+    },
+    "logout_confirm": "Vuoi davvero disconnetterti?"
+  },
+  "menu": {
+    "welcome": "Benvenuto",
+    "connection_status": {
+      "connected": "Connesso",
+      "disconnected": "Non connesso"
+    },
+    "quick_game": "Partita veloce",
+    "join_custom_game": "Unisciti a partita personalizzata",
+    "create_custom_game": "Crea partita personalizzata",
+    "options": "Opzioni"
+  },
+  "game_setup": {
+    "join": {
+      "title": "Unisciti a partita veloce",
+      "code_label": "Codice partita",
+      "code_placeholder": "Inserisci codice",
+      "submit_button": "Unisciti",
+      "back_button": "Indietro"
+    },
+    "create": {
+      "code_label": "Codice partita:",
+      "players_label": "Giocatori connessi:",
+      "start_button": "Inizia partita",
+      "delete_button": "Elimina partita",
+      "back_button": "Indietro"
+    },
+    "waiting": {
+      "players_count": "Numero di giocatori nella tua partita:",
+      "game_code": "Codice partita:",
+      "waiting_message": "Per favore, attendi. Quando ci saranno abbastanza giocatori, apparirà il pulsante 'Pronto'.",
+      "confirmation_message": "Altri giocatori stanno confermando e la partita inizierà.",
+      "quit_message": "Se vuoi uscire dalla partita, clicca sul pulsante 'Esci dalla partita' per non disturbare gli altri giocatori.",
+      "game_duration_label": "Durata partita",
+      "game_duration_placeholder": "in secondi",
+      "start_button": "Inizia partita",
+      "ready_button": "Pronto",
+      "quit_button": "Esci dalla partita"
+    }
+  },
+  "account": {
+    "change_name": {
+      "title": "Cambia nome",
+      "current_name_label": "Nome attuale",
+      "new_name_label": "Nuovo nome",
+      "new_name_placeholder": "Inserisci nuovo nome",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "submit_button": "Conferma",
+      "back_button": "Precedente",
+      "success": "Nome cambiato con successo!",
+      "error": "Impossibile cambiare il nome"
+    },
+    "change_password": {
+      "title": "Cambia password",
+      "current_password_label": "Password attuale",
+      "new_password_label": "Nuova password",
+      "confirm_password_label": "Conferma nuova password",
+      "password_placeholder": "••••••••",
+      "submit_button": "Conferma",
+      "back_button": "Precedente",
+      "success": "Password cambiata con successo!",
+      "error": "Impossibile cambiare la password"
+    },
+    "delete_account": {
+      "title": "Elimina account",
+      "warning": "⚠️ Attenzione: Questa azione è irreversibile!",
+      "warning_details": "Tutti i tuoi dati saranno eliminati permanentemente.",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "submit_button": "Elimina account",
+      "back_button": "Precedente",
+      "confirmation": "⚠️ Vuoi davvero eliminare il tuo account? Questa azione è irreversibile!",
+      "success": "Account eliminato con successo. Arrivederci!",
+      "error": "Impossibile eliminare l'account"
+    }
+  }
+}
+

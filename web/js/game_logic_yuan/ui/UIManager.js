@@ -1388,6 +1388,9 @@ export class UIManager {
                 <div class="victory-message">
                     <p>${personalMessage}</p>
                 </div>
+                <div class="victory-message">
+                    <p>${i18n.t('game.phases.simultaneous_play.victory_table.lien_bgg')}</p>
+                </div>
             </div>
         `;
 

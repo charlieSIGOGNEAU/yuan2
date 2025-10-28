@@ -1,24 +1,39 @@
-import { loadPartial, loadCSS } from '../simple.js';
+import { loadCSS } from '../simple.js';
 import { Router } from './router.js';
 import { Auth } from './auth.js';
 import { WebSocketClient } from './websocket.js';
 import { ServerConfig } from './config.js';
+import { i18n } from '../core/i18n.js';
 
 // Menu principal du jeu (anciennement lobby)
 export const GameMenuPage = {
     // Afficher la page
     async show(data = {}) {
-        const html = await loadPartial('partials/game-menu.html');
+        const html = this.renderHTML();
         document.getElementById('app').innerHTML = html;
         loadCSS('css/lobby.css');
-        
-        // Afficher le nom d'utilisateur
-        document.getElementById('username').textContent = Auth.currentUser?.name || '';
         
         // Mettre à jour le statut WebSocket
         WebSocketClient.updateConnectionUI();
         
         this.setupEvents();
+    },
+
+    // Générer le HTML avec les traductions
+    renderHTML() {
+        const username = Auth.currentUser?.name || '';
+        return `
+            <div class="game-menu-page">
+                <p>${i18n.t('menu.welcome')}, <span id="username">${username}</span> <span id="connection-status" class="connection-status disconnected">disconnected</span></p>
+                
+                <div class="menu">
+                    <button id="quick-game-btn" class="menu-btn btn">${i18n.t('menu.quick_game')}</button>
+                    <button id="join-custom-game-btn" class="menu-btn btn">${i18n.t('menu.join_custom_game')}</button>
+                    <button id="create-custom-game-btn" class="menu-btn btn">${i18n.t('menu.create_custom_game')}</button>
+                    <button id="options-btn" class="menu-btn btn">${i18n.t('menu.options')}</button>
+                </div>
+            </div>
+        `;
     },
 
     async startQuickGame() {

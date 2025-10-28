@@ -140,6 +140,10 @@ export const GoogleAuth = {
         console.log('🔐 Credential reçu de Google');
         
         try {
+            // Récupérer la langue actuelle du navigateur
+            const currentLanguage = i18n.getLanguage();
+            console.log('🌍 Envoi de la langue pour le nouveau compte Google:', currentLanguage);
+            
             // Envoyer le credential au backend
             const apiResponse = await fetch(`${ServerConfig.HTTP_BASE}auth/google_login`, {
                 method: 'POST',
@@ -147,7 +151,8 @@ export const GoogleAuth = {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    credential: response.credential
+                    credential: response.credential,
+                    language: currentLanguage
                 })
             });
 
@@ -160,8 +165,11 @@ export const GoogleAuth = {
                 console.log('✅ Connexion Google réussie:', Auth.currentUser.name);
                 console.log('🌍 Langue utilisateur:', Auth.currentUser.language);
 
-                // Initialiser le système de traductions avec la langue de l'utilisateur
-                await i18n.initialize(Auth.currentUser.language);
+                // Charger la langue de l'utilisateur si différente de la langue actuelle
+                if (Auth.currentUser.language && Auth.currentUser.language !== i18n.getLanguage()) {
+                    console.log('🌍 Changement de langue vers:', Auth.currentUser.language);
+                    await i18n.initialize(Auth.currentUser.language);
+                }
 
                 // Démarrer la connexion WebSocket après l'authentification
                 await WebSocketClient.connect();

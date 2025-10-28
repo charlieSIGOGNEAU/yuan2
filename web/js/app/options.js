@@ -1,29 +1,159 @@
-import { loadPartial, loadCSS } from '../simple.js';
+import { loadCSS } from '../simple.js';
 import { Router } from './router.js';
 import { Auth } from './auth.js';
+import { ServerConfig } from './config.js';
+import { i18n } from '../core/i18n.js';
+
+// Fonction pour changer la langue (utilisée aussi par OptionsMenu.js)
+export async function handleLanguageChange(newLanguage, callbacks = {}) {
+    console.log(`🌍 Changement de langue vers: ${newLanguage}`);
+    
+    const currentLanguage = i18n.getLanguage();
+    
+    // Ne rien faire si c'est la même langue
+    if (newLanguage === currentLanguage) {
+        console.log('⚠️ Langue identique, pas de changement');
+        return;
+    }
+
+    try {
+        // Récupérer le token d'authentification
+        const token = Auth.authToken;
+        if (!token) {
+            console.error('❌ Token non trouvé');
+            if (callbacks.onError) callbacks.onError('Token non trouvé');
+            return;
+        }
+
+        // Envoyer la requête au serveur pour mettre à jour la langue de l'utilisateur
+        const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Auth.authToken}`
+            },
+            body: JSON.stringify({
+                language: newLanguage
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('✅ Langue mise à jour sur le serveur');
+            
+            // Charger la nouvelle langue
+            await i18n.loadLanguage(newLanguage);
+            i18n.setLanguage(newLanguage);
+            
+            // Mettre à jour la langue dans l'objet utilisateur
+            if (Auth.currentUser) {
+                Auth.currentUser.language = newLanguage;
+            }
+            
+            // Callback de succès
+            if (callbacks.onSuccess) {
+                callbacks.onSuccess(newLanguage);
+            }
+            
+            // Afficher un message de confirmation
+            if (window.uiManager) {
+                window.uiManager.showTemporaryMessage(
+                    i18n.t('options.language_updated'),
+                    2000
+                );
+            }
+        } else {
+            console.error('❌ Erreur lors de la mise à jour de la langue:', data);
+            if (callbacks.onError) callbacks.onError(data.message);
+        }
+    } catch (error) {
+        console.error('❌ Erreur lors du changement de langue:', error);
+        if (callbacks.onError) callbacks.onError(error.message);
+    }
+}
 
 // Page des options
 export const OptionsPage = {
     // Afficher la page
     async show(data = {}) {
-        const html = await loadPartial('partials/options.html');
+        const html = this.renderHTML();
         document.getElementById('app').innerHTML = html;
         loadCSS('css/options.css');
         this.setupEvents();
         this.loadCurrentSettings();
     },
 
+    // Générer le HTML avec les traductions
+    renderHTML() {
+        return `
+            <div class="options-page">
+                <h2 id="options-title">${i18n.t('options.title')}</h2>
+                
+                <div class="options-list">
+                    <div class="option-item">
+                        <label for="language-select">${i18n.t('options.language')}</label>
+                        <select id="language-select" class="option-select">
+                            <option value="fr">Français</option>
+                            <option value="en">English</option>
+                            <option value="zh">中文</option>
+                            <option value="ja">日本語</option>
+                            <option value="ko">한국어</option>
+                            <option value="de">Deutsch</option>
+                            <option value="es">Español</option>
+                            <option value="pt">Português</option>
+                            <option value="ru">Русский</option>
+                            <option value="it">Italiano</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-item">
+                        <label for="graphics-quality">${i18n.t('options.graphics_quality')}</label>
+                        <select id="graphics-quality" class="option-select">
+                            <option value="20">20</option>
+                            <option value="30">30</option>
+                            <option value="60">60</option>
+                        </select>
+                    </div>
+                    
+                    <button id="change-name-btn" class="option-btn btn">${i18n.t('options.change_name')}</button>
+                    
+                    <button id="change-password-btn" class="option-btn btn">${i18n.t('options.change_password')}</button>
+                    
+                    <button id="logout-btn" class="option-btn logout-btn btn">${i18n.t('options.logout')}</button>
+                    
+                    <button id="delete-account-btn" class="option-btn delete-account-btn btn">${i18n.t('options.delete_account')}</button>
+                </div>
+                
+                <button id="back-to-game-menu" class="back-btn btn">${i18n.t('common.previous')}</button>
+            </div>
+        `;
+    },
+
     // Configurer les événements
     setupEvents() {
         // Changement de langue
-        document.getElementById('language-select')?.addEventListener('change', (e) => {
-            console.log('🌍 Changement de langue:', e.target.value);
-            // TODO: Implémenter le changement de langue
+        document.getElementById('language-select')?.addEventListener('change', async (e) => {
+            const newLanguage = e.target.value;
+            await handleLanguageChange(newLanguage, {
+                onSuccess: () => {
+                    // Recharger la page des options pour mettre à jour les traductions
+                    this.show();
+                },
+                onError: (error) => {
+                    alert(`❌ Erreur lors du changement de langue: ${error}`);
+                }
+            });
         });
 
         // Changer de nom
         document.getElementById('change-name-btn')?.addEventListener('click', () => {
             Router.navigateTo('change-name');
+        });
+
+        // Changer de mot de passe
+        document.getElementById('change-password-btn')?.addEventListener('click', () => {
+            Router.navigateTo('change-password');
         });
 
         // Changement de qualité graphique
@@ -40,7 +170,7 @@ export const OptionsPage = {
 
         // Déconnexion
         document.getElementById('logout-btn')?.addEventListener('click', () => {
-            if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+            if (confirm(i18n.t('auth.logout_confirm'))) {
                 Auth.logout();
             }
         });
@@ -58,8 +188,15 @@ export const OptionsPage = {
 
     // Charger les paramètres actuels
     loadCurrentSettings() {
-        // TODO: Charger les paramètres depuis le serveur ou le localStorage
         console.log('📥 Chargement des paramètres');
+        
+        // Charger la langue actuelle
+        const languageSelect = document.getElementById('language-select');
+        if (languageSelect) {
+            const currentLanguage = i18n.getLanguage();
+            languageSelect.value = currentLanguage;
+            console.log(`🌍 Langue actuelle: ${currentLanguage}`);
+        }
     }
 };
 

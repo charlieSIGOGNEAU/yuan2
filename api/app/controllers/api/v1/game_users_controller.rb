@@ -44,9 +44,11 @@ class Api::V1::GameUsersController < ApplicationController
     end
     # Vérifier que la partie n'est pas déjà terminée
     if @game.completed? || @game.end_dispute?
-      render json: { success: false, message: "Game already finished" }, status: 422
+      render json: { success: true, message: "Game already finished" }, status: 422
       return
     end
+
+   
     # Marquer le game_user comme ayant abandonné
     if @game_user.update(abandoned: true)
       render json: { 

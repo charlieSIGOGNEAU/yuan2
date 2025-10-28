@@ -1,20 +1,5 @@
 /* Menu principal */
-.menu button { 
-    display: block; 
-    width: 100%; 
-    margin: 10px 0; 
-    padding: 15px; 
-    font-size: 16px; 
-    border: none; 
-    background: #007bff; 
-    color: white; 
-    border-radius: 5px; 
-    cursor: pointer; 
-}
 
-.menu button:hover { 
-    background: #0056b3; 
-}
 
 /* Statut de connexion WebSocket */
 .connection-status-container {
@@ -136,7 +121,7 @@
     background: #c82333;
 } 
 
-@media (max-height: 550px) {
+@media (max-height: 400px) {
     .titre-image {
       display: none;
     }

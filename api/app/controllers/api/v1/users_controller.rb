@@ -6,7 +6,7 @@ class Api::V1::UsersController < ApplicationController
     language = params[:language]
     
     # Valider que la langue est supportée
-    unless %w[fr en zh].include?(language)
+    unless %w[fr en zh ja ko de es pt ru it].include?(language)
       render json: { success: false, message: "Language not supported" }, status: 422
       return
     end

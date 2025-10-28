@@ -10,11 +10,11 @@ export class ShadowManager {
         
         // Limitation du taux de calcul des ombres
         this.shadowUpdateLimited = true; // Si true, limite le calcul des ombres
-        this.shadowUpdateInterval = 1000; // Intervalle en ms (1 seconde par défaut)
+        this.shadowUpdateInterval = 2000; // Intervalle en ms (2 seconde par défaut)
         this.lastShadowUpdate = 0; // Timestamp du dernier calcul d'ombre
         
         this.setupShadows();
-        this.turn_duration = 10; // 2 minutes
+        this.turn_duration = 120; // 2 minutes par défaut
         this.startTime = 0;
         this.animationStarted = false; // Flag pour savoir si l'animation a été démarrée
         this.beginningOfAnimation = true;
@@ -26,7 +26,7 @@ export class ShadowManager {
 
 
 
-        this.setShadowUpdateLimited(true, 1000)
+        this.setShadowUpdateLimited(true, 3000)
         //pour avoir le calcule des ombre toutes les secondes.
         // shadowManager.setShadowUpdateLimited(true, 1000)
     }
@@ -58,7 +58,7 @@ export class ShadowManager {
         
         // Qualité des ombres - Ajustement pour permettre les ombres entre tiles
         // Un bias trop élevé empêche les ombres de s'afficher sur des surfaces plates
-        this.directionalLight.shadow.bias = 0.000; // Très légèrement positif, finalement 0 pour eviter les artophaque sur les androis non ombrage
+        this.directionalLight.shadow.bias = 0.000; // Très légèrement positif, finalement 0 pour eviter les artophaque sur les androis non ombrage.
         this.directionalLight.shadow.normalBias = 0.02; // Réduit de 0.1 à 0.01 pour permettre les ombres entre tiles
     }
 
@@ -261,7 +261,7 @@ export class ShadowManager {
         this.beginningOfAnimation = true;
         if (this.animationStarted) {
             console.log('🌞 Animation du soleil déjà démarrée');
-            this.setShadowUpdateLimited(true, this.turn_duration * 1000 / 12)
+            this.lastShadowUpdate = 0; // Forcer une mise à jour immédiate
             return;
         }
         else {
@@ -275,9 +275,24 @@ export class ShadowManager {
         const sunrise = {rx: 90, ry: 20};
         const noon = {rx: -45, ry: 45};
         const sunset = {rx: -180, ry: 10};
-        const progress = ((Date.now() - this.startTime) / this.turn_duration / 1000) % 1; // boucle sur [0,1]
+        const alarmDuration = 5
+        const alarmePeriod = 3
+
+        let progress = 0
+        if (this.turn_duration > alarmDuration) {
+        progress = ((Date.now() - this.startTime) / ((this.turn_duration - alarmDuration)*1000)) ; 
+        }
+        else {
+            progress = 0.5;
+        }
+
+
         let rx, ry;
-        if (progress <= 0.5 ) { // matin → midi
+        if (progress > 1){
+            rx = sunset.rx
+            ry = sunset.ry
+        }        
+        else if (progress <= 0.5 ) { // matin → midi
             const t = progress * 2; // normalisé [0,1]
             rx = sunrise.rx * (1 - t) + noon.rx * t;
             ry = sunrise.ry * (1 - t**0.5) + noon.ry * t**0.5;
@@ -302,9 +317,9 @@ export class ShadowManager {
         }
 
         // clignotement de la lumière pour signaler fin du tour
+        // x = temps restant en secondes pour finir le tour
         let x = this.turn_duration - (Date.now() - this.startTime) / 1000;
-        const alarmDuration = 5
-        const alarmePeriod = 3
+        
 
         if (x < alarmDuration && x > 0 && this.ambientLight) {
             const intensity = Math.sin(x / alarmDuration * Math.PI * alarmePeriod * 2 + Math.PI/2)  ; 
@@ -323,100 +338,6 @@ export class ShadowManager {
 
         requestAnimationFrame(() => this.animateSun());
     }
-
-    // vertion avec moins de glich mais avec effet tick tic chaque seconde, a optimiser pour ne pas calculer les onbre entre les mouvement
-    // animateSun() {
-    //     const now = Date.now();
-    
-    //     // Ne mettre à jour que si au moins 1 seconde s'est écoulée
-    //     if (!this.lastSunUpdate || now - this.lastSunUpdate >= 1000) {
-    //         this.lastSunUpdate = now;
-    
-    //         const sunrise = {rx: 90, ry: 10};
-    //         const noon = {rx: -45, ry: 45};
-    //         const sunset = {rx: -180, ry: 10};
-    
-    //         const progress = ((now - this.startTime) / this.turn_duration / 1000) % 1; // boucle sur [0,1]
-    
-    //         let rx, ry;
-    //         if (progress <= 0.5) { // matin → midi
-    //             const t = progress * 2; // normalisé [0,1]
-    //             rx = sunrise.rx * (1 - t) + noon.rx * t;
-    //             ry = sunrise.ry * (1 - t) + noon.ry * t;
-    //         } else { // midi → nuit
-    //             const t = (progress - 0.5) * 2;
-    //             rx = noon.rx * (1 - t) + sunset.rx * t;
-    //             ry = noon.ry * (1 - t) + sunset.ry * t;
-    //         }
-    
-    //         this.setLightOnSphere(rx, ry);
-    //     }
-    
-    //     requestAnimationFrame(() => this.animateSun());
-    // }
-    
-
-//     // Présets de position solaire
-//     setSunPreset(preset) {
-//         const presets = {
-//             'sunrise': { rx: 90, ry: 5 },      // Lever du soleil à l'est, bas
-//             'morning': { rx: 90, ry: 30 },     // Matin, soleil montant à l'est
-//             'noon': { rx: 0, ry: 90 },         // Midi, soleil au zénith
-//             'afternoon': { rx: 270, ry: 30 },  // Après-midi, soleil descendant à l'ouest
-//             'sunset': { rx: 270, ry: 5 },      // Coucher du soleil à l'ouest, bas
-//             'north': { rx: 0, ry: 45 },        // Nord, mi-hauteur
-//             'south': { rx: 180, ry: 45 },      // Sud, mi-hauteur
-//             'east': { rx: 90, ry: 45 },        // Est, mi-hauteur
-//             'west': { rx: 270, ry: 45 }        // Ouest, mi-hauteur
-//         };
-
-//         if (presets[preset]) {
-//             console.log(`☀️ Preset solaire: ${preset}`);
-//             this.setLightOnSphere(presets[preset].rx, presets[preset].ry);
-//         } else {
-//             console.log(`❌ Preset inconnu. Disponibles: ${Object.keys(presets).join(', ')}`);
-//         }
-//     }
-
-//     // Afficher l'aide pour setLightOnSphere
-//     showLightHelp() {
-//         console.log(`
-// 🌞 === AIDE POSITIONNEMENT LUMIÈRE SUR SPHÈRE ===
-
-// Usage:
-//   shadowManager.setLightOnSphere(rx, ry)
-
-// Paramètres:
-//   rx = rotation horizontale (azimuth) en degrés (0-360)
-//        0° = Nord (+Z)
-//        90° = Est (+X)
-//        180° = Sud (-Z)
-//        270° = Ouest (-X)
-
-//   ry = élévation verticale en degrés (0-90)
-//        0° = horizon (soleil couchant/levant)
-//        45° = mi-hauteur
-//        90° = zénith (midi, soleil au-dessus)
-
-// Exemples:
-//   shadowManager.setLightOnSphere(90, 10)   // Lever du soleil à l'est
-//   shadowManager.setLightOnSphere(0, 90)    // Midi, soleil au-dessus
-//   shadowManager.setLightOnSphere(270, 10)  // Coucher du soleil à l'ouest
-
-// Présets disponibles:
-//   shadowManager.setSunPreset('sunrise')    // Lever du soleil
-//   shadowManager.setSunPreset('noon')       // Midi
-//   shadowManager.setSunPreset('sunset')     // Coucher du soleil
-//   shadowManager.setSunPreset('north')      // Nord
-//   shadowManager.setSunPreset('south')      // Sud
-//   shadowManager.setSunPreset('east')       // Est
-//   shadowManager.setSunPreset('west')       // Ouest
-
-// Infos:
-//   shadowManager.getSceneCenter()           // Centre de la scène
-//   shadowManager.getSceneSphereRadius()     // Rayon de la sphère
-//         `);
-//     }
 
     // Activer ou désactiver le rendu des ombres
     
@@ -493,49 +414,6 @@ export class ShadowManager {
             this.lastShadowUpdate = currentTime;
         }
     }
-
-    // Ajuster la zone de projection des ombres (shadowSize)
-    // setShadowSize(size) {
-    //     this.directionalLight.shadow.camera.left = -size;
-    //     this.directionalLight.shadow.camera.right = size;
-    //     this.directionalLight.shadow.camera.top = size;
-    //     this.directionalLight.shadow.camera.bottom = -size;
-    //     this.directionalLight.shadow.camera.updateProjectionMatrix();
-    //     console.log(`📐 Taille zone ombres changée: ${size}`);
-    // }
-
-    // Ajuster le bias des ombres
-    // setShadowBias(bias, normalBias = null) {
-    //     this.directionalLight.shadow.bias = bias;
-    //     if (normalBias !== null) {
-    //         this.directionalLight.shadow.normalBias = normalBias;
-    //     }
-    //     console.log(`🎚️ Bias ombres changé: ${bias}, normalBias: ${this.directionalLight.shadow.normalBias}`);
-    // }
-
-    // Afficher les paramètres actuels des ombres
-    // getShadowSettings() {
-    //     const settings = {
-    //         mapSize: {
-    //             width: this.directionalLight.shadow.mapSize.width,
-    //             height: this.directionalLight.shadow.mapSize.height
-    //         },
-    //         shadowSize: this.directionalLight.shadow.camera.right,
-    //         bias: this.directionalLight.shadow.bias,
-    //         normalBias: this.directionalLight.shadow.normalBias,
-    //         lightPosition: this.directionalLight.position,
-    //         shadowCamera: {
-    //             left: this.directionalLight.shadow.camera.left,
-    //             right: this.directionalLight.shadow.camera.right,
-    //             top: this.directionalLight.shadow.camera.top,
-    //             bottom: this.directionalLight.shadow.camera.bottom,
-    //             near: this.directionalLight.shadow.camera.near,
-    //             far: this.directionalLight.shadow.camera.far
-    //         }
-    //     };
-    //     console.log('⚙️ Paramètres des ombres:', settings);
-    //     return settings;
-    // }
 
     // Calculer les 4 points d'intersection entre le frustum de la caméra et le plan y=0
     getCameraFrustumGroundPoints(silent = true) {
@@ -691,116 +569,6 @@ export class ShadowManager {
 
         return waterTiles;
     }
-
-    // // Obtenir la tile eau la plus à gauche (x minimum)
-    // getLeftmostWaterTile() {
-    //     const waterTiles = this.findWaterTiles();
-        
-    //     if (waterTiles.length === 0) {
-    //         console.log('❌ Aucune tile eau trouvée');
-    //         return null;
-    //     }
-
-    //     let leftmost = waterTiles[0];
-    //     const leftmostWorldPos = new THREE.Vector3();
-    //     leftmost.getWorldPosition(leftmostWorldPos);
-    //     let minX = leftmostWorldPos.x;
-
-    //     waterTiles.forEach(tile => {
-    //         const worldPos = new THREE.Vector3();
-    //         tile.getWorldPosition(worldPos);
-    //         if (worldPos.x < minX) {
-    //             minX = worldPos.x;
-    //             leftmost = tile;
-    //             leftmostWorldPos.copy(worldPos);
-    //         }
-    //     });
-
-    //     return leftmost;
-    // }
-
-    // // Obtenir la tile eau la plus à droite (x maximum)
-    // getRightmostWaterTile() {
-    //     const waterTiles = this.findWaterTiles();
-        
-    //     if (waterTiles.length === 0) {
-    //         console.log('❌ Aucune tile eau trouvée');
-    //         return null;
-    //     }
-
-    //     let rightmost = waterTiles[0];
-    //     const rightmostWorldPos = new THREE.Vector3();
-    //     rightmost.getWorldPosition(rightmostWorldPos);
-    //     let maxX = rightmostWorldPos.x;
-
-    //     waterTiles.forEach(tile => {
-    //         const worldPos = new THREE.Vector3();
-    //         tile.getWorldPosition(worldPos);
-    //         if (worldPos.x > maxX) {
-    //             maxX = worldPos.x;
-    //             rightmost = tile;
-    //             rightmostWorldPos.copy(worldPos);
-    //         }
-    //     });
-
-    //     return rightmost;
-    // }
-
-    // // Obtenir la tile eau la plus au fond (z minimum)
-    // getBackmostWaterTile() {
-    //     const waterTiles = this.findWaterTiles();
-        
-    //     if (waterTiles.length === 0) {
-    //         console.log('❌ Aucune tile eau trouvée');
-    //         return null;
-    //     }
-
-    //     let backmost = waterTiles[0];
-    //     const backmostWorldPos = new THREE.Vector3();
-    //     backmost.getWorldPosition(backmostWorldPos);
-    //     let minZ = backmostWorldPos.z;
-
-    //     waterTiles.forEach(tile => {
-    //         const worldPos = new THREE.Vector3();
-    //         tile.getWorldPosition(worldPos);
-    //         if (worldPos.z < minZ) {
-    //             minZ = worldPos.z;
-    //             backmost = tile;
-    //             backmostWorldPos.copy(worldPos);
-    //         }
-    //     });
-
-    //     console.log(`🔼 Tile eau la plus au fond: (${backmostWorldPos.x.toFixed(2)}, ${backmostWorldPos.y.toFixed(2)}, ${backmostWorldPos.z.toFixed(2)})`);
-    //     return backmost;
-    // }
-
-    // // Obtenir la tile eau la plus vers l'avant (z maximum)
-    // getFrontmostWaterTile() {
-    //     const waterTiles = this.findWaterTiles();
-        
-    //     if (waterTiles.length === 0) {
-    //         console.log('❌ Aucune tile eau trouvée');
-    //         return null;
-    //     }
-
-    //     let frontmost = waterTiles[0];
-    //     const frontmostWorldPos = new THREE.Vector3();
-    //     frontmost.getWorldPosition(frontmostWorldPos);
-    //     let maxZ = frontmostWorldPos.z;
-
-    //     waterTiles.forEach(tile => {
-    //         const worldPos = new THREE.Vector3();
-    //         tile.getWorldPosition(worldPos);
-    //         if (worldPos.z > maxZ) {
-    //             maxZ = worldPos.z;
-    //             frontmost = tile;
-    //             frontmostWorldPos.copy(worldPos);
-    //         }
-    //     });
-
-    //     console.log(`🔽 Tile eau la plus vers l'avant: (${frontmostWorldPos.x.toFixed(2)}, ${frontmostWorldPos.y.toFixed(2)}, ${frontmostWorldPos.z.toFixed(2)})`);
-    //     return frontmost;
-    // }
 }
 
 export function createShadowManager(renderer, directionalLight, camera = null, workplane = null) {

@@ -1,0 +1,240 @@
+{
+  "game": {
+    "game_destroyed": "Ein Spieler hat das Spiel aufgegeben. Entschuldigung für die Unannehmlichkeiten.",
+    "help": {
+      "Developpement": "Entwicklung gliedert sich in 2 Arten:<br><br>{{aide:Colonisation:Kolonisierung}}: wenn das Ziel eine freie Provinz ist<br>(Level 1-2 muss verbunden sein, Level 3 bedingungslos).<br><br>{{aide:Expansion:Erweiterung}}: wenn das Ziel eine besessene Provinz ist.<br><br>Konflikte:<br>- Wenn 2 Clans dieselbe benachbarte Provinz wollen: sie bleibt neutral.<br>- Wenn 2 Clans dieselbe Provinz anvisieren: Der Clan mit der höchsten Ehre gibt nach und erhält 6 Chaos als Entschädigung.<br><br>{{tableau:honneur}}",
+      "Colonisation": "Kolonisierung:<br>Übernimmt das Zielgebiet und seine benachbarten Gebiete.<br>Level 2-3: +2 Chaos.",
+      "Expansion": "Erweiterung:<br>Level 1-2: Übernimmt die an die Zielgruppe angrenzenden Gebiete.<br>Level 2: +2 Chaos.<br>Level 3: Baut einen {{aide:Temple:Tempel}} (falls keiner vorhanden) + stiehlt 2 Chaos von benachbarten Clans.",
+      "Fortification": "Verteidigung gliedert sich in 2 Arten:<br><br>{{aide:Urbanisation:Urbanisierung}} wenn das Ziel ein besessenes Dorf ist.<br>{{aide:Renforcement:Verstärkung}} wenn das Ziel eine besessene Stadt ist.",
+      "Urbanisation": "Urbanisierung:<br><br><br>Level 1: Keine Wirkung.<br><br>Level 2: Wird zur Stadt.<br><br>Level 3: +1 Armee, wird zur befestigten Stadt (schützt Gebiet, als hätte sie 2 zusätzliche Armeen).",
+      "Renforcement": "Verstärkung:<br><br>Level 1: Wird zur Doppelstadt→zählt für Aktionskostenermäßigung als 2 Gebiete gleicher Art.<br><br>Level 2: Wird zur befestigten Doppelstadt (schützt Gebiet, als hätte sie 2 zusätzliche Armeen).<br><br>Level 3: Wird zur uneinnehmbaren Stadt+schützt benachbarte verbündete Gebiete um 1; +1 Armee.",
+      "Militarisation": "Militarisierung gliedert sich in 2 Arten:<br><br>{{aide:Recrutement:Rekrutierung}}: wenn das Ziel eine besessene Stadt ist.<br><br>{{aide:Attaque:Angriff}}: wenn das Ziel eine feindliche Provinz ist.<br>⚠️ Sie müssen mindestens 1 Armee mit dem Ziel verbunden haben.",
+      "Recrutement": "Rekrutierung<br><br>Level 1: Keine Wirkung<br><br>Level 2: +1 Armee<br><br>Level 3: +3 Armeen<br><br>👉 Am Ende des Zuges darf jede Provinz maximal 3 Armeen haben.",
+      "Attaque": "Angriff<br><br>Level 1-2-3:<br> - Alle verbundenen Armeen greifen an.<br> - Armeen heben sich 1 gegen 1 auf.<br> - Wenn mindestens 1 Armee übrig bleibt→Provinz gewonnen.<br><br>Level 2-3: +1 Armee beim Angriff.<br><br>Level 3: Bei gewonnenem Kampf dann kostenloser Angriff der Stärke 1 auf alle benachbarten feindlichen Provinzen (ohne Armeen).",
+      "Temple": "Tempel<br><br>Wenn Sie die angegebene Anzahl Tempel besitzen, gewinnen Sie das Spiel.<br><br>Diese Zahl sinkt alle 2 Runden um 1.<br><br>Bei Gleichstand gewinnt der Clan mit der höchsten Ehre.<br><br>{{tableau:honneur}}",
+      "Chao": "Aktionskosten:<br><br>Level 0 und Level 1: Kostenlos<br>Level 2: 4 Chaos<br>Level 3: 7 Chaos<br><br>Ermäßigungen:<br>Für jedes Reisfeld reduzieren sich die {{aide:Developpement:Entwicklungs}}aktionskosten um 1.<br>Für jeden Wald reduzieren sich die {{aide:Fortification:Verteidigungs}}aktionskosten um 1.<br>Für jede Mine reduzieren sich die {{aide:Militarisation:Militarisierungs}}aktionskosten um 1.<br>Eine 'Doppelstadt' verdoppelt die Ermäßigung ihrer Provinz.<br><br>Alle Ihre besessenen Provinzen werden oben auf dem Bildschirm angezeigt."
+    },
+    "phases": {
+      "initial_placement": {
+        "instructions": "Platzieren Sie bei Bedarf Städte neu und bestätigen Sie.",
+        "title": "Anfangsplatzierungsphase"
+      },
+      "bidding": {
+        "instructions": "Wählen Sie Ihren Clan—bieten Sie mit Ihren 6 Chaos—Der Höchstbietende erhält seinen gewählten Clan.",
+        "waiting_for_others": "Warten auf Gebote anderer Spieler...",
+        "bid_on_clan": "Sie haben für den {{color}} Clan mit {{chao}} Chaos geboten",
+        "bid_confirmed": "Gebot registriert, Sie können es ändern, während Sie auf andere Spieler warten.",
+        "selection_clan": "Bitte wählen Sie einen Clan"
+      },
+      "installation": {
+        "title": "Installationsphase"
+      },
+      "starting_spot_selection": {
+        "winner_instructions": "Wählen Sie Ihre Startposition im Kreis und bestätigen Sie.",
+        "waiting_for_winner": "Warten auf Spieler {{winnerName}}, der die Bietphase mit {{chao}} Chaos gewonnen hat, um die Startposition zu wählen",
+        "waiting_generic": "Warten auf Startpositionsauswahl...",
+        "validate_clan_selection": "Auswahl des {{color}} Clans bestätigen"
+      },
+      "simultaneous_play": {
+        "welcome_message": "Grüße {{playerName}},<br><br>Sie verkörpern den <span class='clan-circle' style='background-color: {{colorHex}};'></span> Clan<br><br>Wählen Sie ein Gebiet, dann mit den Schaltflächen unten das Level der verschiedenen Aktionen und bestätigen Sie, bevor die Sonne untergeht!<br><br>Spielhilfe ist oben verfügbar.<br><br>Viel Spaß!",
+        "action_validated": "Aktion registriert, Sie können sie ändern, während Sie auf andere Spieler warten.",
+        "colonization_targets": "Kolonisierungsziele",
+        "clan_conflicts_territory": "Mehrere Clans wollen dasselbe Gebiet kolonisieren. Der Clan mit der höchsten Ehre gibt nach und überspringt die Runde (+6 Chaos)",
+        "provinces_disputed": "Mehrere Clans streiten um dieselben Provinzen, daher bleiben sie neutral.",
+        "free_urbanization": "Nach der Kolonisierung ist eine (oder mehrere) Provinz nicht lebensfähig, kostenlose Urbanisierung wird durchgeführt",
+        "conquest_phase_complete": "Phase der Eroberung neutraler Provinzen abgeschlossen.",
+        "temple_tax_complete": "Tempelbau und zugehörige Steuern abgeschlossen",
+        "revenue_collected": "Dies sind die von den verschiedenen Clans eingesammelten Einnahmen",
+        "attaque_free_urbanization": "Nach dem Angriff ist eine (oder mehrere) Provinz nicht lebensfähig, kostenlose Urbanisierung wird durchgeführt",
+        "territory_not_found": "Sie können keine Aktion wählen, ohne eine Zielprovinz anzugeben.",
+        "not_action": "Sie haben gewählt, die Runde zu überspringen, um 6 Chaos zu erhalten.",
+        "development_not_possible": "Sie können keine Entwicklungsaktion auf einer feindlichen Provinz durchführen.",
+        "development_not_connected": "Erweiterung Level 1 oder 2 muss auf einer verbundenen Provinz erfolgen.",
+        "possible_urbanization": "Aktion validiert, aber kostenlose Urbanisierung ist möglich.",
+        "enemy_fortification": "Sie können eine feindliche Provinz nicht verteidigen, die Sie nicht angegriffen haben.",
+        "recruitment_impossible": "Rekrutierung ist nur in Städten oder Gebieten erlaubt, die in dieser Runde zu Städten werden.",
+        "not_chao": "Sie haben nicht genug Chaos, um diese Aktionen durchzuführen.",
+        "too_many_warriors": "Am Ende der Runde kann eine Provinz nicht mehr als 3 Armeen unterstützen.",
+        "your_victory": "Sie haben das Spiel gewonnen!",
+        "other_victory": "Der {{clanColor}} Clan gewinnt und hat das Spiel gewonnen! 🏆",
+        "chao_error": "Eine normalerweise unmögliche Aktion wurde durchgeführt. Der {{clansErrorString}} Clan hat nicht genug Chaos, um diese Aktionen durchzuführen.",
+        "tour_debut": "Runde {{tour}} beginnt",
+        "player_abandoned": "Der <span class='clan-circle' style='background-color: {{colorHex}};'></span> Clan hat das Spiel aufgegeben.",
+        "victory_table": {
+          "title": "🏆 Endrangliste",
+          "rank": "Rang",
+          "clan": "Clan",
+          "temples": "Tempel",
+          "honor": "Ehre",
+          "winner_congratulations": "🎉 Herzlichen Glückwunsch! Sie haben den Sieg errungen!",
+          "temple_leader_message": "🏛️ Sie hatten die meisten Tempel, haben aber wegen der Ehre verloren. Großartige Leistung!",
+          "game_over_message": "Spiel vorbei! Herzlichen Glückwunsch zum Sieg des {{winnerClan}} Clans! 🏆",
+          "lien_bgg": "Wenn Ihnen mein Spiel gefallen hat, würde ich mich sehr über eine Bewertung auf <a href='https://boardgamegeek.com/boardgame/403280/yuan-lart-de-la-guerre-chine' target='_blank'>BGG</a> freuen. Danke!"
+        }
+      }
+    },
+    "ui": {
+      "loading": "Lädt...",
+      "waiting": "Wartet...",
+      "waiting_for_others": "Warte auf andere Spieler...",
+      "your_turn": "Sie sind dran",
+      "game_over": "Spiel vorbei"
+    },
+    "actions": {
+      "validate": "Bestätigen",
+      "cancel": "Abbrechen",
+      "place": "Platzieren",
+      "move": "Bewegen"
+    }
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "yes": "Ja",
+    "no": "Nein",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "save": "Speichern",
+    "load": "Laden"
+  },
+  "colors": {
+    "black": "Schwarz",
+    "red": "Rot",
+    "green": "Grün",
+    "orange": "Orange",
+    "white": "Weiß",
+    "blue": "Blau",
+    "purple": "Lila",
+    "yellow": "Gelb"
+  },
+  "options": {
+    "title": "Optionen",
+    "language": "Sprache",
+    "abandon_game": "Spiel aufgeben",
+    "leave_game": "Spiel verlassen",
+    "return_to_game": "Zurück zum Spiel",
+    "abandon_confirmation": "Möchten Sie das Spiel wirklich aufgeben? Das ist nicht fair gegenüber anderen Spielern...",
+    "language_updated": "Sprache erfolgreich aktualisiert",
+    "game_abandoned": "Sie haben das Spiel aufgegeben",
+    "languages": {
+      "fr": "Français",
+      "en": "English",
+      "zh": "中文"
+    },
+    "graphics_quality": "Ziel-FPS",
+    "change_name": "Namen ändern",
+    "change_password": "Passwort ändern",
+    "logout": "Abmelden",
+    "delete_account": "Konto löschen"
+  },
+  "auth": {
+    "landing": {
+      "login": "Anmelden",
+      "signup": "Registrieren"
+    },
+    "email_login": {
+      "title": "Mit E-Mail anmelden",
+      "email_label": "E-Mail",
+      "email_placeholder": "ihre.email@beispiel.de",
+      "password_label": "Passwort",
+      "password_placeholder": "••••••••",
+      "submit_button": "Anmelden",
+      "back_button": "Zurück"
+    },
+    "signup": {
+      "title": "Registrieren",
+      "email_label": "E-Mail",
+      "email_placeholder": "ihre.email@beispiel.de",
+      "password_label": "Passwort",
+      "password_placeholder": "••••••••",
+      "password_confirm_label": "Passwort bestätigen",
+      "submit_button": "Registrieren",
+      "back_button": "Zurück"
+    },
+    "google_login": {
+      "title": "Mit Google anmelden",
+      "button": "Mit Google anmelden",
+      "info": "Klicken Sie auf die Schaltfläche oben, um sich mit Ihrem Google-Konto anzumelden. Alle Informationen werden automatisch ausgefüllt.",
+      "back_button": "Zurück"
+    },
+    "logout_confirm": "Möchten Sie sich wirklich abmelden?"
+  },
+  "menu": {
+    "welcome": "Willkommen",
+    "connection_status": {
+      "connected": "Verbunden",
+      "disconnected": "Nicht verbunden"
+    },
+    "quick_game": "Schnelles Spiel",
+    "join_custom_game": "Benutzerdefiniertes Spiel beitreten",
+    "create_custom_game": "Benutzerdefiniertes Spiel erstellen",
+    "options": "Optionen"
+  },
+  "game_setup": {
+    "join": {
+      "title": "Schnellem Spiel beitreten",
+      "code_label": "Spielcode",
+      "code_placeholder": "Code eingeben",
+      "submit_button": "Beitreten",
+      "back_button": "Zurück"
+    },
+    "create": {
+      "code_label": "Spielcode:",
+      "players_label": "Verbundene Spieler:",
+      "start_button": "Spiel starten",
+      "delete_button": "Spiel löschen",
+      "back_button": "Zurück"
+    },
+    "waiting": {
+      "players_count": "Anzahl Spieler in Ihrem Spiel:",
+      "game_code": "Spielcode:",
+      "waiting_message": "Bitte warten Sie. Wenn genügend Spieler vorhanden sind, erscheint die Schaltfläche 'Bereit'.",
+      "confirmation_message": "Andere Spieler bestätigen und das Spiel startet.",
+      "quit_message": "Wenn Sie das Spiel verlassen möchten, klicken Sie auf die Schaltfläche 'Spiel verlassen', um andere Spieler nicht zu stören.",
+      "game_duration_label": "Spieldauer",
+      "game_duration_placeholder": "in Sekunden",
+      "start_button": "Spiel starten",
+      "ready_button": "Bereit",
+      "quit_button": "Spiel verlassen"
+    }
+  },
+  "account": {
+    "change_name": {
+      "title": "Namen ändern",
+      "current_name_label": "Aktueller Name",
+      "new_name_label": "Neuer Name",
+      "new_name_placeholder": "Neuen Namen eingeben",
+      "password_label": "Passwort",
+      "password_placeholder": "••••••••",
+      "submit_button": "Bestätigen",
+      "back_button": "Zurück",
+      "success": "Name erfolgreich geändert!",
+      "error": "Name konnte nicht geändert werden"
+    },
+    "change_password": {
+      "title": "Passwort ändern",
+      "current_password_label": "Aktuelles Passwort",
+      "new_password_label": "Neues Passwort",
+      "confirm_password_label": "Neues Passwort bestätigen",
+      "password_placeholder": "••••••••",
+      "submit_button": "Bestätigen",
+      "back_button": "Zurück",
+      "success": "Passwort erfolgreich geändert!",
+      "error": "Passwort konnte nicht geändert werden"
+    },
+    "delete_account": {
+      "title": "Konto löschen",
+      "warning": "⚠️ Warnung: Diese Aktion ist unwiderruflich!",
+      "warning_details": "Alle Ihre Daten werden dauerhaft gelöscht.",
+      "password_label": "Passwort",
+      "password_placeholder": "••••••••",
+      "submit_button": "Konto löschen",
+      "back_button": "Zurück",
+      "confirmation": "⚠️ Möchten Sie Ihr Konto wirklich löschen? Diese Aktion ist unwiderruflich!",
+      "success": "Konto erfolgreich gelöscht. Auf Wiedersehen!",
+      "error": "Konto konnte nicht gelöscht werden"
+    }
+  }
+}
+
