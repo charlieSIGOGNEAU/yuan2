@@ -6,16 +6,9 @@ export class HelpSystem {
         this.helpKeywords = new Map(); // Map des mots-clés vers leurs clés i18n
         this.isActive = false; // État du système d'aide
         
-        // Initialiser les mots-clés d'aide
-        this.initializeKeywords();
     }
 
-    // Définir les mots-clés et leurs clés i18n correspondantes
-    initializeKeywords() {
-        // Ce système n'est plus utilisé car on utilise maintenant des balises {{aide:key}}
-        // Conservé pour compatibilité si besoin
-        console.log(`📚 Système d'aide initialisé avec balises {{aide:key}}`);
-    }
+  
 
     // Transformer un texte en ajoutant des liens cliquables sur les mots-clés
     processText(text) {
