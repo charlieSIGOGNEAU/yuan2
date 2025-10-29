@@ -201,7 +201,6 @@
 }
 
 .fullscreen-toggle:hover {
-    background: rgba(171, 186, 163, 0.95);
     transform: scale(1.1);
     box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.3);
 }
