@@ -202,11 +202,6 @@ export class UIManager {
     // Méthode interne pour le chargement
     async _loadGameUIInternal() {
         try {
-            // Supprimer la div app si elle existe
-            const appDiv = document.getElementById('app');
-            if (appDiv) {
-                appDiv.remove();
-            }
             
             // Charger le HTML de l'interface
             const response = await fetch(`./partials/game-ui.html`);
@@ -216,10 +211,6 @@ export class UIManager {
             const uiContainer = document.createElement('div');
             uiContainer.innerHTML = htmlContent;
             
-            // Injecter tous les éléments enfants (barre d'info + overlay)
-            // while (uiContainer.firstChild) {
-            //     document.body.appendChild(uiContainer.firstChild);
-            // }
             const allContainer = document.getElementById('all');
             allContainer.innerHTML = htmlContent;
             
@@ -253,9 +244,64 @@ export class UIManager {
             
             // Charger le GameBoard3D si pas déjà chargé
             await this.loadGameBoard3D();
+
+            this.setupFullscreenToggle();
             
         } catch (error) {
             throw error;
+        }
+    }
+
+    setupFullscreenToggle() {
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const allDiv = document.getElementById('all');
+        
+        if (!fullscreenBtn || !allDiv) return;
+        
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement && 
+                !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && 
+                !document.msFullscreenElement) {
+                // Entrer en plein écran
+                if (allDiv.requestFullscreen) {
+                    allDiv.requestFullscreen();
+                } else if (allDiv.webkitRequestFullscreen) {
+                    allDiv.webkitRequestFullscreen();
+                } else if (allDiv.mozRequestFullScreen) {
+                    allDiv.mozRequestFullScreen();
+                } else if (allDiv.msRequestFullscreen) {
+                    allDiv.msRequestFullscreen();
+                }
+                fullscreenBtn.textContent = '⛶';
+            } else {
+                // Sortir du plein écran
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                fullscreenBtn.textContent = '⛶';
+            }
+        });
+        
+        // Mettre à jour l'icône quand l'état change
+        document.addEventListener('fullscreenchange', updateFullscreenIcon);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+        
+        function updateFullscreenIcon() {
+            const isFullscreen = document.fullscreenElement || 
+                               document.webkitFullscreenElement || 
+                               document.mozFullScreenElement || 
+                               document.msFullscreenElement;
+            fullscreenBtn.textContent = isFullscreen ? '⛶' : '⛶';
+            fullscreenBtn.title = isFullscreen ? 'Quitter le plein écran' : 'Mode plein écran';
         }
     }
 
@@ -962,8 +1008,8 @@ export class UIManager {
         // Désactiver la sélection de texte
         this.disableTextSelection();
         
-        // Afficher la barre
-        infoBar.style.display = 'flex';
+        // ne pas afficher la barre
+        infoBar.style.display = 'none';
 
         
         // Réappliquer les event listeners après l'affichage

@@ -9,7 +9,7 @@
     height: 100vh; /* Prend toute la hauteur */
     background: transparent;
     pointer-events: none; /* Permet l'interaction avec le gameboard en dessous */
-    z-index: 9999;
+    z-index: 100;
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;

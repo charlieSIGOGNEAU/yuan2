@@ -7,7 +7,7 @@
     height: 100vh;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
-    z-index: 20000;
+    z-index: 200;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -171,4 +171,51 @@
 .options-overlay {
     animation: fadeIn 0.3s ease-out;
 }
+
+
+
+
+
+/* Bouton de plein écran */
+.fullscreen-toggle {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: rgb(255, 255, 255, 0.25);
+    color: #000000;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    pointer-events: auto;
+}
+
+.fullscreen-toggle:hover {
+    background: rgba(171, 186, 163, 0.95);
+    transform: scale(1.1);
+    box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.fullscreen-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Style quand en plein écran */
+#all:fullscreen .fullscreen-toggle,
+#all:-webkit-full-screen .fullscreen-toggle,
+#all:-moz-full-screen .fullscreen-toggle,
+#all:-ms-fullscreen .fullscreen-toggle {
+    background: rgba(171, 186, 163, 0.9);
+}
+
 

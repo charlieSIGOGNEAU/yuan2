@@ -85,8 +85,12 @@ export const simultaneousPlayPhase = {
 
         if (this.processedTurns === gameState.game.simultaneous_play_turn) {
             this.actionsOfPlayer()
+            const infoBar = document.getElementById('simultaneous-play-info-bar');
+            infoBar.style.display = 'flex';
         }
         else {
+            const infoBar = document.getElementById('simultaneous-play-info-bar');
+            infoBar.style.display = 'none';
             
             // Désactiver la détection des clics sur les territoires
             this.disableTerritoryClickDetection(gameBoard);
@@ -137,6 +141,7 @@ export const simultaneousPlayPhase = {
         }
 
     },
+    
 
     actionsOfPlayer(){
         this.inProgress = false;
