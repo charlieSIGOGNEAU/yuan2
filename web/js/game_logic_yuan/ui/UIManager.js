@@ -208,8 +208,8 @@ export class UIManager {
                 appDiv.remove();
             }
             
-            // Charger le HTML de l'interface avec un paramètre pour éviter le cache
-            const response = await fetch(`./partials/game-ui.html?v=${Date.now()}`);
+            // Charger le HTML de l'interface
+            const response = await fetch(`./partials/game-ui.html`);
             const htmlContent = await response.text();
             
             // Injecter l'interface dans le body
@@ -217,20 +217,22 @@ export class UIManager {
             uiContainer.innerHTML = htmlContent;
             
             // Injecter tous les éléments enfants (barre d'info + overlay)
-            while (uiContainer.firstChild) {
-                document.body.appendChild(uiContainer.firstChild);
-            }
+            // while (uiContainer.firstChild) {
+            //     document.body.appendChild(uiContainer.firstChild);
+            // }
+            const allContainer = document.getElementById('all');
+            allContainer.innerHTML = htmlContent;
             
-            // Charger le CSS de l'interface avec un paramètre pour éviter le cache
+            // Charger le CSS de l'interface
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = `./css/game-ui.css?v=${Date.now()}&force=${Math.random()}`;
+            link.href = `./css/game-ui.css`;
             document.head.appendChild(link);
             
             // Charger le CSS du menu d'options
             const optionsLink = document.createElement('link');
             optionsLink.rel = 'stylesheet';
-            optionsLink.href = `./css/options-menu.css?v=${Date.now()}&force=${Math.random()}`;
+            optionsLink.href = `./css/options-menu.css`;
             document.head.appendChild(optionsLink);
             
             // Références vers les éléments UI

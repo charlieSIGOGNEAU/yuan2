@@ -128,8 +128,12 @@ export class OptionsMenu {
         });
 
         // Ajouter au DOM
+        // this.overlayElement.appendChild(this.menuElement);
+        // document.body.appendChild(this.overlayElement);
+        const allContainer = document.getElementById('all');
         this.overlayElement.appendChild(this.menuElement);
-        document.body.appendChild(this.overlayElement);
+        allContainer.appendChild(this.overlayElement);
+
     }
 
     // Créer une section du menu
