@@ -25,7 +25,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     padding: 8px;
     background: #caddc0;
     box-shadow: inset 2px 2px 4px rgba(50, 61, 50, 0.1), inset -2px -2px 4px rgba(50, 61, 50, 0.2);
@@ -170,6 +170,9 @@
     }
     #change-name-title {
         display: none;
+    }
+    #back-to-game-menu {
+        margin-top: 10px;
     }
   }
 

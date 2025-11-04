@@ -73,6 +73,31 @@ export async function handleLanguageChange(newLanguage, callbacks = {}) {
     }
 }
 
+export async function handleFPSChange(fps) {
+    const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.authToken}`
+        },
+        body: JSON.stringify({
+            fps: fps
+        })
+    });
+    const data = await response.json();
+    if (data.success) {
+        Auth.options.fps = fps;
+        if (window.gameBoard) {
+            window.gameBoard.setFPS(fps);
+        } else {
+            console.error('❌ GameBoard3D non trouvé');
+        }
+        console.log('✅ Qualité graphique mise à jour sur le serveur');
+    } else {
+        console.error('❌ Erreur lors de la mise à jour de la qualité graphique:', data);
+    }
+}
+
 // Page des options
 export const OptionsPage = {
     // Afficher la page
@@ -82,6 +107,7 @@ export const OptionsPage = {
         loadCSS('css/options.css');
         this.setupEvents();
         this.loadCurrentSettings();
+        this.loadCurrentFPS();
     },
 
     // Générer le HTML avec les traductions
@@ -130,6 +156,8 @@ export const OptionsPage = {
         `;
     },
 
+    
+
     // Configurer les événements
     setupEvents() {
         // Changement de langue
@@ -157,10 +185,12 @@ export const OptionsPage = {
         });
 
         // Changement de qualité graphique
-        document.getElementById('graphics-quality')?.addEventListener('change', (e) => {
-            console.log('🎨 Qualité graphique:', e.target.value);
-            // TODO: Implémenter le changement de qualité
+        document.getElementById('graphics-quality')?.addEventListener('change', async (e) => {
+            // Envoyer la requête au serveur pour mettre à jour la qualité graphique de l'utilisateur
+            await handleFPSChange(e.target.value)
         });
+
+
 
         // Activation des ombres
         document.getElementById('enable-shadows')?.addEventListener('change', (e) => {
@@ -196,6 +226,15 @@ export const OptionsPage = {
             const currentLanguage = i18n.getLanguage();
             languageSelect.value = currentLanguage;
             console.log(`🌍 Langue actuelle: ${currentLanguage}`);
+        }
+    },
+
+    // Charger la qualité graphique actuelle
+    loadCurrentFPS() {
+        const fpsSelect = document.getElementById('graphics-quality');
+        if (fpsSelect) {
+            fpsSelect.value = Auth.options.fps;
+            console.log('🎨 Qualité graphique actuelle:', Auth.options.fps);
         }
     }
 };

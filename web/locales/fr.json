@@ -13,8 +13,8 @@
 
 
       "Attaque": "Attaque<br><br>Niv.1-2-3 :<br> - Toutes vos armées connectées attaquent.<br> - Armées s'annulent 1 pour 1.<br> - Si au moins 1 armée reste → province gagnée.<br><br>Niv.2-3 : +1 armée lors de l'attaque.<br><br>Niv.3 : si vous gagnez le combat, effectuez ensuite une attaque de force 1 gratuite (sans armée) contre toutes les provinces ennemies adjacentes.",
-      "Temple": "Temple<br><br>Vous gagnez la partie si vous possédez le nombre de temples indiqué.<br><br>Ce nombre diminue de 1 tous les 2 tours.<br><br>En cas d'égalité, le clan ayant le plus d'honneur l'emporte.<br><br>{{tableau:honneur}}",
-      "Chao": "Coût des actions :<br><br>Niv.0 et Niv.1 : gratuit<br>Niv.2 : 4 Chao<br>Niv.3 : 7 Chao<br><br>Réductions :<br>Chaque rizière possédée réduit de 1 le coût d'une action de {{aide:Developpement:développement}}.<br>Chaque forêt possédée réduit de 1 le coût d'une action de {{aide:Fortification:fortification}}.<br>Chaque mine possédée réduit de 1 le coût d'une action de {{aide:Militarisation:Militarisation}}.<br>Une 'ville double'  double la reduction de la province sur lequel elle est placée.<br><br>L'ensemble de vos provinces possédées est indiqué en haut de l'écran."
+      "Temple": "Temple :<br><br>Vous gagnez la partie si vous possédez le nombre de temples indiqué.<br>Ce nombre diminue de 1 tous les 2 tours.<br>En cas d'égalité, le clan ayant le plus d'honneur l'emporte.<br><br>{{tableau:honneur}}",
+      "Chao": "{{tableau:chao}}<br>Coût des actions :<br>Niv.0 et Niv.1 : gratuit<br>Niv.2 : 4 Chao<br>Niv.3 : 7 Chao<br><br>Réductions :<br>Chaque rizière possédée réduit de 1 le coût d'une action de {{aide:Developpement:développement}}.<br>Chaque forêt possédée réduit de 1 le coût d'une action de {{aide:Fortification:fortification}}.<br>Chaque mine possédée réduit de 1 le coût d'une action de {{aide:Militarisation:Militarisation}}.<br>Une 'ville double'  double la reduction de la province sur lequel elle est placée.<br><br>L'ensemble de vos provinces possédées est indiqué en haut de l'écran."
 
     },
     "phases": {

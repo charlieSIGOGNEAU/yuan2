@@ -12,7 +12,7 @@
       "Recrutement": "招募<br><br>等级1：无效果<br><br>等级2：+1军队<br><br>等级3：+3军队<br><br>👉 回合结束时，每个省份最多只能有3支军队。",
       "Attaque": "攻击<br><br>等级1-2-3：<br> - 所有连接的军队攻击。<br> - 军队相互抵消1对1。<br> - 如果至少剩余1支军队→赢得省份。<br><br>等级2-3：攻击时+1军队。<br><br>等级3：如果赢得战斗，然后对所有相邻敌方省份进行免费力量1攻击（无需军队）。",
       "Temple": "神庙<br><br>如果您拥有指定数量的神庙，您就赢得游戏。<br><br>这个数字每2回合减少1。<br><br>平局情况下，荣誉最高的氏族获胜。<br><br>{{tableau:honneur}}",
-      "Chao": "行动成本：<br><br>等级0和等级1：免费<br>等级2：4混沌<br>等级3：7混沌<br><br>减免：<br>每拥有一个稻田，{{aide:Developpement:发展}}行动成本减少1。<br>每拥有一个森林，{{aide:Fortification:防御}}行动成本减少1。<br>每拥有一个矿山，{{aide:Militarisation:军事化}}行动成本减少1。<br>'双城'使其所在省份的减免翻倍。<br><br>您所有拥有的省份显示在屏幕顶部。"
+      "Chao": "{{tableau:chao}}<br>行动成本：<br>等级0和等级1：免费<br>等级2：4混沌<br>等级3：7混沌<br><br>减免：<br>每拥有一个稻田，{{aide:Developpement:发展}}行动成本减少1。<br>每拥有一个森林，{{aide:Fortification:防御}}行动成本减少1。<br>每拥有一个矿山，{{aide:Militarisation:军事化}}行动成本减少1。<br>'双城'使其所在省份的减免翻倍。<br><br>您所有拥有的省份显示在屏幕顶部。"
     },
     "phases": {
       "initial_placement": {

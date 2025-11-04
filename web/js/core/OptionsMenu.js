@@ -4,6 +4,9 @@ import { gameState } from '../game_logic_yuan/gameState.js';
 import { ServerConfig } from '../app/config.js';
 import { Auth } from '../app/auth.js';
 import { handleLanguageChange as changeLanguage } from '../app/options.js';
+import { handleFPSChange } from '../app/options.js';
+
+
 
 export class OptionsMenu {
     constructor() {
@@ -38,6 +41,18 @@ export class OptionsMenu {
                     ],
                     currentValue: i18n.getLanguage(),
                     onChange: this.handleLanguageChange.bind(this)
+                },
+                {
+                    type: 'dropdown',
+                    label: i18n.t('options.graphics_quality'),
+                    id: 'graphics-quality-options-of-game',
+                    options: [
+                        { value: '20', label: '20' },
+                        { value: '30', label: '30' },
+                        { value: '60', label: '60' }
+                    ],
+                    currentValue: String(Auth.options.fps),
+                    onChange: this.handleFPSChange.bind(this)
                 },
                 {
                     type: 'button',
@@ -197,6 +212,14 @@ export class OptionsMenu {
             onError: (error) => {
                 console.error('❌ Erreur lors du changement de langue:', error);
             }
+        });
+    }
+    async handleFPSChange(newFPS) {
+        await handleFPSChange(newFPS, {
+            onSuccess: () => {
+                // Fermer le menu
+                this.close();
+            },
         });
     }
 

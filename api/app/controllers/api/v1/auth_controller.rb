@@ -28,7 +28,8 @@ class Api::V1::AuthController < ApplicationController
             id: user.id,
             name: user.name,
             email: user.email,
-            language: user.language
+            language: user.language,
+            fps: user.fps
           },
           token: token
         }, status: :ok
@@ -74,7 +75,8 @@ class Api::V1::AuthController < ApplicationController
           id: user.id,
           name: user.name,
           email: user.email,
-          language: user.language
+          language: user.language,
+          fps: user.fps
         },
         token: token
       }, status: :ok
@@ -109,7 +111,8 @@ class Api::V1::AuthController < ApplicationController
       password: params[:password],
       password_confirmation: params[:password],
       provider: 'email',
-      language: language
+      language: language,
+      fps: 20
     )
 
     if user.save
@@ -123,7 +126,8 @@ class Api::V1::AuthController < ApplicationController
           id: user.id,
           name: user.name,
           email: user.email,
-          language: user.language
+          language: user.language,
+          fps: user.fps
         },
         token: token
       }, status: :created
@@ -183,7 +187,8 @@ class Api::V1::AuthController < ApplicationController
           email: email,
           name: name,
           provider: 'google',
-          language: language
+          language: language,
+          fps: 20
         )
         
         if user.save
@@ -210,7 +215,8 @@ class Api::V1::AuthController < ApplicationController
           id: user.id,
           name: user.name,
           email: user.email,
-          language: user.language
+          language: user.language,
+          fps: user.fps
         },
         token: token
       }, status: :ok
@@ -234,7 +240,8 @@ class Api::V1::AuthController < ApplicationController
           id: current_user.id,
           name: current_user.name,
           email: current_user.email,
-          language: current_user.language
+          language: current_user.language,
+          fps: current_user.fps
         }
       }
     else
@@ -290,7 +297,8 @@ class Api::V1::AuthController < ApplicationController
           id: current_user.id,
           name: current_user.name,
           email: current_user.email,
-          language: current_user.language
+          language: current_user.language,
+          fps: current_user.fps
         }
       }, status: :ok
     else

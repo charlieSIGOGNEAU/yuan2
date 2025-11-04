@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { meepleManager } from '../pieces/MeepleManager.js';
 import { createShadowManager } from './ShadowManager.js';
+import { Auth } from '../../app/auth.js';
 // import { createMeshMerger } from './MeshMerger.js';
 
 export class GameBoard3D {
@@ -46,7 +47,8 @@ export class GameBoard3D {
         this.meepleManager = meepleManager; // Référence au gestionnaire de meeples
         
         // Limitation FPS
-        this.targetFPS = 20; // FPS cible (peut être modifié via setFPS) - Défaut: 5 FPS
+        console.log('Auth', Auth);
+        this.targetFPS = Auth.options.fps; // FPS cible (peut être modifié via setFPS) 
         this.frameInterval = 1000 / this.targetFPS; // Intervalle entre frames en ms
         this.lastFrameTime = 0; // Timestamp de la dernière frame rendue
         

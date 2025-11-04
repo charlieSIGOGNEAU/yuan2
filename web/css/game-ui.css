@@ -64,7 +64,7 @@
     border-radius: 8px;
     font-size: 14px;
     text-align: left;
-    z-index: 10001;
+    z-index: 101;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     border: 2px solid white;
     pointer-events: auto; /* Bloque l'interaction avec le gameboard en dessous */
@@ -101,7 +101,7 @@
     border-radius: 8px;
     font-size: 14px;
     text-align: left;
-    z-index: 10001;
+    z-index: 101;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     border: 2px solid white;
     pointer-events: auto;
@@ -121,7 +121,7 @@
     align-items: center;
     gap: 10px;
     pointer-events: auto;
-    z-index: 10002;
+    z-index: 102;
 }
 
 /* Barres d'action - comportement par défaut (portrait) */
@@ -452,7 +452,7 @@
     height: calc(100vw / 5); /* Ratio 1:5 (hauteur = largeur/5) */
     background:black ;
     display: flex;
-    z-index: 10004; /* Au-dessus de l'overlay UI */
+    z-index: 104; /* Au-dessus de l'overlay UI */
     pointer-events: none; /* Permet l'interaction avec le gameboard en dessous */
     flex-shrink: 0;
 }
@@ -668,6 +668,9 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.chao-table {
+    margin: 0px auto;
 }
 
 .help-table thead {

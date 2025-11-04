@@ -47,6 +47,8 @@ export class HelpSystem {
             switch (tableType) {
                 case 'honneur':
                     return this.generateHonourTable();
+                case 'chao':
+                    return this.generateChaoTable();
                 default:
                     console.warn(`⚠️ Type de tableau inconnu: ${tableType}`);
                     return match;
@@ -90,6 +92,54 @@ export class HelpSystem {
                         ${colorName}
                     </td>
                     <td class="honour-value">${clan.honneur}</td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+
+        return tableHTML;
+    }
+
+
+
+    // Générer le tableau de chao des clans
+    generateChaoTable() {
+        // Récupérer les clans depuis gameState
+        if (!window.gameState || !window.gameState.game || !window.gameState.game.clans) {
+            return '<p style="color: #999; font-style: italic;">Tableau non disponible (partie non démarrée)</p>';
+        }
+
+        const clans = window.gameState.game.clans;
+        
+
+        // Générer le HTML du tableau
+        let tableHTML = `
+            <table class="help-table chao-table">
+                <thead>
+                    <tr>
+                        <th>Clan</th>
+                        <th>Chao</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        clans.forEach(clan => {
+            // Traduire le nom de la couleur
+            const colorName = this.i18n.t(`colors.${clan.color_name}`);
+            
+            tableHTML += `
+                <tr>
+                    <td>
+                    
+                        <span class="clan-circle" style="background-color: ${clan.color}; display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px;"></span>
+                        ${colorName}
+                    </td>
+                    <td class="honour-value">${clan.available_chao}</td>
                 </tr>
             `;
         });
