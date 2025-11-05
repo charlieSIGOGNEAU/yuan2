@@ -10,6 +10,9 @@ class Api::V1::GamesController < ApplicationController
     game = result[:game]
     message = result[:message]
     game_user = result[:game_user]
+
+    # test tour plus cour pour les ombres
+    game.update(turn_duration: 20)
   
 
     if game
@@ -32,13 +35,12 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def creat_custom_game
-    p "3"*100
+
     result = Game.creat_custom_game(current_user)
     message = result[:message]
-    p "3"*100
+
     game = result[:game]
     game_user = result[:game_user]
-    p "3"*100
 
     if message == "ongoing game"
       render json: { success: false, message: "You are already in a game", game_id: game.id, game_user_id: game_user.id, custom_code: game.custom_code, waiting_players_count: game.waiting_players_count }
@@ -77,17 +79,9 @@ class Api::V1::GamesController < ApplicationController
     game_duration = @game_duration
     user = current_user
     creator = game.creator
-    p "0"*100
-    p game_duration
-    p user.id
-    p creator.id
-    p game.game_status
-    p "0"*100
+
     if (user.id == creator.id && game.game_status == "waiting_for_players")
       result = game.launch_custom_game(game_duration)
-      p "1"*100
-      p result
-      p "2"*100
     
       if result[:message] == "go ready to play"
         render json: { success: true, game_id: game.id }

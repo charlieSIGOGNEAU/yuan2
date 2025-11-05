@@ -259,6 +259,7 @@ export class UIManager {
         if (!fullscreenBtn || !allDiv) return;
         
         fullscreenBtn.addEventListener('click', () => {
+            console.log('fullscreenBtn clicked');
             if (!document.fullscreenElement && 
                 !document.webkitFullscreenElement && 
                 !document.mozFullScreenElement && 

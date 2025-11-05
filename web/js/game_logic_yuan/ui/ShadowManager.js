@@ -21,7 +21,10 @@ export class ShadowManager {
         
         this.directionalLight; // Assignée depuis GameBoard3D (THREE.DirectionalLight)
         this.ambientLight;     // Assignée depuis GameBoard3D (THREE.AmbientLight)
-        
+
+        this.originalIntensity;
+        this.firstanimation = true;
+        this.hasLightBeenUpdated = false;
 
 
 
@@ -261,11 +264,14 @@ export class ShadowManager {
         this.beginningOfAnimation = true;
         if (this.animationStarted) {
             console.log('🌞 Animation du soleil déjà démarrée');
-            this.lastShadowUpdate = 0; // Forcer une mise à jour immédiate
+            // this.lastShadowUpdate = 0; // Forcer une mise à jour immédiate
             return;
         }
         else {
+            this.originalIntensity = this.directionalLight.intensity;
+            console.log('originalIntensity', this.originalIntensity);
             this.animateSun(); // lance la boucle
+            
         }
         
     }
@@ -275,23 +281,52 @@ export class ShadowManager {
         const sunrise = {rx: 90, ry: 20};
         const noon = {rx: -45, ry: 45};
         const sunset = {rx: -180, ry: 10};
-        const alarmDuration = 5
+        const alarmDuration = 3
         const alarmePeriod = 3
+        const moltenDuration = 2000;
 
         let progress = 0
-        if (this.turn_duration > alarmDuration) {
-        progress = ((Date.now() - this.startTime) / ((this.turn_duration - alarmDuration)*1000)) ; 
+
+        // intensity de debut de tour
+        if (Date.now() - this.startTime < moltenDuration/2 && this.firstanimation == false){    
+            progress = (Date.now() - this.startTime) / (moltenDuration/2);
+            const intensity = Math.cos(progress * Math.PI/2)*this.originalIntensity;
+            this.directionalLight.intensity = intensity;
+            requestAnimationFrame(() => this.animateSun());
+            return;
         }
+        if (Date.now() - this.startTime < moltenDuration){
+            progress = (Date.now() - this.startTime-moltenDuration/2) / (moltenDuration/2);
+            const intensity = Math.sin(progress * Math.PI/2)*4;
+            this.directionalLight.intensity = intensity;
+            if (this.hasLightBeenUpdated == false){
+                this.lastShadowUpdate = 0; // Forcer une mise à jour immédiate
+                this.hasLightBeenUpdated = true;
+            }
+        }
+        if (Date.now() - this.startTime > moltenDuration){
+            this.firstanimation = false;
+            this.hasLightBeenUpdated = false;
+        }
+
+        
+        if (this.turn_duration > alarmDuration) {
+            progress = ((Date.now() - this.startTime) / ((this.turn_duration )*1000)) ; 
+            progress = Math.min(progress, 1);
+        }
+        // securiter si tour trop court
         else {
             progress = 0.5;
         }
 
 
+
         let rx, ry;
+        // reste sur nuit si temps depasse
         if (progress > 1){
             rx = sunset.rx
             ry = sunset.ry
-        }        
+        }
         else if (progress <= 0.5 ) { // matin → midi
             const t = progress * 2; // normalisé [0,1]
             rx = sunrise.rx * (1 - t) + noon.rx * t;
@@ -306,30 +341,31 @@ export class ShadowManager {
         //couleur du soleil    
         if (this.ambientLight) {
             const orange = new THREE.Color(0xff4500);
+
             const white = new THREE.Color(0xffffff);
 
             // calculer la distance à 0.5
             const d = Math.abs(progress - 0.5) * 2; // d = 1 quand progress = 0 ou 1, d = 0 quand progress = 0.5
 
+
             // interpoler
-            const color = white.clone().lerp(orange, d**4);
+            const color = white.clone().lerp(orange, 1);
             this.ambientLight.color.set(color);       
         }
 
         // clignotement de la lumière pour signaler fin du tour
         // x = temps restant en secondes pour finir le tour
         let x = this.turn_duration - (Date.now() - this.startTime) / 1000;
-        
-
         if (x < alarmDuration && x > 0 && this.ambientLight) {
             const intensity = Math.sin(x / alarmDuration * Math.PI * alarmePeriod * 2 + Math.PI/2)  ; 
             // this.ambientLight.intensity = 0.5 + intensity ;
             this.directionalLight.intensity = 4 + intensity*2 ;
-        }
+        } 
+        // intensity normale
         else {
-            // this.ambientLight.intensity = 0.5;
             this.directionalLight.intensity = 4;
         }
+     
 
         if (this.beginningOfAnimation) {
             this.beginningOfAnimation = false;
@@ -339,7 +375,7 @@ export class ShadowManager {
         requestAnimationFrame(() => this.animateSun());
     }
 
-    // Activer ou désactiver le rendu des ombres
+ 
     
     setShadowsEnabled(enabled) {
         this.shadowsEnabled = enabled;

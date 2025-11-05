@@ -141,30 +141,5 @@ export const WebSocketClient = {
         setTimeout(() => notification.remove(), 3000);
     },
 
-    // Game channels
-    // subscribeToGameChannel(gameId) {
-    //     if (this.gameSubscriptions.includes(gameId)) return;
 
-    //     const subscribeMessage = {
-    //         command: 'subscribe',
-    //         identifier: JSON.stringify({ channel: 'GameChannel', game_id: gameId })
-    //     };
-        
-    //     if (this.send(subscribeMessage)) {
-    //         this.gameSubscriptions.push(gameId);
-    //     }
-    // },
-
-    // unsubscribeFromGameChannel(gameId) {
-    //     if (!this.gameSubscriptions.includes(gameId)) return;
-
-    //     const unsubscribeMessage = {
-    //         command: 'unsubscribe',
-    //         identifier: JSON.stringify({ channel: 'GameChannel', game_id: gameId })
-    //     };
-        
-    //     if (this.send(unsubscribeMessage)) {
-    //         this.gameSubscriptions = this.gameSubscriptions.filter(id => id !== gameId);
-    //     }
-    // },
 }; 

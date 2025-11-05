@@ -1,9 +1,6 @@
 import * as THREE from 'three';
 import { gameState } from '../gameState.js';
 
-  
-
-
 /**
  * Classe Arrow pour gérer une flèche individuelle avec évitement automatique des chevauchements
  */
