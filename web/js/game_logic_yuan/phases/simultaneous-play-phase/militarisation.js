@@ -3,6 +3,7 @@ import { uiManager } from '../../ui/UIManager.js';
 import { i18n } from '../../../core/i18n.js';
 import { arrowManager } from '../../gameplay/arrowManager.js';
 
+
 export const militarisation = {
     animation: true,
     gameBoard: null,
@@ -137,6 +138,7 @@ export const militarisation = {
             }
             conflicts.push(conflict);
         }
+        this.gameBoard.shadowManager.lastShadowUpdate = 0; // Forcer une mise à jour immédiate des ombres pour suprimer les ombres des warriors
 
         if (this.animation && arrowPromises.length > 0) {
             console.log(`⏳ Attente de ${arrowPromises.length} animations de flèches attaque...`);
@@ -277,7 +279,6 @@ export const militarisation = {
 
         
         intermediateConflicts = null;
-        console.log("voila les conflits locaux restant apres les  attaquans et attaques la province cible, juste avand de gerer les conflicts de zone",finalLocalConflicts);
 
 
         // contestingTerritories, ce sont l'integralite de territoires conteste, en comprenant les reactions en chaine. un territoire peut etre conteste par plusieurs clans

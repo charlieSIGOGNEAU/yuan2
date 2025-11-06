@@ -285,19 +285,17 @@ export class ShadowManager {
         const alarmePeriod = 3
         const moltenDuration = 2000;
 
-        let progress = 0
-
         // intensity de debut de tour
         if (Date.now() - this.startTime < moltenDuration/2 && this.firstanimation == false){    
-            progress = (Date.now() - this.startTime) / (moltenDuration/2);
-            const intensity = Math.cos(progress * Math.PI/2)*this.originalIntensity;
+            const p = (Date.now() - this.startTime) / (moltenDuration/2);
+            const intensity = Math.cos(p * Math.PI/2)*this.originalIntensity;
             this.directionalLight.intensity = intensity;
             requestAnimationFrame(() => this.animateSun());
             return;
         }
         if (Date.now() - this.startTime < moltenDuration){
-            progress = (Date.now() - this.startTime-moltenDuration/2) / (moltenDuration/2);
-            const intensity = Math.sin(progress * Math.PI/2)*4;
+            const p = (Date.now() - this.startTime-moltenDuration/2) / (moltenDuration/2);
+            const intensity = Math.sin(p * Math.PI/2)*4;
             this.directionalLight.intensity = intensity;
             if (this.hasLightBeenUpdated == false){
                 this.lastShadowUpdate = 0; // Forcer une mise à jour immédiate
@@ -309,7 +307,7 @@ export class ShadowManager {
             this.hasLightBeenUpdated = false;
         }
 
-        
+        let progress = 0
         if (this.turn_duration > alarmDuration) {
             progress = ((Date.now() - this.startTime) / ((this.turn_duration )*1000)) ; 
             progress = Math.min(progress, 1);
@@ -346,7 +344,6 @@ export class ShadowManager {
 
             // calculer la distance à 0.5
             const d = Math.abs(progress - 0.5) * 2; // d = 1 quand progress = 0 ou 1, d = 0 quand progress = 0.5
-
 
             // interpoler
             const color = white.clone().lerp(orange, 1);

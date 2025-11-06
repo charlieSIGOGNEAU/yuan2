@@ -960,6 +960,11 @@ export class GameBoard3D {
         }
 
         onPointerDown(e) {
+            // Ignorer les clics sur les boutons UI (fullscreen, etc.)
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                return; // Laisser l'événement se propager normalement
+            }
+            
             e.preventDefault();
             // Si on est déjà en train de glisser, on ignore
             if (this.isDragging) return;

@@ -11,8 +11,6 @@ class Api::V1::GamesController < ApplicationController
     message = result[:message]
     game_user = result[:game_user]
 
-    # test tour plus cour pour les ombres
-    game.update(turn_duration: 20)
   
 
     if game
