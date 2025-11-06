@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README*
+docs/
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+
+# Dependencies
+node_modules/
+bower_components/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+test/
+spec/
+coverage/
+
+# Logs
+*.log
+log/*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+*.gem
+*.rbc
+
+
+

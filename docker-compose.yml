@@ -1,0 +1,46 @@
+services:
+  redis:
+    image: redis:7-alpine
+    # Port non exposé à l'extérieur, seulement accessible par l'API via le réseau Docker
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - yuan2_network
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - RAILS_ENV=production
+      - REDIS_URL=redis://redis:6379/1
+      - RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+    volumes:
+      - api_storage:/rails/storage
+      - api_db:/rails/db
+      - api_log:/rails/log
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - yuan2_network
+
+volumes:
+  redis_data:
+  api_storage:
+  api_db:
+  api_log:
+
+networks:
+  yuan2_network:
+    driver: bridge
+
+
