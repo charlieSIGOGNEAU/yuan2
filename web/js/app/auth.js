@@ -11,45 +11,6 @@ export const Auth = {
         fps: 20
     },
 
-    // Connexion (ancienne méthode - gardée pour compatibilité)
-    // async login(name) {
-    //     try {
-    //         const response = await fetch(`${ServerConfig.HTTP_BASE}/auth/login`, {
-    //             method: 'POST',
-    //             headers: { 'Content-Type': 'application/json' },
-    //             body: JSON.stringify({ name })
-    //         });
-            
-    //         const data = await response.json();
-            
-    //         if (data.success) {
-    //             this.authToken = data.token;
-    //             this.currentUser = data.user;
-    //             console.log('✅ Connexion réussie:', this.currentUser.name);
-    //             console.log('🌍 Langue utilisateur:', this.currentUser.language);
-                
-    //             // Charger la langue de l'utilisateur si différente de la langue actuelle
-    //             if (this.currentUser.language && this.currentUser.language !== i18n.getLanguage()) {
-    //                 console.log('🌍 Changement de langue vers:', this.currentUser.language);
-    //                 await i18n.initialize(this.currentUser.language);
-    //             } else {
-    //                 console.log('✅ Langue identique, pas de rechargement');
-    //             }
-                
-    //             // Démarrer la connexion WebSocket après l'authentification
-    //             await WebSocketClient.connect();
-                
-    //             // Naviguer vers le menu du jeu
-    //             Router.navigateTo('game-menu');
-    //         } else {
-    //             alert('❌ Erreur: ' + data.message);
-    //         }
-    //     } catch (error) {
-    //         console.error('❌ Erreur connexion:', error);
-    //         alert('❌ Erreur de connexion au serveur');
-    //     }
-    // },
-
     // Connexion avec email/password
     async loginWithEmail(email, password) {
         try {

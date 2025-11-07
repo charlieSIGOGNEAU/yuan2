@@ -4,7 +4,6 @@ console.log('Chargement de l\'application...');
 // Importer le router et toutes les pages
 import { Router } from './app/router.js';
 import { Auth } from './app/auth.js';
-import { WebSocketClient } from './app/websocket.js';
 import { i18n } from './core/i18n.js';
 
 // Pages d'authentification
@@ -16,7 +15,7 @@ import { SignupPage } from './app/signup.js';
 // Pages de jeu
 import { GameMenuPage } from './app/gameMenu.js';
 import { JoinQuickGamePage } from './app/joinQuickGame.js';
-import { CreateQuickGamePage } from './app/createQuickGame.js';
+// import { CreateQuickGamePage } from './app/createQuickGame.js';
 import { PlayerWaitingPage } from './app/playerWaiting.js';
 
 // Pages d'options
@@ -32,7 +31,7 @@ Router.registerPage('email-login', EmailLoginPage);
 Router.registerPage('signup', SignupPage);
 Router.registerPage('game-menu', GameMenuPage);
 Router.registerPage('join-quick-game', JoinQuickGamePage);
-Router.registerPage('create-quick-game', CreateQuickGamePage);
+// Router.registerPage('create-quick-game', CreateQuickGamePage);
 Router.registerPage('options', OptionsPage);
 Router.registerPage('change-name', ChangeNamePage);
 Router.registerPage('change-password', ChangePasswordPage);

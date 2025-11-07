@@ -1136,37 +1136,7 @@ export class GameBoard3D {
             return constrained;
         }
 
-        // Méthode pour contraindre la position du workplane dans les limites des tuiles (ANCIEN SYSTÈME - peut-être obsolète)
-        // constrainPosition(position) {
-        //     const scale = this.workplane.scale.x; // Le scale est uniforme
-            
-        //     // Calculer les limites effectives en tenant compte du scale
-        //     // Plus le scale est grand (zoom in), plus on peut se déplacer loin
-        //     const effectiveMinX = this.tileBounds.minX * scale;
-        //     const effectiveMaxX = this.tileBounds.maxX * scale;
-        //     const effectiveMinZ = this.tileBounds.minZ * scale;
-        //     const effectiveMaxZ = this.tileBounds.maxZ * scale;
 
-        //     // Contraindre la position
-        //     let constrained = false;
-            
-        //     if (position.x < -effectiveMaxX) {
-        //         position.x = -effectiveMaxX;
-        //         constrained = true;
-        //     }
-        //     if (position.x > -effectiveMinX) {
-        //         position.x = -effectiveMinX;
-        //         constrained = true;
-        //     }
-        //     if (position.z < -effectiveMaxZ) {
-        //         position.z = -effectiveMaxZ;
-        //         constrained = true;
-        //     }
-        //     if (position.z > -effectiveMinZ) {
-        //         position.z = -effectiveMinZ;
-        //         constrained = true;
-        //     }
-        // }
 
         onPointerUp(e) {
             // Ne traiter que les événements du pointer actif
@@ -1570,46 +1540,4 @@ export class GameBoard3D {
             this.tempTileRotation = null;
         }
 
-        // Méthode de démonstration pour le nouveau système Territory
-    //     async testTerritorySystem() {
-    //         try {
-    //             // Vérifier qu'on a des territoires
-    //             if (!window.gameState?.game?.territories?.length) {
-    //                 return;
-    //             }
-                
-    //             // Prendre le premier territoire disponible
-    //             const territory = window.gameState.game.territories[0];
-                
-    //             // Configurer le territoire pour le test
-    //             territory.color = '#FF0000'; // Rouge pour test
-    //             territory.construction_type = 'ville';
-    //             territory.rempart = 'fortifiee';
-                
-    //             // Test 1: Créer une construction
-    //             territory.createConstruction(this, this.meepleManager);
-                
-    //             // Test 2: Créer des guerriers (3 pour tester le positionnement)
-    //             setTimeout(() => {
-    //                 territory.createWarriors(this, this.meepleManager, 3);
-                    
-    //                 // Test 3: Ajouter 2 guerriers supplémentaires après 2 secondes
-    //                 setTimeout(() => {
-    //                     territory.createWarriors(this, this.meepleManager, 2);
-                        
-    //                     // Test 4: Nettoyage après 3 secondes
-    //                     setTimeout(() => {
-    //                         territory.removeAllMeshes(this);
-                            
-    //                         // Réinitialiser le territoire
-    //                         territory.color = null;
-    //                         territory.construction_type = null;
-    //                         territory.rempart = null;
-    //                     }, 3000);
-    //                 }, 2000);
-    //             }, 1000);
-                
-    //         } catch (error) {
-    //     }
-    // }
 } 

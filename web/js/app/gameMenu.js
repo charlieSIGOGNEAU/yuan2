@@ -65,13 +65,7 @@ export const GameMenuPage = {
         const data = await response.json();
         console.log('🎮 Données reçues:', data);
         if (data.custom_code) {
-            // Router.navigateTo('player-waiting',data);
-            
-            // const data2 = {
-            //     custom_code: data.custom_code,
-            //     waiting_players_count: data.waiting_players_count
-            // };
-            // return data2;
+            console.log('🎮 Code de la partie:', data.custom_code);
         }
         else {
             return false;
@@ -97,10 +91,8 @@ export const GameMenuPage = {
 
         // Créer une partie personnalisée
         document.getElementById('create-custom-game-btn')?.addEventListener('click', async () => {
-            const data2 = await this.createCustomGame();
-            if (data2) {
-                Router.navigateTo('create-quick-game',data2);
-            }
+            this.createCustomGame();
+            // maintenant c'est gameApi qui lance la partie personnalisée suite au broadcast de la partie personnalisée
         });
 
         // Options

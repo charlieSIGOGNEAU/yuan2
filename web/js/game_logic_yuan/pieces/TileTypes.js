@@ -79,7 +79,12 @@ export function tileInGame(numPlayers) {
     return {
       2: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm"],
       3: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm"],
-      4: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om"]
+      4: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om"],
+      5: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om", "Im", "Jm", "Km", "Lm"],
+      6: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om"],
+      7: ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om", "Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm"],
+      8 : ["Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om", "Am", "Bm", "Cm", "Dm", "Em", "Fm", "Gm", "Hm", "Im", "Jm", "Km", "Lm", "Mm", "Nm", "Om"]
+
     }[numPlayers];
   }
   
