@@ -193,7 +193,8 @@ def create
 end
 ```
 
-Chaque action est vérifiée côté serveur. Si triche détectée → les joueurs sont prévenus (pas de sanction automatique).
+Chaque action est vérifiée somairement côté serveur.
+La partie logique des action est verrifié cote front. Si triche détectée → les joueurs sont prévenus (pas de sanction automatique).
 
 ### 6. Transactions & Locks Optimisés
 
@@ -315,9 +316,7 @@ end
 
 #### Apprentissage Autonome
 - Capacité à apprendre de nouvelles technologies rapidement
-- Lecture de documentation technique (anglais)
 - Debugging systématique
-- Recherche de solutions (Stack Overflow, documentation officielle)
 
 #### Gestion de Projet
 - Priorisation des fonctionnalités
@@ -363,7 +362,7 @@ end
 
 **Solution** :
 - Changement de repère pour calculer uniquement dans la vision de l'utilisateur
-- Désactivation des ombres sur les objets éloignés
+- Calcule uniquement toute les 12 segondes, recalcule si le terrain est modifie. desactivation des ombres local si movement d'une pieces
 - Optimisation du shadow map
 
 ### 4. Race Conditions en Multijoueur
@@ -391,7 +390,6 @@ end
 
 **Solution** :
 - Apprentissage progressif (bases → ES6+ → Three.js)
-- Lecture de la documentation MDN
 - Pratique avec des exemples simples avant d'attaquer le projet
 
 ---
@@ -559,16 +557,12 @@ Le projet contient plusieurs fichiers de documentation technique :
 Avec l'avancement du projet et mes connaissances qui se sont développées, voici les améliorations que j'identifie :
 
 ### Code Quality
-- Refactorisation de certains fichiers volumineux (ex: `GameBoard3D.js` - 1543 lignes)
+- Refactorisation de certains fichiers volumineux (ex: `GameBoard3D.js` - 1543 lignes, gameAPI en 2 fichier envoi/reception ...)
 - Meilleure séparation des responsabilités dans certains modules
 - Ajout de tests unitaires et d'intégration
 
-### Performance
-- Implémentation d'un système de cache côté serveur
-- Optimisation supplémentaire des requêtes SQL (N+1 queries)
-- Pagination des résultats
-
 ### Fonctionnalités
+- Partie very fast sans instalation ni enchere, en recuperant des debut de partie bien note
 - Système de classement/ranking des joueurs
 - Replay des parties
 - Mode spectateur
@@ -606,8 +600,8 @@ Ce projet démontre que **mes compétences ne sont pas limitées à Ruby et Java
 
 ### 1. Capacité d'Apprentissage Prouvée
 - Appris JavaScript de zéro et construit un projet 3D complexe
-- Maîtrisé des technologies diverses (Rails, Three.js, WebSocket, Docker, Blender)
-- Capable de lire et comprendre de la documentation technique
+- Maîtrisé des technologies diverses (Rails, Three.js, WebSocket)
+- debut sur d'autre technologies (Docker, Blender)
 
 ### 2. Vision Algorithmique
 - 15 ans d'enseignement des mathématiques
@@ -634,8 +628,9 @@ Ce projet démontre que **mes compétences ne sont pas limitées à Ruby et Java
 ## 📧 Contact
 
 **Nom** : SIGOGNEAU  
-**Email** : charliesigogneau@gmail.com, charliesigogneau@gmail.com
+**Email** : charliesigogneau@gmail.com,  charliesigogneau@gmail.com
 **LinkedIn** : www.linkedin.com/in/charlie-sigogneau-61685b325
+**vertion physique** : https://boardgamegeek.com/boardgame/403280/yuan-lart-de-la-guerre-chine
 
 
 ---
