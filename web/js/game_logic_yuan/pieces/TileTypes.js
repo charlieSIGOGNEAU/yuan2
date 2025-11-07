@@ -88,5 +88,3 @@ export function tileInGame(numPlayers) {
     }[numPlayers];
   }
   
-
-

@@ -115,16 +115,6 @@ class Arrow {
                 this.pathSprites = pathInstance.pathSprites || [];
                 this.currentArrow = pathInstance.currentArrow;
                 this.smoothCurvePositions = pathInstance.smoothCurvePositions || [];
-                // Les guerriers seront repositionnés par le suivi chaque update
-                // Log de la position finale de la flèche
-                // if (this.currentArrow) {
-                //     const p = this.currentArrow.position;
-                //     const [t1, t2] = this.getLastTwoTerritories();
-                //     console.log(
-                //         `🎯 Position finale flèche clan=${this.clanId} pair=(${t1.position.q},${t1.position.r})->(${t2.position.q},${t2.position.r}) ` +
-                //         `pos=(${p.x.toFixed(3)}, ${p.y.toFixed(3)}, ${p.z.toFixed(3)}) offset=(q:${this.offset.q.toFixed(3)}, r:${this.offset.r.toFixed(3)}, y:${this.offset.y.toFixed(3)})`
-                //     );
-                // }
             }
             
             // Résoudre la promesse d'animation
@@ -1206,6 +1196,6 @@ export const arrowManager = {
 
 // pour le debug
 // Pour le debug
-window.arrowManager = arrowManager;
-window.Arrow = Arrow;
+// window.arrowManager = arrowManager;
+// window.Arrow = Arrow;
 // arrowManager.createArrow(gameState.game.actions[3],gameState.getTerritoryByPosition(2,2).findShortestPathTo(gameState.getTerritoryByPosition(0,0)),"devellopementConnecte")

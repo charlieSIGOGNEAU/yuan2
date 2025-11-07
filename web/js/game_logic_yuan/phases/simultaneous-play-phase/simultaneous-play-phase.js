@@ -959,4 +959,4 @@ export const simultaneousPlayPhase = {
     },
 }
 // pour le debug
-window.simultaneousPlayPhase = simultaneousPlayPhase;
+// window.simultaneousPlayPhase = simultaneousPlayPhase;
