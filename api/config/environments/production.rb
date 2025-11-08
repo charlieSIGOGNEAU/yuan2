@@ -42,6 +42,7 @@ Rails.application.configure do
     'http://127.0.0.1:8000',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'https://charliesigogneau.github.io',
     /http:\/\/localhost:\d+/,
     /http:\/\/127\.0\.0\.1:\d+/
   ]

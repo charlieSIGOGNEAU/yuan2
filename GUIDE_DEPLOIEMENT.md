@@ -225,13 +225,19 @@ Si quelque chose ne fonctionne vraiment pas :
 # Tout arrêter et supprimer
 docker compose down -v
 
+# ou juste arreter, plus propre
+docker compose down
+
 # Nettoyer les images
 docker system prune -a
 
 # Reconstruire et relancer
 docker compose build --no-cache
 docker compose up -d
+
+# sans le --no-cache pour aller plus  vite
 ```
+
 
 ## 🎯 Prochaines Étapes
 
