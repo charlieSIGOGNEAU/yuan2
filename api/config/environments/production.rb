@@ -36,13 +36,17 @@ Rails.application.configure do
   # config.action_cable.mount_path = nil
   # config.action_cable.url = "wss://example.com/cable"
   
-  # Configuration ActionCable : autoriser le frontend local
+  # Configuration ActionCable : autoriser le frontend local et production
   config.action_cable.allowed_request_origins = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://charliesigogneau.github.io',
+    'https://yuan-game.com',
+    'https://www.yuan-game.com',
+    'http://yuan-game.com',
+    'http://www.yuan-game.com',
     /http:\/\/localhost:\d+/,
     /http:\/\/127\.0\.0\.1:\d+/
   ]
