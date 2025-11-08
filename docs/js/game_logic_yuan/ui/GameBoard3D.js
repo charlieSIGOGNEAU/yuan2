@@ -121,7 +121,7 @@ export class GameBoard3D {
         this.renderer = new THREE.WebGLRenderer({ antialias: false });
         
 
-        this.renderer.setPixelRatio(window.devicePixelRatio**0.5);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.outputColorSpace = THREE.SRGBColorSpace; 
         
         // Utiliser la taille du container au lieu de window
