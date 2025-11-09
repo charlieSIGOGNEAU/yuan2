@@ -71,7 +71,7 @@ export class UIManager {
             if (this.isSmartphone) {
                 // Smartphone
                 const screenWidth = window.innerWidth;
-                const screenHeight = window.innerHeight;
+                const screenHeight = visualViewport.height;
                 
                 if (isPortrait) {
                     // Mode portrait : height = 1/5 de la largeur, width = largeur de l'écran
