@@ -3,7 +3,7 @@
 
 class BroadcastConfirmationService
   REDIS_KEY_PREFIX = "broadcast_confirmation".freeze
-  MAX_RETRIES = 20
+  MAX_RETRIES = 10
   RETRY_INTERVAL = 5 # secondes
   TTL = 120 # Time to live en secondes (2 minutes)
 
@@ -12,22 +12,33 @@ class BroadcastConfirmationService
     # @param game_user_id [Integer] ID du game_user destinataire
     # @param game_id [Integer] ID de la game
     def register_pending_broadcast(game_user_id, game_id)
+      key = redis_key(game_user_id)
+      
+      # Ne réinitialiser le compteur que si le broadcast n'existe pas encore
+      # Cela évite de réinitialiser le compteur lors des retries
+      existing_count = redis.hget(key, "retry_count")
+      
       redis.hset(
-        redis_key(game_user_id),
+        key,
         "game_id",
         game_id.to_s
       )
+      
+      # Ne réinitialiser le compteur que s'il n'existe pas
+      if existing_count.nil?
+        redis.hset(
+          key,
+          "retry_count",
+          "1"
+        )
+      end
+      
       redis.hset(
-        redis_key(game_user_id),
-        "retry_count",
-        "1"
-      )
-      redis.hset(
-        redis_key(game_user_id),
+        key,
         "timestamp",
         Time.now.to_i.to_s
       )
-      redis.expire(redis_key(game_user_id), TTL)
+      redis.expire(key, TTL)
       
       Rails.logger.info "📝 Broadcast enregistré pour game_user_id=#{game_user_id}, game_id=#{game_id}"
     end
