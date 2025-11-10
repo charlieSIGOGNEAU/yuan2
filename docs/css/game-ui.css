@@ -25,12 +25,18 @@
 
 /* Container pour le GameBoard3D */
 .game-board-container {
-    flex: 1;
-    position: relative;
-    background: #000;
+    /* flex: 1; */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* background: #000; */
     pointer-events: auto;
-    min-height: 0; /* Permet au flex de rétrécir */
-    width: 100%; /* Prend toute la largeur disponible */
+   /* min-height: 0;  Permet au flex de rétrécir */
+    width: 100%;
+    height: 100%; 
+
 }
 
 
@@ -54,9 +60,6 @@
 /* Info panel - comportement par défaut (portrait) */
 .info-panel {
     position: absolute;
-    top: calc(5vw); /* 10% de la largeur de la fenêtre */
-    left: 5%;
-    right: 5%;
     max-width: 700px; /* Largeur maximale de 700px */
     background: rgba(0, 0, 0, 0.9);
     color: white;
@@ -73,106 +76,54 @@
     display: none; /* Caché par défaut */
 }
 
-/* Desktop - toujours en mode portrait (même en paysage) */
-.desktop .info-panel {
-    /* Garder le comportement portrait même en paysage */
-    top: calc(5vw);
-    left: 5%;
-    right: 5%;
+@media (orientation: portrait) {
+    .info-panel {
+        top: 84px;
+        left: 5%;
+        right: 5%;
+    }
+}
+@media (orientation: landscape) {
+    .info-panel {
+        top: 20px;
+        left: 84px;
+        right: 74px;
+    }
 }
 
-/* Smartphone - mode portrait */
-.smartphone.portrait .info-panel {
-    /* Comportement portrait sur smartphone */
-    top: calc(5vw);
-    left: 5%;
-    right: 5%;
-}
-
-/* Mode landscape - panneau d'informations - smartphone uniquement */
-.smartphone.landscape .info-panel {
-    position: absolute;
-    top: calc(5vw);
-    left: 5%;
-    
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    text-align: left;
-    z-index: 101;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    border: 2px solid white;
-    pointer-events: auto;
-    white-space: normal;
-    word-wrap: break-word;
-}
-
-/* Barre d'actions du joueur avec 6 cases */
 .player-action-bar {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
-    height: auto;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
     pointer-events: auto;
     z-index: 102;
+    gap: 10px;
 }
 
-/* Barres d'action - comportement par défaut (portrait) */
-.player-action-bar,
-#validation-bar,
-#rectangle-action-bar,
-#menu-only-bar {
-    /* Centrage horizontal et en bas */
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 10px;
-    right: auto;
+@media (orientation: portrait) {
+    .player-action-bar {
+        width: 320px;
+        height: 64px;
+        left: 50%;
+        bottom: 0;
+        translate: -50% 0;
+        margin-bottom: 10px;
+    }
 }
 
-/* Desktop - toujours en mode portrait (même en paysage) */
-.desktop .player-action-bar,
-.desktop #validation-bar,
-.desktop #rectangle-action-bar,
-.desktop #menu-only-bar {
-    /* Garder le comportement portrait même en paysage */
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 10px;
-    right: auto;
+@media (orientation: landscape) {
+    .player-action-bar {
+        width: 64px;
+        height: 320px;
+        right: 0;
+        top: 50%;
+        translate: 0 -50%;
+        flex-direction: column;
+        margin-right: 10px;
+    }
 }
 
-/* Smartphone - mode portrait */
-.smartphone.portrait .player-action-bar,
-.smartphone.portrait #validation-bar,
-.smartphone.portrait #rectangle-action-bar,
-.smartphone.portrait #menu-only-bar {
-    /* Comportement portrait sur smartphone */
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 10px;
-    right: auto;
-}
-
-/* Smartphone - mode paysage */
-.smartphone.landscape .player-action-bar,
-.smartphone.landscape #validation-bar,
-.smartphone.landscape #rectangle-action-bar,
-.smartphone.landscape #menu-only-bar {
-    /* En mode paysage sur smartphone, passer en vertical */
-    flex-direction: column;
-    top: 50%;
-    transform: translateY(-50%);
-    right: 10px;
-    left: auto;
-    bottom: auto;
-}
 
 /* Quand la barre d'action est cachée, elle ne prend pas d'espace */
 .player-action-bar[style*="display: none"] {
@@ -184,8 +135,10 @@
 
 /* Cases d'actions individuelles */
 .action-case {
-    flex: 1;
+    /* flex: 1; */
     aspect-ratio: 1; /* Rend les cases carrées */
+    height: 56px; /* 64px-8px car gap de 10 sur 4 espacement*/
+    width: 56px;
     background: #888888;
     border-radius: 8px;
     border: 2px solid #666666;
@@ -195,17 +148,9 @@
     color: #ffffff;
 }
 
-/* Mode horizontal - cases d'action - smartphone uniquement */
-.smartphone.landscape .action-case {
-    aspect-ratio: 1; /* Garde les cases carrées même en mode horizontal */
-    flex: 1; /* Prend toute la place disponible */
-    min-width: 0;
-    min-height: 0;
-}
 
-.action-case:hover {
-    /* Pas d'effet hover */
-}
+
+
 
 /* Icônes dans les cases d'actions */
 .action-icon {
@@ -449,12 +394,46 @@
 
 /* Barre d'information principale */
 .simultaneous-play-info-bar {
-    height: calc(100vw / 5); /* Ratio 1:5 (hauteur = largeur/5) */
+    position: absolute;
+
     background:black ;
-    display: flex;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); 
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top: none;
+
+
+    
     z-index: 104; /* Au-dessus de l'overlay UI */
     pointer-events: none; /* Permet l'interaction avec le gameboard en dessous */
     flex-shrink: 0;
+    display: flex;
+}
+@media (orientation: portrait) {
+    .simultaneous-play-info-bar {
+        left: 0;
+        width: 320px;
+        height: 64px;
+        left: 50%;
+        translate: -50% 0; /* à la place de transform */
+        border-top-left-radius: 0px;
+        border-top-right-radius: 0px;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+    }
+}
+@media (orientation: landscape) {
+    .simultaneous-play-info-bar {
+        left: 0;
+        width: 64px;
+        height: 320px;
+        top: 50%;
+        translate: 0 -50% ; /* à la place de transform */
+        border-top-left-radius: 0px;
+        border-top-right-radius: 20px;
+        border-bottom-left-radius: 0px;
+        border-bottom-right-radius: 20px;
+        flex-direction: column; /* empile de haut en bas */
+    }
 }
 
 /* Mode horizontal - barre d'information - smartphone uniquement */
@@ -467,7 +446,9 @@
 /* Carrés individuels dans la barre */
 .info-square {
     flex: 1;
-    height: 100%;
+    aspect-ratio: 1;
+    height: 64px;
+    width: 64px;
     display: flex;
     align-items: center;
     justify-content: center;

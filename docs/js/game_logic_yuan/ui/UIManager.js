@@ -41,6 +41,7 @@ export class UIManager {
 
     // Configurer les dimensions responsives pour les barres d'action
     setupResponsiveDimensions() {
+        return;
         // Fonction pour mettre à jour les dimensions
         const updateDimensions = () => {
             const isPortrait = window.innerHeight > window.innerWidth;
