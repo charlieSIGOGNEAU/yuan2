@@ -3,8 +3,8 @@ body {
     margin: 0;          /* supprime les marges par défaut */
     padding: 0;         /* supprime les padding par défaut */
     width: 100vw;       /* largeur = largeur de la fenêtre */
-    height: 100vh;      /* hauteur = hauteur de la fenêtre */
-    min-height: 100vh;  /* garantit la hauteur minimale */
+    height: 100dvh;      /* hauteur = hauteur de la fenêtre */
+    /*min-height: 100vh;  /* garantit la hauteur minimale */
 
 }
 #wrapper {
