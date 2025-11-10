@@ -20,11 +20,8 @@ export class UIManager {
         // Variables pour le bidding
         this.currentBid = 0; // Valeur actuelle du numérateur
         this.maxBid = 6; // Valeur maximale du dénominateur
-        
-        // Détection smartphone et gestion des dimensions
+        }
 
-
-    }
 
     // Charger l'interface UI du jeu
     async loadGameUI() {
@@ -60,7 +57,13 @@ export class UIManager {
             uiContainer.innerHTML = htmlContent;
             
             const allContainer = document.getElementById('all');
-            allContainer.innerHTML = htmlContent;
+            const preserve = document.getElementById('fullscreen-toggle');
+
+            Array.from(allContainer.children).forEach(child => {
+                if (child !== preserve) allContainer.removeChild(child);
+            });
+
+            allContainer.insertAdjacentHTML('beforeend', htmlContent);
             
             // Charger le CSS de l'interface
             const link = document.createElement('link');
@@ -98,6 +101,7 @@ export class UIManager {
             throw error;
         }
     }
+
 
     // Charger le GameBoard3D
     async loadGameBoard3D() {
