@@ -57,8 +57,6 @@ export const simultaneousPlayPhase = {
 
             arrowManager.initialize(gameBoard);
 
-            //  repositionner tout, pour repositioner infopanel
-            uiManager.setupResponsiveDimensions();
 
             await this.processVictoryBiddings(gameBoard);
             // Mettre à jour les compteurs de ressources de tous les clans

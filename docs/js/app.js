@@ -51,3 +51,57 @@ console.log('Application chargee ! Demarrage...');
     console.log('✅ i18n initialisé, démarrage de l\'application...');
     Auth.init();
 })(); 
+
+// Fonction pour gérer le plein écran
+const allDiv = document.getElementById('all');
+const btn = document.getElementById('fullscreen-toggle');
+const body = document.body;
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+// Masquer le bouton sur iOS (pas de fullscreen)
+if (isIOS()) {
+  btn.style.display = 'none';
+} else {
+  btn.addEventListener('click', () => {
+    const fsElement =
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement;
+
+    if (!fsElement) {
+      // Entrer en plein écran
+      if (allDiv.requestFullscreen) allDiv.requestFullscreen();
+      else if (allDiv.webkitRequestFullscreen) allDiv.webkitRequestFullscreen();
+      else if (allDiv.mozRequestFullScreen) allDiv.mozRequestFullScreen();
+      else if (allDiv.msRequestFullscreen) allDiv.msRequestFullscreen();
+      body.style.height = '99dvh';
+      body.style.height = '100dvh';
+    } else {
+      // Sortir du plein écran
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+      body.style.height = '99dvh';
+      body.style.height = '100dvh';
+    }
+  });
+
+  // Mettre à jour le style du bouton quand le plein écran change
+  function updateBtn() {
+    const fsElement =
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement;
+    btn.textContent = '⛶'; // tu peux changer le symbole si tu veux
+    btn.title = fsElement ? 'Quitter le plein écran' : 'Mode plein écran';
+  }
+
+  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event =>
+    document.addEventListener(event, updateBtn)
+  );
+}
