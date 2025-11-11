@@ -52,68 +52,68 @@ console.log('Application chargee ! Demarrage...');
     Auth.init();
 })(); 
 
-// Fonction pour gérer le plein écran
-const allDiv = document.getElementById('all');
-const btn = document.getElementById('fullscreen-toggle');
-const body = document.body;
+// // Fonction pour gérer le plein écran
+// const allDiv = document.getElementById('all');
+// const btn = document.getElementById('fullscreen-toggle');
+// const body = document.body;
 
-function isIOS() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-}
+// function isIOS() {
+//   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+// }
 
-// Fonction pour mettre à jour la hauteur du body
-function updateBodyHeight() {
-  setTimeout(() => {
-    body.style.width = window.innerWidth + 'px';
-    body.style.height = window.innerHeight + 'px';
-  }, 200); // délai de 200ms pour laisser Chrome/Edge s'adapter
-}
+// // Fonction pour mettre à jour la hauteur du body
+// function updateBodyHeight() {
+//   setTimeout(() => {
+//     body.style.width = window.innerWidth + 'px';
+//     body.style.height = window.innerHeight + 'px';
+//   }, 200); // délai de 200ms pour laisser Chrome/Edge s'adapter
+// }
 
-// Appelle au chargement
-updateBodyHeight();
+// // Appelle au chargement
+// updateBodyHeight();
 
-// Met à jour à chaque resize (utile aussi pour orientation change)
-window.addEventListener('resize', updateBodyHeight);
+// // Met à jour à chaque resize (utile aussi pour orientation change)
+// window.addEventListener('resize', updateBodyHeight);
 
-// Masquer le bouton sur iOS (pas de fullscreen)
-if (isIOS()) {
-  btn.style.display = 'none';
-} else {
-  btn.addEventListener('click', () => {
-    const fsElement =
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.mozFullScreenElement ||
-      document.msFullscreenElement;
+// // Masquer le bouton sur iOS (pas de fullscreen)
+// if (isIOS()) {
+//   btn.style.display = 'none';
+// } else {
+//   btn.addEventListener('click', () => {
+//     const fsElement =
+//       document.fullscreenElement ||
+//       document.webkitFullscreenElement ||
+//       document.mozFullScreenElement ||
+//       document.msFullscreenElement;
 
-    if (!fsElement) {
-      // Entrer en plein écran
-      if (allDiv.requestFullscreen) allDiv.requestFullscreen();
-      else if (allDiv.webkitRequestFullscreen) allDiv.webkitRequestFullscreen();
-      else if (allDiv.mozRequestFullScreen) allDiv.mozRequestFullScreen();
-      else if (allDiv.msRequestFullscreen) allDiv.msRequestFullscreen();
-    } else {
-      // Sortir du plein écran
-      if (document.exitFullscreen) document.exitFullscreen();
-      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-      else if (document.msExitFullscreen) document.msExitFullscreen();
-    }
-  });
+//     if (!fsElement) {
+//       // Entrer en plein écran
+//       if (allDiv.requestFullscreen) allDiv.requestFullscreen();
+//       else if (allDiv.webkitRequestFullscreen) allDiv.webkitRequestFullscreen();
+//       else if (allDiv.mozRequestFullScreen) allDiv.mozRequestFullScreen();
+//       else if (allDiv.msRequestFullscreen) allDiv.msRequestFullscreen();
+//     } else {
+//       // Sortir du plein écran
+//       if (document.exitFullscreen) document.exitFullscreen();
+//       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+//       else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+//       else if (document.msExitFullscreen) document.msExitFullscreen();
+//     }
+//   });
 
-  // Mettre à jour le style du bouton et la hauteur du body quand le plein écran change
-  function updateBtn() {
-    const fsElement =
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.mozFullScreenElement ||
-      document.msFullscreenElement;
-    btn.textContent = '⛶'; // tu peux changer le symbole si tu veux
-    btn.title = fsElement ? 'Quitter le plein écran' : 'Mode plein écran';
-    updateBodyHeight(); // mise à jour de la hauteur
-  }
+//   // Mettre à jour le style du bouton et la hauteur du body quand le plein écran change
+//   function updateBtn() {
+//     const fsElement =
+//       document.fullscreenElement ||
+//       document.webkitFullscreenElement ||
+//       document.mozFullScreenElement ||
+//       document.msFullscreenElement;
+//     btn.textContent = '⛶'; // tu peux changer le symbole si tu veux
+//     btn.title = fsElement ? 'Quitter le plein écran' : 'Mode plein écran';
+//     updateBodyHeight(); // mise à jour de la hauteur
+//   }
 
-  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event =>
-    document.addEventListener(event, updateBtn)
-  );
-}
+//   ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event =>
+//     document.addEventListener(event, updateBtn)
+//   );
+// }
