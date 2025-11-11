@@ -63,7 +63,10 @@ function isIOS() {
 
 // Fonction pour mettre à jour la hauteur du body
 function updateBodyHeight() {
-  body.style.height = window.innerHeight + 'px';
+  setTimeout(() => {
+    body.style.width = window.innerWidth + 'px';
+    body.style.height = window.innerHeight + 'px';
+  }, 200); // délai de 200ms pour laisser Chrome/Edge s'adapter
 }
 
 // Appelle au chargement
