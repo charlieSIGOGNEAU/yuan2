@@ -61,19 +61,9 @@ function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 
-// Fonction pour mettre à jour la hauteur du body
-function updateBodyHeight() {
-  setTimeout(() => {
-    body.style.width = window.innerWidth + 'px';
-    body.style.height = window.innerHeight + 'px';
-  }, 200); // délai de 200ms pour laisser Chrome/Edge s'adapter
-}
 
-// Appelle au chargement
-updateBodyHeight();
 
-// Met à jour à chaque resize (utile aussi pour orientation change)
-window.addEventListener('resize', updateBodyHeight);
+
 
 // Masquer le bouton sur iOS (pas de fullscreen)
 if (isIOS()) {
@@ -113,7 +103,7 @@ if (isIOS()) {
       document.msFullscreenElement;
     btn.textContent = '⛶'; // tu peux changer le symbole si tu veux
     btn.title = fsElement ? 'Quitter le plein écran' : 'Mode plein écran';
-    updateBodyHeight(); // mise à jour de la hauteur
+
   }
 
   ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event =>
