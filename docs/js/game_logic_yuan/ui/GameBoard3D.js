@@ -128,7 +128,9 @@ export class GameBoard3D {
         const containerRect = this.container.getBoundingClientRect();
         this.renderer.setSize(containerRect.width, containerRect.height);
         this.container.appendChild(this.renderer.domElement);
-        // FOV initial selon l'orientation
+        // Mettre à jour l'aspect ratio de la caméra avant de calculer le FOV
+        this.camera.aspect = containerRect.width / containerRect.height;
+        // FOV initial selon l'orientation (FOV diagonal fixe à 60°)
         this.updateFovByOrientation();
         
         // Ajout d'éclairage pour les modèles 3D
@@ -215,14 +217,23 @@ export class GameBoard3D {
         this.animate();
     }
 
-    // Met à jour dynamiquement le FOV selon l'orientation (paysage/portrait)
+    // Met à jour le FOV vertical pour maintenir un FOV diagonal fixe à 60 degrés
     updateFovByOrientation() {
         if (!this.camera || !this.container) return;
         const rect = this.container.getBoundingClientRect();
-        const isLandscape = rect.width >= rect.height;
-        const targetFov = isLandscape ? 40 : 60;
-        if (this.camera.fov !== targetFov) {
-            this.camera.fov = targetFov;
+        const aspectRatio = rect.width / rect.height;
+        
+        // FOV diagonal fixe à 60 degrés
+        const diagonalFovDeg = 99;
+        const diagonalFovRad = THREE.MathUtils.degToRad(diagonalFovDeg);
+        
+        // Calculer le FOV vertical pour maintenir le FOV diagonal constant
+        // FOV_vertical = 2 * atan(tan(FOV_diagonal / 2) / sqrt(1 + aspect_ratio^2))
+        const verticalFovRad = 2 * Math.atan(Math.tan(diagonalFovRad / 2) / Math.sqrt(1 + aspectRatio * aspectRatio));
+        const verticalFovDeg = THREE.MathUtils.radToDeg(verticalFovRad);
+        
+        if (Math.abs(this.camera.fov - verticalFovDeg) > 0.01) {
+            this.camera.fov = verticalFovDeg;
             this.camera.updateProjectionMatrix();
         }
     }

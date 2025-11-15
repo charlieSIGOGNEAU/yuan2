@@ -27,11 +27,8 @@ export class ShadowManager {
         this.hasLightBeenUpdated = false;
 
 
-
-
+        //false pour calculer les ombres a chaque frame
         this.setShadowUpdateLimited(false, 3000)
-        //pour avoir le calcule des ombre toutes les secondes.
-        // shadowManager.setShadowUpdateLimited(true, 1000)
     }
 
     // Configuration initiale des ombres
@@ -366,6 +363,7 @@ export class ShadowManager {
 
         if (this.beginningOfAnimation) {
             this.beginningOfAnimation = false;
+            // pour ne pas calculer les ombre a chaque frame
             // this.setShadowUpdateLimited(true, this.turn_duration * 1000 / 12)
         }
 
