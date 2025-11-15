@@ -29,7 +29,7 @@ export class ShadowManager {
 
 
 
-        this.setShadowUpdateLimited(true, 3000)
+        this.setShadowUpdateLimited(false, 3000)
         //pour avoir le calcule des ombre toutes les secondes.
         // shadowManager.setShadowUpdateLimited(true, 1000)
     }
@@ -366,7 +366,7 @@ export class ShadowManager {
 
         if (this.beginningOfAnimation) {
             this.beginningOfAnimation = false;
-            this.setShadowUpdateLimited(true, this.turn_duration * 1000 / 12)
+            // this.setShadowUpdateLimited(true, this.turn_duration * 1000 / 12)
         }
 
         requestAnimationFrame(() => this.animateSun());

@@ -14,7 +14,7 @@
 
       "Attaque": "Attaque<br><br>Niv.1-2-3 :<br> - Toutes vos armées connectées attaquent.<br> - Armées s'annulent 1 pour 1.<br> - Si au moins 1 armée reste → province gagnée.<br><br>Niv.2-3 : +1 armée lors de l'attaque.<br><br>Niv.3 : si vous gagnez le combat, effectuez ensuite une attaque de force 1 gratuite (sans armée) contre toutes les provinces ennemies adjacentes.",
       "Temple": "Temple :<br><br>Vous gagnez la partie si vous possédez le nombre de temples indiqué.<br>Ce nombre diminue de 1 tous les 2 tours.<br>En cas d'égalité, le clan ayant le plus d'honneur l'emporte.<br><br>{{tableau:honneur}}",
-      "Chao": "{{tableau:chao}}<br>Coût des actions :<br>Niv.0 et Niv.1 : gratuit<br>Niv.2 : 4 Chao<br>Niv.3 : 7 Chao<br><br>Réductions :<br>Chaque rizière possédée réduit de 1 le coût d'une action de {{aide:Developpement:développement}}.<br>Chaque forêt possédée réduit de 1 le coût d'une action de {{aide:Fortification:fortification}}.<br>Chaque mine possédée réduit de 1 le coût d'une action de {{aide:Militarisation:Militarisation}}.<br>Une 'ville double'  double la reduction de la province sur lequel elle est placée.<br><br>L'ensemble de vos provinces possédées est indiqué en haut de l'écran."
+      "Chao": "Les Chaos sont la monnaie du jeu. Vous en gagnez 6 si vous ne jouez aucune action pendant un tour.<br>{{tableau:chao}}<br>Coût des actions :<br>Niv.0 et Niv.1 : gratuit<br>Niv.2 : 4 Chao<br>Niv.3 : 7 Chao<br><br>Réductions :<br>Chaque rizière possédée réduit de 1 le coût d'une action de {{aide:Developpement:développement}}.<br>Chaque forêt possédée réduit de 1 le coût d'une action de {{aide:Fortification:fortification}}.<br>Chaque mine possédée réduit de 1 le coût d'une action de {{aide:Militarisation:Militarisation}}.<br>Une 'ville double'  double la reduction de la province sur lequel elle est placée.<br><br>L'ensemble de vos provinces possédées est indiqué dans la barre d'information"
 
     },
     "phases": {
@@ -40,7 +40,7 @@
         "validate_clan_selection": "Valide pour choisir le clan {{color}}"
       },
       "simultaneous_play": {
-        "welcome_message": "Salutations {{playerName}},<br><br>Vous incarnez le clan <span class='clan-circle' style='background-color: {{colorHex}};'></span> <br><br>Choisissez un territoire, puis les niveaux de vos différentes actions avec les boutons du bas, et validez, avant que le soleil se couche !<br><br>Des aides de jeu sont disponibles en haut.<br><br>Bonne partie !",
+        "welcome_message": "Salutations {{playerName}},<br><br>Vous incarnez le clan {{color}} <span class='clan-circle' style='background-color: {{colorHex}};'></span> <br><br>Des aides de jeu sont disponibles dans la barre d’information.<br><br>Choisissez un territoire, puis avec la barre d’action, les niveaux de vos différentes actions et validez avant que le soleil se couche !<br><br>Bonne partie !",
         "action_validated": "Action prise en compte, en attendant les autres joueurs, vous pouvez la modifier.",
         "colonization_targets": "Les colonisations ont pour cible",
         "clan_conflicts_territory": "Plusieurs clans veulent coloniser le même territoire. Les clans avec le plus d'honneur cèdent leur place et font l'action passer son tour (+6 chao)",
