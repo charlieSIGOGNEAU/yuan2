@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { meepleManager } from '../pieces/MeepleManager.js';
 import { createShadowManager } from './ShadowManager.js';
 import { Auth } from '../../app/auth.js';
+import {uiManager} from './UIManager.js';
 // import { createMeshMerger } from './MeshMerger.js';
 
 export class GameBoard3D {
@@ -1109,6 +1110,7 @@ export class GameBoard3D {
             
             // Si on est en mode pinch avec 2 doigts
             if (this.isPinching && this.activePointers.size === 2) {
+                uiManager.updateInfoPanel("Pinch to zoom");
                 const pointers = Array.from(this.activePointers.values());
                 const currentDistance = this.calculateDistance(pointers[0], pointers[1]);
                 
