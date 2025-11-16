@@ -1011,8 +1011,24 @@ export class GameBoard3D {
             // Ajouter ce pointeur à la liste des pointeurs actifs
             this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
             
-            // Si on a 2 doigts ET qu'un drag n'a pas encore vraiment commencé
-            if (this.activePointers.size === 2 && !this.isDragging && !this.isDraggingCity) {
+            console.log(`👆 PointerDown - ID: ${e.pointerId}, Total pointers: ${this.activePointers.size}, isDragging: ${this.isDragging}`);
+            
+            // Si on a 2 doigts, activer le pinch et annuler tout drag en cours
+            if (this.activePointers.size === 2) {
+                console.log('🎯 Activation du PINCH - annulation des drags en cours');
+                
+                // Annuler tout drag en cours
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    this.dragStart = null;
+                    this.rigStartPosition = null;
+                    this.rigTargetPosition = null;
+                }
+                if (this.isDraggingCity) {
+                    this.isDraggingCity = false;
+                    this.draggedCity = null;
+                }
+                
                 // Initialiser le pinch
                 this.isPinching = true;
                 this.pinchStartZoom = this.zoomProgress;
@@ -1108,8 +1124,14 @@ export class GameBoard3D {
                 this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
             }
             
+            // Log seulement si on a 2 pointeurs ou plus
+            if (this.activePointers.size >= 2) {
+                console.log(`👆 PointerMove - isPinching: ${this.isPinching}, pointers: ${this.activePointers.size}`);
+            }
+            
             // Si on est en mode pinch avec 2 doigts
             if (this.isPinching && this.activePointers.size === 2) {
+                console.log('🎯 PINCH MOVE détecté');
                 uiManager.updateInfoPanel("Pinch to zoom");
                 const pointers = Array.from(this.activePointers.values());
                 const currentDistance = this.calculateDistance(pointers[0], pointers[1]);
@@ -1245,11 +1267,16 @@ export class GameBoard3D {
 
 
         onPointerUp(e) {
+            console.log(`👆 PointerUp - ID: ${e.pointerId}, Total avant: ${this.activePointers.size}`);
+            
             // Retirer ce pointeur de la liste des pointeurs actifs
             this.activePointers.delete(e.pointerId);
             
+            console.log(`👆 PointerUp - Total après: ${this.activePointers.size}, isPinching: ${this.isPinching}`);
+            
             // Si on était en mode pinch et qu'il reste moins de 2 doigts
             if (this.isPinching && this.activePointers.size < 2) {
+                console.log('🎯 Fin du PINCH');
                 this.isPinching = false;
                 this.lastPinchDistance = null;
                 this.pinchStartZoom = null;
