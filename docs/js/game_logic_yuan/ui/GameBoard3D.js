@@ -25,6 +25,13 @@ export class GameBoard3D {
         this.rigTargetPosition = null; // Position cible du rig pour le lissage
         this.activePointerId = null; // Pour suivre le doigt actif
         
+        // Support du pinch-to-zoom tactile
+        this.activePointers = new Map(); // Map des pointeurs actifs (id -> {x, y})
+        this.isPinching = false; // État du pinch
+        this.lastPinchDistance = null; // Distance entre les 2 doigts lors du dernier pinch
+        this.pinchStartZoom = null; // Progression du zoom au début du pinch
+        this.pinchSensitivity = 0.5; // Sensibilité du pinch (ajustable, plus élevé = plus sensible)
+        
         // Promise pour attendre que l'initialisation soit terminée
         this.ready = null;
         
@@ -185,6 +192,8 @@ export class GameBoard3D {
         // Exposer les fonctions de zoom globalement
         window.setZoomParams = (z0, y0, z1, y1) => this.setZoomParams(z0, y0, z1, y1);
         window.getZoomParams = () => this.getZoomParams();
+        window.setPinchSensitivity = (sensitivity) => this.setPinchSensitivity(sensitivity);
+        window.getPinchSensitivity = () => this.getPinchSensitivity();
         
         // Exposer les fonctions de lissage du déplacement globalement
         // window.setPanSmoothing = (factor) => this.setPanSmoothing(factor);
@@ -997,8 +1006,36 @@ export class GameBoard3D {
             }
             
             e.preventDefault();
-            // Si on est déjà en train de glisser, on ignore
-            if (this.isDragging) return;
+            
+            // Ajouter ce pointeur à la liste des pointeurs actifs
+            this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            
+            // Si on a 2 doigts ET qu'un drag n'a pas encore vraiment commencé
+            if (this.activePointers.size === 2 && !this.isDragging && !this.isDraggingCity) {
+                // Initialiser le pinch
+                this.isPinching = true;
+                this.pinchStartZoom = this.zoomProgress;
+                const pointers = Array.from(this.activePointers.values());
+                this.lastPinchDistance = this.calculateDistance(pointers[0], pointers[1]);
+                
+                // Réinitialiser les états de clic
+                this.clickStartPosition = null;
+                this.clickStartTime = null;
+                this.activePointerId = null;
+                
+                // Capturer les deux pointeurs
+                this.container.setPointerCapture(e.pointerId);
+                return;
+            }
+            
+            // Si on a plus de 2 doigts, ignorer ce nouveau pointeur
+            if (this.activePointers.size > 2) {
+                this.activePointers.delete(e.pointerId);
+                return;
+            }
+            
+            // Si on est déjà en train de pinch, ignorer les nouveaux pointeurs
+            if (this.isPinching) return;
 
             const result = this.getMouseWorld(e);
             if (!result.point) return;
@@ -1057,8 +1094,43 @@ export class GameBoard3D {
             this.container.setPointerCapture(e.pointerId);
         }
         
+        // Calcule la distance entre deux pointeurs
+        calculateDistance(p1, p2) {
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
         onPointerMove(e) {
-            // Ne traiter que les événements du pointer actif
+            // Mettre à jour la position de ce pointeur
+            if (this.activePointers.has(e.pointerId)) {
+                this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            }
+            
+            // Si on est en mode pinch avec 2 doigts
+            if (this.isPinching && this.activePointers.size === 2) {
+                const pointers = Array.from(this.activePointers.values());
+                const currentDistance = this.calculateDistance(pointers[0], pointers[1]);
+                
+                if (this.lastPinchDistance) {
+                    // Calculer le ratio de changement de distance
+                    const distanceRatio = currentDistance / this.lastPinchDistance;
+                    
+                    // Calculer le delta de zoom (sensibilité ajustable)
+                    const zoomDelta = (distanceRatio - 1) * this.pinchSensitivity;
+                    
+                    // Calculer la nouvelle progression du zoom (écarter les doigts = dézoomer, rapprocher = zoomer)
+                    const newProgress = Math.max(0, Math.min(1, this.zoomProgress - zoomDelta));
+                    
+                    // Appliquer le zoom
+                    this.updateCameraZoom(newProgress);
+                }
+                
+                this.lastPinchDistance = currentDistance;
+                return;
+            }
+            
+            // Ne traiter le déplacement que si on n'est pas en pinch et qu'on a le bon pointeur actif
             if ((!this.isDragging && !this.isDraggingCity) || e.pointerId !== this.activePointerId) return;
 
             const result = this.getMouseWorld(e);
@@ -1171,7 +1243,30 @@ export class GameBoard3D {
 
 
         onPointerUp(e) {
-            // Ne traiter que les événements du pointer actif
+            // Retirer ce pointeur de la liste des pointeurs actifs
+            this.activePointers.delete(e.pointerId);
+            
+            // Si on était en mode pinch et qu'il reste moins de 2 doigts
+            if (this.isPinching && this.activePointers.size < 2) {
+                this.isPinching = false;
+                this.lastPinchDistance = null;
+                this.pinchStartZoom = null;
+                
+                // Libérer la capture du pointer
+                try {
+                    this.container.releasePointerCapture(e.pointerId);
+                } catch (e) {}
+                
+                // Optimiser la shadow box après le pinch
+                if (this.shadowManager) {
+                    this.shadowManager.optimizeShadowBox(2);
+                }
+                
+                // Si on était en pinch, on ne traite pas le reste (pas de clic)
+                return;
+            }
+            
+            // Ne traiter que les événements du pointer actif pour le drag
             if (e.pointerId !== this.activePointerId) return;
 
             // Si on était en train de draguer une ville (et que le drag est activé)
@@ -1584,6 +1679,19 @@ export class GameBoard3D {
                 currentY: this.camera.position.y,
                 currentAngle: currentAngle
             };
+        }
+
+        // Définir la sensibilité du pinch tactile
+        setPinchSensitivity(sensitivity) {
+            this.pinchSensitivity = Math.max(0.1, Math.min(2, sensitivity)); // Limité entre 0.1 et 2
+            console.log(`👆 Sensibilité du pinch: ${this.pinchSensitivity.toFixed(2)}`);
+            console.log(`   (0.1 = peu sensible, 1 = normal, 2 = très sensible)`);
+        }
+
+        // Obtenir la sensibilité du pinch actuelle
+        getPinchSensitivity() {
+            console.log(`👆 Sensibilité du pinch: ${this.pinchSensitivity.toFixed(2)}`);
+            return this.pinchSensitivity;
         }
 
         // Définir le facteur de lissage du déplacement (pan)
