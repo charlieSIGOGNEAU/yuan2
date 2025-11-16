@@ -29,6 +29,9 @@ export const LandingPage = {
                     <button id="signup-btn" class="auth-btn signup-btn btn">
                         ${i18n.t('auth.landing.signup')}
                     </button>
+                    <button id="signup-btn" class="auth-btn signup-btn btn">
+                        ${i18n.t('auth.landing.signup')}
+                    </button>
                 </div>
             </div>
         `;
