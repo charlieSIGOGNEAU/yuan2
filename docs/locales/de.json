@@ -169,7 +169,10 @@
     "quick_game": "Schnelles Spiel",
     "join_custom_game": "Benutzerdefiniertes Spiel beitreten",
     "create_custom_game": "Benutzerdefiniertes Spiel erstellen",
-    "options": "Optionen"
+    "options": "Optionen",
+    "rules_video": "Videoregeln",
+    "rules_pdf": "PDF-Regeln",
+    "rate_on_bgg": "Auf BGG bewerten"
   },
   "game_setup": {
     "join": {

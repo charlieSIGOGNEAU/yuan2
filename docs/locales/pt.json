@@ -169,7 +169,10 @@
     "quick_game": "Jogo rápido",
     "join_custom_game": "Entrar em jogo personalizado",
     "create_custom_game": "Criar jogo personalizado",
-    "options": "Opções"
+    "options": "Opções",
+    "rules_video": "Regras em Vídeo",
+    "rules_pdf": "Regras em PDF",
+    "rate_on_bgg": "Avaliar no BGG"
   },
   "game_setup": {
     "join": {

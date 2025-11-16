@@ -169,7 +169,10 @@
     "quick_game": "Быстрая игра",
     "join_custom_game": "Присоединиться к пользовательской игре",
     "create_custom_game": "Создать пользовательскую игру",
-    "options": "Настройки"
+    "options": "Настройки",
+    "rules_video": "Видео правила",
+    "rules_pdf": "Правила PDF",
+    "rate_on_bgg": "Оценить на BGG"
   },
   "game_setup": {
     "join": {

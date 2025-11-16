@@ -71,7 +71,7 @@ export class GameBoard3D {
         this.waterLoadPromise = null; // Promise pour attendre le chargement
         
         // Paramètres du zoom style Warcraft 3 (dans le repère du cameraRig)
-        this.remoteness = 1.0 ;
+        this.remoteness = 1.0 ; // pour ajuster l'elloignement sans changer l'angle
         this.zoomZ0 = 3 * this.remoteness;     // Position Z initiale (dézoomé)
         this.zoomY0 = 7 * this.remoteness;     // Hauteur Y initiale (dézoomé)
         this.zoomZ1 = 2;     // Position Z finale (zoom max)

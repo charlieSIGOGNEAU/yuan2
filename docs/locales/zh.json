@@ -169,7 +169,10 @@
     "quick_game": "快速游戏",
     "join_custom_game": "加入自定义游戏",
     "create_custom_game": "创建自定义游戏",
-    "options": "选项"
+    "options": "选项",
+    "rules_video": "视频规则",
+    "rules_pdf": "PDF规则",
+    "rate_on_bgg": "在BGG评分"
   },
   "game_setup": {
     "join": {

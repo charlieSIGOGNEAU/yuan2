@@ -169,7 +169,10 @@
     "quick_game": "빠른 게임",
     "join_custom_game": "커스텀 게임 참여",
     "create_custom_game": "커스텀 게임 만들기",
-    "options": "옵션"
+    "options": "옵션",
+    "rules_video": "비디오 규칙",
+    "rules_pdf": "PDF 규칙",
+    "rate_on_bgg": "BGG에서 평가"
   },
   "game_setup": {
     "join": {

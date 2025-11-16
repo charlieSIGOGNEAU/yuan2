@@ -169,7 +169,10 @@
     "quick_game": "クイックゲーム",
     "join_custom_game": "カスタムゲームに参加",
     "create_custom_game": "カスタムゲームを作成",
-    "options": "オプション"
+    "options": "オプション",
+    "rules_video": "ルール動画",
+    "rules_pdf": "ルールPDF",
+    "rate_on_bgg": "BGGで評価"
   },
   "game_setup": {
     "join": {

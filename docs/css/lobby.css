@@ -106,6 +106,9 @@
     background: #218838;
 }
 
+.short-btn {
+    width: 97px;
+}
 #logout-btn { 
     margin-top: 20px; 
     padding: 10px; 
@@ -121,7 +124,7 @@
     background: #c82333;
 } 
 
-@media (max-height: 400px) {
+@media (max-height: 600px) {
     .titre-image {
       display: none;
     }
