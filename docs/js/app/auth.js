@@ -34,16 +34,16 @@ export const Auth = {
                     console.log('🌍 Changement de langue vers:', this.currentUser.language);
                     await i18n.initialize(this.currentUser.language);
                 }
-                if (this.currentUser.fps && this.currentUser.fps !== Auth.options.fps) {
-                    console.log('🎨 Changement de qualité graphique vers:', this.currentUser.fps);
+                if (this.currentUser.fps != null) {
+                    console.log('🎨 Chargement de la qualité graphique:', this.currentUser.fps);
                     Auth.options.fps = this.currentUser.fps;
                 }
-                if (this.currentUser.resolutionScale && this.currentUser.resolutionScale !== Auth.options.resolutionScale) {
-                    console.log('🎨 Changement de résolution vers:', this.currentUser.resolutionScale);
+                if (this.currentUser.resolutionScale != null) {
+                    console.log('🎨 Chargement de la résolution:', this.currentUser.resolutionScale);
                     Auth.options.resolutionScale = this.currentUser.resolutionScale;
                 }
-                if (this.currentUser.shadowRealtime && this.currentUser.shadowRealtime !== Auth.options.shadowRealtime) {
-                    console.log('🎨 Changement de réalité des ombres vers:', this.currentUser.shadowRealtime);
+                if (this.currentUser.shadowRealtime != null) {
+                    console.log('🎨 Chargement des ombres en temps réel:', this.currentUser.shadowRealtime);
                     Auth.options.shadowRealtime = this.currentUser.shadowRealtime;
                 }
                 

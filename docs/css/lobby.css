@@ -108,7 +108,16 @@
 
 .short-btn {
     width: 97px;
+    background: #e4eedc;
+    font-size: 14px;
 }
+#buy-game-btn {
+    background: #e4eedc;
+    font-size: 14px;
+}
+
+
+
 #logout-btn { 
     margin-top: 20px; 
     padding: 10px; 

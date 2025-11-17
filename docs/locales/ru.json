@@ -127,6 +127,9 @@
     "render_quality_high": "Высокое",
     "render_quality_medium": "Среднее",
     "render_quality_low": "Низкое",
+    "shadow_update": "Обновление теней",
+    "shadow_realtime": "В реальном времени",
+    "shadow_every_5s": "Каждые 5 секунд",
     "change_name": "Изменить имя",
     "change_password": "Изменить пароль",
     "logout": "Выйти",
@@ -176,7 +179,8 @@
     "options": "Настройки",
     "rules_video": "Видео правила",
     "rules_pdf": "Правила PDF",
-    "rate_on_bgg": "Оценить на BGG"
+    "rate_on_bgg": "Оценить на BGG",
+    "buy_game": "Купить игру"
   },
   "game_setup": {
     "join": {

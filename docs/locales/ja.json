@@ -127,6 +127,9 @@
     "render_quality_high": "高",
     "render_quality_medium": "中",
     "render_quality_low": "低",
+    "shadow_update": "シャドウ更新",
+    "shadow_realtime": "リアルタイム",
+    "shadow_every_5s": "5秒ごと",
     "change_name": "名前を変更",
     "change_password": "パスワードを変更",
     "logout": "ログアウト",
@@ -176,7 +179,8 @@
     "options": "オプション",
     "rules_video": "ルール動画",
     "rules_pdf": "ルールPDF",
-    "rate_on_bgg": "BGGで評価"
+    "rate_on_bgg": "BGGで評価",
+    "buy_game": "ゲームを購入"
   },
   "game_setup": {
     "join": {

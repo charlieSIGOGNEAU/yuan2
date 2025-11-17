@@ -34,6 +34,7 @@ export const GameMenuPage = {
                     <button id="rules-video-btn" class="menu-btn btn short-btn">${i18n.t('menu.rules_video')}</button>
                     <button id="rules-pdf-btn" class="menu-btn btn short-btn">${i18n.t('menu.rules_pdf')}</button>
                     <button id="rate-bgg-btn" class="menu-btn btn short-btn">${i18n.t('menu.rate_on_bgg')}</button>
+                    <button id="buy-game-btn" class="menu-btn btn">${i18n.t('menu.buy_game')}</button>
                 </div>
             </div>
         `;
@@ -117,6 +118,11 @@ export const GameMenuPage = {
         document.getElementById('rate-bgg-btn')?.addEventListener('click', () => {
             this.openBGG();
         });
+
+        // Acheter le jeu
+        document.getElementById('buy-game-btn')?.addEventListener('click', () => {
+            this.buyGame();
+        });
     },
 
     // Ouvrir la vidéo des règles en plein écran
@@ -177,6 +183,11 @@ export const GameMenuPage = {
     // Ouvrir la page BGG
     openBGG() {
         window.open('https://boardgamegeek.com/boardgame/403280/yuan-lart-de-la-guerre-chine', '_blank');
+    },
+
+    // Ouvrir la page d'achat du jeu
+    buyGame() {
+        window.open('https://okaluda.fr/yuan/', '_blank');
     }
 };
 

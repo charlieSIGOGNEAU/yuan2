@@ -127,6 +127,9 @@
     "render_quality_high": "高",
     "render_quality_medium": "中",
     "render_quality_low": "低",
+    "shadow_update": "阴影更新",
+    "shadow_realtime": "实时",
+    "shadow_every_5s": "每5秒",
     "change_name": "更改名称",
     "change_password": "更改密码",
     "logout": "登出",
@@ -176,7 +179,8 @@
     "options": "选项",
     "rules_video": "视频规则",
     "rules_pdf": "PDF规则",
-    "rate_on_bgg": "在BGG评分"
+    "rate_on_bgg": "在BGG评分",
+    "buy_game": "购买游戏"
   },
   "game_setup": {
     "join": {

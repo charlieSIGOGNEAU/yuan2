@@ -27,6 +27,12 @@ export class ShadowManager {
 
         // limitation des ombres
         this.shadowRealtime = Auth.options.shadowRealtime;
+        this.setShadowRealtime(this.shadowRealtime);
+    }
+
+    
+    setShadowRealtime(shadowRealtime) {
+        this.shadowRealtime = shadowRealtime;
         if (this.shadowRealtime) {
             this.setShadowUpdateLimited(false, 1000)
         }

@@ -6,6 +6,7 @@ import { Auth } from '../app/auth.js';
 import { handleLanguageChange as changeLanguage } from '../app/options.js';
 import { handleFPSChange } from '../app/options.js';
 import { handleRenderScaleChange } from '../app/options.js';
+import { handleShadowRealtimeChange } from '../app/options.js';
 
 
 
@@ -66,6 +67,17 @@ export class OptionsMenu {
                     ],
                     currentValue: String(Auth.options.resolutionScale || 1),
                     onChange: this.handleRenderScaleChange.bind(this)
+                },
+                {
+                    type: 'dropdown',
+                    label: i18n.t('options.shadow_update'),
+                    id: 'shadow-realtime-options-of-game',
+                    options: [
+                        { value: 'true', label: i18n.t('options.shadow_realtime') },
+                        { value: 'false', label: i18n.t('options.shadow_every_5s') }
+                    ],
+                    currentValue: String(Auth.options.shadowRealtime !== false),
+                    onChange: this.handleShadowRealtimeChange.bind(this)
                 },
                 {
                     type: 'button',
@@ -237,6 +249,14 @@ export class OptionsMenu {
     }
     async handleRenderScaleChange(newRenderScale) {
         await handleRenderScaleChange(newRenderScale, {
+            onSuccess: () => {
+                // Fermer le menu
+                this.close();
+            },
+        });
+    }
+    async handleShadowRealtimeChange(newShadowRealtime) {
+        await handleShadowRealtimeChange(newShadowRealtime, {
             onSuccess: () => {
                 // Fermer le menu
                 this.close();

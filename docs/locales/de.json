@@ -127,6 +127,9 @@
     "render_quality_high": "Hoch",
     "render_quality_medium": "Mittel",
     "render_quality_low": "Niedrig",
+    "shadow_update": "Schatten-Aktualisierung",
+    "shadow_realtime": "Echtzeit",
+    "shadow_every_5s": "Alle 5 Sekunden",
     "change_name": "Namen ändern",
     "change_password": "Passwort ändern",
     "logout": "Abmelden",
@@ -176,7 +179,8 @@
     "options": "Optionen",
     "rules_video": "Videoregeln",
     "rules_pdf": "PDF-Regeln",
-    "rate_on_bgg": "Auf BGG bewerten"
+    "rate_on_bgg": "Auf BGG bewerten",
+    "buy_game": "Spiel kaufen"
   },
   "game_setup": {
     "join": {

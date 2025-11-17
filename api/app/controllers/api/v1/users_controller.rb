@@ -6,6 +6,7 @@ class Api::V1::UsersController < ApplicationController
     language = params[:language]
     fps = params[:fps]
     render_scale = params[:render_scale]
+    shadow_realtime = params[:shadow_realtime]
 
     if language.present?
       unless %w[fr en zh ja ko de es pt ru it].include?(language)
@@ -17,6 +18,7 @@ class Api::V1::UsersController < ApplicationController
 
     updates[:fps] = fps if fps.present?
     updates[:render_scale] = render_scale if render_scale.present?
+    updates[:shadow_realtime] = shadow_realtime unless shadow_realtime.nil?
 
     if updates.empty?
       render json: { success: false, message: "No parameters to update" }, status: 422
