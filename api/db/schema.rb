@@ -110,7 +110,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "language", default: "fr", null: false
-    t.integer "fps", default: 20, null: false
+    t.integer "fps", default: 60, null: false
+    t.decimal "render_scale", default: "1.0", null: false
+    t.boolean "shadow_realtime", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "email"

@@ -123,6 +123,13 @@
       "zh": "中文"
     },
     "graphics_quality": "목표 FPS",
+    "render_quality": "렌더링 품질",
+    "render_quality_high": "높음",
+    "render_quality_medium": "중간",
+    "render_quality_low": "낮음",
+    "shadow_update": "그림자 업데이트",
+    "shadow_realtime": "실시간",
+    "shadow_every_5s": "5초마다",
     "change_name": "이름 변경",
     "change_password": "비밀번호 변경",
     "logout": "로그아웃",
@@ -169,7 +176,11 @@
     "quick_game": "빠른 게임",
     "join_custom_game": "커스텀 게임 참여",
     "create_custom_game": "커스텀 게임 만들기",
-    "options": "옵션"
+    "options": "옵션",
+    "rules_video": "비디오 규칙",
+    "rules_pdf": "PDF 규칙",
+    "rate_on_bgg": "BGG에서 평가",
+    "buy_game": "게임 구매"
   },
   "game_setup": {
     "join": {

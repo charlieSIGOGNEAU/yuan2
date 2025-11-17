@@ -9,12 +9,21 @@ export const PlayerWaitingPage = {
     game_id: null,
     // Afficher la page
     async show(data = {}) {
-        Router.disableBack = true;
-        console.log('🔙 Données reçues:', data);
-        this.game_id = data.game_id;
-        const html = this.renderHTML();
-        document.getElementById('app').innerHTML = html;
-        loadCSS('css/player-waiting.css');
+        // Exécuter ces lignes uniquement si la page précédente était différente         // On vérifie si les éléments de la page existent déjà dans le DOM
+        const isAlreadyOnThisPage = document.getElementById('waiting-players-count') !== null;
+        
+        // Toujours mettre à jour game_id si fourni
+        if (data.game_id) {
+            this.game_id = data.game_id;
+        }
+        
+        if (!isAlreadyOnThisPage) {
+            Router.disableBack = true;
+            console.log('🔙 Données reçues:', data);
+            const html = this.renderHTML();
+            document.getElementById('app').innerHTML = html;
+            loadCSS('css/player-waiting.css');
+        }
 
         if (data.waiting_players_count) {
             document.getElementById('waiting-players-count').textContent = data.waiting_players_count;

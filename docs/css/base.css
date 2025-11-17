@@ -1,15 +1,27 @@
 /* Styles de base */
-body { 
-    margin: 0;          /* supprime les marges par défaut */
-    padding: 0;         /* supprime les padding par défaut */
-    width: 100vw;       /* largeur = largeur de la fenêtre */
-    height: 100vh;      /* hauteur = hauteur de la fenêtre */
-    min-height: 100vh;  /* garantit la hauteur minimale */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100svh;
+    min-height: -webkit-fill-available; /* fallback iOS */
+    overflow-x: hidden; /* évite débordement horizontal */
+    overflow-y: auto;
+    position: relative;
+  }
 
+/* Styles spécifiques pour iOS en mode paysage */
+@supports (-webkit-touch-callout: none) {
+    html, body {
+        width: 100%;
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
 }
+  
 #wrapper {
     position: relative;
-    min-height: 100vh;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -19,14 +31,35 @@ body {
     position: fixed;       /* reste immobile */
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background-image: url('../images/landingPage.webp');
+    min-height: -webkit-fill-available; /* fallback iOS */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     z-index: -1;           /* passe derrière tout le reste */
+    overflow: hidden; 
   }
+
+/* Ajustements spécifiques pour iOS - gestion des safe areas */
+@supports (-webkit-touch-callout: none) {
+    .background {
+        width: 100%;
+        height: 100vh;
+        height: -webkit-fill-available;
+        left: env(safe-area-inset-left, 0);
+        right: env(safe-area-inset-right, 0);
+        padding-left: env(safe-area-inset-left, 0);
+        padding-right: env(safe-area-inset-right, 0);
+    }
+    
+    #all {
+        width: 100%;
+        padding-left: env(safe-area-inset-left, 0);
+        padding-right: env(safe-area-inset-right, 0);
+    }
+}
   
 
 .titre-image {
@@ -87,4 +120,37 @@ p {
     transform: translateY(-2px);
     background: rgb(171, 186, 163);
     box-shadow: inset 2px 2px 4px rgba(50, 61, 50, 0.1), inset 1px 1px 2px rgba(50, 61, 50, 0.3);
+}
+
+/* Bouton de plein écran */
+.fullscreen-toggle {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: rgb(255, 255, 255, 0.25);
+    color: #000000;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    pointer-events: auto;
+}
+
+.fullscreen-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.fullscreen-toggle:active {
+    transform: scale(0.95);
 }

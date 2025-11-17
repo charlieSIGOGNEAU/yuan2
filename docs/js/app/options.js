@@ -98,6 +98,59 @@ export async function handleFPSChange(fps) {
     }
 }
 
+export async function handleRenderScaleChange(renderScale) {
+    const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.authToken}`
+        },
+        body: JSON.stringify({
+            render_scale: renderScale
+        })
+    });
+    const data = await response.json();
+    if (data.success) {
+        Auth.options.resolutionScale = parseFloat(renderScale);
+        
+        if (window.gameBoard) {
+            window.gameBoard.setResolutionScale(parseFloat(renderScale));
+        } else {
+            console.error('❌ GameBoard3D non trouvé');
+        }
+        console.log('✅ Qualité de rendu mise à jour sur le serveur');
+    } else {
+        console.error('❌ Erreur lors de la mise à jour de la qualité de rendu:', data);
+    }
+}
+
+export async function handleShadowRealtimeChange(shadowRealtime) {
+    const shadowRealtimeBool = shadowRealtime === 'true';
+    const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.authToken}`
+        },
+        body: JSON.stringify({
+            shadow_realtime: shadowRealtimeBool
+        })
+    });
+    const data = await response.json();
+    if (data.success) {
+        Auth.options.shadowRealtime = shadowRealtimeBool;
+        
+        if (window.gameBoard && window.gameBoard.shadowManager) {
+            window.gameBoard.shadowManager.setShadowRealtime(shadowRealtimeBool);
+        } else {
+            console.error('❌ GameBoard3D ou ShadowManager non trouvé');
+        }
+        console.log('✅ Mise à jour des ombres modifiée sur le serveur');
+    } else {
+        console.error('❌ Erreur lors de la modification de la mise à jour des ombres:', data);
+    }
+}
+
 // Page des options
 export const OptionsPage = {
     // Afficher la page
@@ -139,6 +192,23 @@ export const OptionsPage = {
                             <option value="20">20</option>
                             <option value="30">30</option>
                             <option value="60">60</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-item">
+                        <label for="render-quality">${i18n.t('options.render_quality')}</label>
+                        <select id="render-quality" class="option-select">
+                            <option value="1">${i18n.t('options.render_quality_high')}</option>
+                            <option value="0.66">${i18n.t('options.render_quality_medium')}</option>
+                            <option value="0.45">${i18n.t('options.render_quality_low')}</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-item">
+                        <label for="shadow-realtime">${i18n.t('options.shadow_update')}</label>
+                        <select id="shadow-realtime" class="option-select">
+                            <option value="true">${i18n.t('options.shadow_realtime')}</option>
+                            <option value="false">${i18n.t('options.shadow_every_5s')}</option>
                         </select>
                     </div>
                     
@@ -190,6 +260,18 @@ export const OptionsPage = {
             await handleFPSChange(e.target.value)
         });
 
+        // Changement de qualité de rendu
+        document.getElementById('render-quality')?.addEventListener('change', async (e) => {
+            // Envoyer la requête au serveur pour mettre à jour la qualité de rendu de l'utilisateur
+            await handleRenderScaleChange(e.target.value)
+        });
+
+        // Changement de mise à jour des ombres
+        document.getElementById('shadow-realtime')?.addEventListener('change', async (e) => {
+            // Envoyer la requête au serveur pour mettre à jour la mise à jour des ombres
+            await handleShadowRealtimeChange(e.target.value)
+        });
+
 
 
         // Activation des ombres
@@ -233,8 +315,24 @@ export const OptionsPage = {
     loadCurrentFPS() {
         const fpsSelect = document.getElementById('graphics-quality');
         if (fpsSelect) {
-            fpsSelect.value = Auth.options.fps;
+            fpsSelect.value = String(Auth.options.fps);
             console.log('🎨 Qualité graphique actuelle:', Auth.options.fps);
+        }
+        
+        const renderScaleSelect = document.getElementById('render-quality');
+        if (renderScaleSelect) {
+            const currentValue = Auth.options.resolutionScale || 1;
+            // Normaliser la valeur pour correspondre aux options du select
+            const normalizedValue = parseFloat(currentValue).toString();
+
+            renderScaleSelect.value = normalizedValue;
+
+        }
+        
+        const shadowRealtimeSelect = document.getElementById('shadow-realtime');
+        if (shadowRealtimeSelect) {
+            shadowRealtimeSelect.value = String(Auth.options.shadowRealtime !== false);
+            console.log('🎨 Mise à jour des ombres actuelle:', Auth.options.shadowRealtime);
         }
     }
 };

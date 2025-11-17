@@ -31,6 +31,10 @@ export const GameMenuPage = {
                     <button id="join-custom-game-btn" class="menu-btn btn">${i18n.t('menu.join_custom_game')}</button>
                     <button id="create-custom-game-btn" class="menu-btn btn">${i18n.t('menu.create_custom_game')}</button>
                     <button id="options-btn" class="menu-btn btn">${i18n.t('menu.options')}</button>
+                    <button id="rules-video-btn" class="menu-btn btn short-btn">${i18n.t('menu.rules_video')}</button>
+                    <button id="rules-pdf-btn" class="menu-btn btn short-btn">${i18n.t('menu.rules_pdf')}</button>
+                    <button id="rate-bgg-btn" class="menu-btn btn short-btn">${i18n.t('menu.rate_on_bgg')}</button>
+                    <button id="buy-game-btn" class="menu-btn btn">${i18n.t('menu.buy_game')}</button>
                 </div>
             </div>
         `;
@@ -65,13 +69,7 @@ export const GameMenuPage = {
         const data = await response.json();
         console.log('🎮 Données reçues:', data);
         if (data.custom_code) {
-            // Router.navigateTo('player-waiting',data);
-            
-            // const data2 = {
-            //     custom_code: data.custom_code,
-            //     waiting_players_count: data.waiting_players_count
-            // };
-            // return data2;
+            console.log('🎮 Code de la partie:', data.custom_code);
         }
         else {
             return false;
@@ -97,16 +95,99 @@ export const GameMenuPage = {
 
         // Créer une partie personnalisée
         document.getElementById('create-custom-game-btn')?.addEventListener('click', async () => {
-            const data2 = await this.createCustomGame();
-            if (data2) {
-                Router.navigateTo('create-quick-game',data2);
-            }
+            this.createCustomGame();
+            // maintenant c'est gameApi qui lance la partie personnalisée suite au broadcast de la partie personnalisée
         });
 
         // Options
         document.getElementById('options-btn')?.addEventListener('click', () => {
             Router.navigateTo('options');
         });
+
+        // Règles vidéo
+        document.getElementById('rules-video-btn')?.addEventListener('click', () => {
+            this.openRulesVideo();
+        });
+
+        // Règles PDF
+        document.getElementById('rules-pdf-btn')?.addEventListener('click', () => {
+            this.openRulesPDF();
+        });
+
+        // Noter sur BGG
+        document.getElementById('rate-bgg-btn')?.addEventListener('click', () => {
+            this.openBGG();
+        });
+
+        // Acheter le jeu
+        document.getElementById('buy-game-btn')?.addEventListener('click', () => {
+            this.buyGame();
+        });
+    },
+
+    // Ouvrir la vidéo des règles en plein écran
+    openRulesVideo() {
+        const videoUrl = 'https://www.youtube.com/embed/TvlbKy-nVtY?autoplay=1';
+        
+        // Créer un iframe en plein écran
+        const iframe = document.createElement('iframe');
+        iframe.src = videoUrl;
+        iframe.style.position = 'fixed';
+        iframe.style.top = '0';
+        iframe.style.left = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.zIndex = '10000';
+        iframe.allow = 'autoplay; fullscreen';
+        iframe.allowFullscreen = true;
+        
+        // Bouton de fermeture
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.position = 'fixed';
+        closeBtn.style.top = '20px';
+        closeBtn.style.right = '20px';
+        closeBtn.style.zIndex = '10001';
+        closeBtn.style.padding = '10px 15px';
+        closeBtn.style.fontSize = '24px';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        closeBtn.style.color = 'white';
+        closeBtn.style.border = 'none';
+        closeBtn.style.borderRadius = '5px';
+        
+        closeBtn.onclick = () => {
+            document.body.removeChild(iframe);
+            document.body.removeChild(closeBtn);
+        };
+        
+        document.body.appendChild(iframe);
+        document.body.appendChild(closeBtn);
+    },
+
+    // Ouvrir le PDF des règles selon la langue
+    openRulesPDF() {
+        const currentLang = i18n.currentLanguage || 'en';
+        let pdfUrl;
+        
+        if (currentLang === 'fr') {
+            pdfUrl = 'https://okaluda.fr/wp-content/uploads/2023/09/YUAN-Regles-Chine_compressed.pdf';
+        } else {
+            pdfUrl = 'https://okaluda.fr/wp-content/uploads/2024/09/YUAN-Regles-Mongolie-ENG_WEB.pdf';
+        }
+        
+        window.open(pdfUrl, '_blank');
+    },
+
+    // Ouvrir la page BGG
+    openBGG() {
+        window.open('https://boardgamegeek.com/boardgame/403280/yuan-lart-de-la-guerre-chine', '_blank');
+    },
+
+    // Ouvrir la page d'achat du jeu
+    buyGame() {
+        window.open('https://okaluda.fr/yuan/', '_blank');
     }
 };
 

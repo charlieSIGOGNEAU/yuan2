@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Yuan Game</title>
     <link rel="icon" type="images/png" href="images/favicon.png">
 
@@ -16,13 +18,15 @@
         }
     }
     </script>
-    
+
     <!-- CSS de base -->
-    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/base.css?v=28">
+
     <!-- Le CSS spécifique à chaque page sera chargé dynamiquement -->
 </head>
 <body>
     <div id="all">
+        <div id="fullscreen-toggle" class="fullscreen-toggle">⛶</div>
         <div class="background"></div>
         <div id="wrapper">
             <!-- tout ton site ici -->
@@ -30,7 +34,7 @@
             <div id="app">
                 <h2>Chargement...</h2>
             </div>
-            <script type="module" src="js/app.js"></script>
+            <script type="module" src="js/app.js?v=28"></script>
         </div>
     </div>
 

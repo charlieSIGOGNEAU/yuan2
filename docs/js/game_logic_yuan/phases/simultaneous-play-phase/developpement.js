@@ -1087,4 +1087,4 @@ export const developpementAndMore = {
     },
 }
 // pour le debug
-window.developpementAndMore = developpementAndMore;
+// window.developpementAndMore = developpementAndMore;

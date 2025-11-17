@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { meepleManager } from '../pieces/MeepleManager.js';
 import { createShadowManager } from './ShadowManager.js';
 import { Auth } from '../../app/auth.js';
+import {uiManager} from './UIManager.js';
 // import { createMeshMerger } from './MeshMerger.js';
 
 export class GameBoard3D {
@@ -21,9 +22,16 @@ export class GameBoard3D {
         this.initialPlacementCities = []; // Stocke les villes du placement initial
         this.isDragging = false;
         this.dragStart = null; // Point d'intersection au début du drag (sur le plan y=0)
-        this.cameraStartPosition = null; // Position de la caméra au début du drag
-        this.cameraTargetPosition = null; // Position cible de la caméra pour le lissage
+        this.rigStartPosition = null; // Position du rig de caméra au début du drag
+        this.rigTargetPosition = null; // Position cible du rig pour le lissage
         this.activePointerId = null; // Pour suivre le doigt actif
+        
+        // Support du pinch-to-zoom tactile
+        this.activePointers = new Map(); // Map des pointeurs actifs (id -> {x, y})
+        this.isPinching = false; // État du pinch
+        this.lastPinchDistance = null; // Distance entre les 2 doigts lors du dernier pinch
+        this.pinchStartZoom = null; // Progression du zoom au début du pinch
+        this.pinchSensitivity = 0.5; // Sensibilité du pinch (ajustable, plus élevé = plus sensible)
         
         // Promise pour attendre que l'initialisation soit terminée
         this.ready = null;
@@ -51,6 +59,9 @@ export class GameBoard3D {
         this.targetFPS = Auth.options.fps; // FPS cible (peut être modifié via setFPS) 
         this.frameInterval = 1000 / this.targetFPS; // Intervalle entre frames en ms
         this.lastFrameTime = 0; // Timestamp de la dernière frame rendue
+
+        // limitation de la resolution
+        this.resolutionScale = Auth.options.resolutionScale;
         
         // Lissage du déplacement (pan)
         this.panSmoothingFactor = 0.5; // 0 = pas de lissage, 1 = lissage maximal (0.5 = moyenne)
@@ -62,9 +73,17 @@ export class GameBoard3D {
         this.waterLoaded = false; // État du chargement de l'eau
         this.waterLoadPromise = null; // Promise pour attendre le chargement
         
-        // Limites de zoom (hauteur Y de la caméra)
-        this.minCameraY = 3; // Zoom max (caméra proche)
-        this.maxCameraY = 9; // Zoom min (caméra loin)
+        // Paramètres du zoom style Warcraft 3 (dans le repère du cameraRig)
+        this.remoteness = 1.0 ; // pour ajuster l'elloignement sans changer l'angle
+        this.zoomZ0 = 3 * this.remoteness;     // Position Z initiale (dézoomé)
+        this.zoomY0 = 7 * this.remoteness;     // Hauteur Y initiale (dézoomé)
+        this.zoomZ1 = 2;     // Position Z finale (zoom max)
+        this.zoomY1 = 2;     // Hauteur Y finale (zoom max)
+        this.zoomProgress = 0; // Progression du zoom de 0 (dézoomé) à 1 (zoom max)
+        
+        // Coefficients de la parabole y = a*z² + b*z + c
+        // Calculés pour passer par (0,0), (z0,y0) et (z1,y1)
+        this.updateParabolaCoefficients();
         
         // Limites de déplacement du workplane (basées sur les tuiles)
         this.tileBounds = { minX: 0, maxX: 0, minZ: 0, maxZ: 0 }; // Bornes calculées dynamiquement
@@ -114,21 +133,31 @@ export class GameBoard3D {
     async initAsync() {
         // Créer d'abord la scène Three.js
         this.scene = new THREE.Scene();
+        
+        // Créer le rig de caméra (parent de la caméra pour gérer séparément zoom et déplacement)
+        this.cameraRig = new THREE.Group();
+        this.scene.add(this.cameraRig);
+        
         this.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100);
 
-        this.camera.position.set(0, 9, 6);
-        this.camera.rotation.set(THREE.MathUtils.degToRad(-57), 0, 0);
+        // Initialiser la position et l'angle de la caméra selon les paramètres de zoom
+        this.updateCameraZoom(0); // Position initiale (dézoomé)
+        
+        // Ajouter la caméra au rig au lieu de la scène
+        this.cameraRig.add(this.camera);
         this.renderer = new THREE.WebGLRenderer({ antialias: false });
         
 
-        this.renderer.setPixelRatio(window.devicePixelRatio**0.5);
+        this.renderer.setPixelRatio(window.devicePixelRatio * this.resolutionScale);
         this.renderer.outputColorSpace = THREE.SRGBColorSpace; 
         
         // Utiliser la taille du container au lieu de window
         const containerRect = this.container.getBoundingClientRect();
         this.renderer.setSize(containerRect.width, containerRect.height);
         this.container.appendChild(this.renderer.domElement);
-        // FOV initial selon l'orientation
+        // Mettre à jour l'aspect ratio de la caméra avant de calculer le FOV
+        this.camera.aspect = containerRect.width / containerRect.height;
+        // FOV initial selon l'orientation (FOV diagonal fixe à 60°)
         this.updateFovByOrientation();
         
         // Ajout d'éclairage pour les modèles 3D
@@ -164,9 +193,15 @@ export class GameBoard3D {
         window.setFPS = (fps) => this.setFPS(fps);
         window.getFPS = () => this.getFPS();
         
+        // Exposer les fonctions de zoom globalement
+        window.setZoomParams = (z0, y0, z1, y1) => this.setZoomParams(z0, y0, z1, y1);
+        window.getZoomParams = () => this.getZoomParams();
+        window.setPinchSensitivity = (sensitivity) => this.setPinchSensitivity(sensitivity);
+        window.getPinchSensitivity = () => this.getPinchSensitivity();
+        
         // Exposer les fonctions de lissage du déplacement globalement
-        window.setPanSmoothing = (factor) => this.setPanSmoothing(factor);
-        window.getPanSmoothing = () => this.getPanSmoothing();
+        // window.setPanSmoothing = (factor) => this.setPanSmoothing(factor);
+        // window.getPanSmoothing = () => this.getPanSmoothing();
 
             
         // Maintenant précharger les modèles
@@ -202,6 +237,11 @@ export class GameBoard3D {
         // Continuer avec l'initialisation normale
         this.init();
     }
+
+    setResolutionScale(scale) {
+        this.resolutionScale = scale;
+        this.renderer.setPixelRatio(window.devicePixelRatio * this.resolutionScale);
+    }
     
     init() {
         // Seulement les événements et l'animation
@@ -215,14 +255,23 @@ export class GameBoard3D {
         this.animate();
     }
 
-    // Met à jour dynamiquement le FOV selon l'orientation (paysage/portrait)
+    // Met à jour le FOV vertical pour maintenir un FOV diagonal fixe à 60 degrés
     updateFovByOrientation() {
         if (!this.camera || !this.container) return;
         const rect = this.container.getBoundingClientRect();
-        const isLandscape = rect.width >= rect.height;
-        const targetFov = isLandscape ? 40 : 60;
-        if (this.camera.fov !== targetFov) {
-            this.camera.fov = targetFov;
+        const aspectRatio = rect.width / rect.height;
+        
+        // FOV diagonal fixe à 60 degrés
+        const diagonalFovDeg = 99;
+        const diagonalFovRad = THREE.MathUtils.degToRad(diagonalFovDeg);
+        
+        // Calculer le FOV vertical pour maintenir le FOV diagonal constant
+        // FOV_vertical = 2 * atan(tan(FOV_diagonal / 2) / sqrt(1 + aspect_ratio^2))
+        const verticalFovRad = 2 * Math.atan(Math.tan(diagonalFovRad / 2) / Math.sqrt(1 + aspectRatio * aspectRatio));
+        const verticalFovDeg = THREE.MathUtils.radToDeg(verticalFovRad);
+        
+        if (Math.abs(this.camera.fov - verticalFovDeg) > 0.01) {
+            this.camera.fov = verticalFovDeg;
             this.camera.updateProjectionMatrix();
         }
     }
@@ -560,8 +609,8 @@ export class GameBoard3D {
                 }
             });
 
-            tile.castShadow = false;
-            console.log('🎮 tile.castShadow:', tile.castShadow);
+            // tile.castShadow = false;
+            // console.log('🎮 tile.castShadow:', tile.castShadow);
                         
             const pos = this.hexToCartesian(position);
             tile.position.set(pos.x, 0.2, pos.z); // Hauteur fixée à 0.2
@@ -966,8 +1015,48 @@ export class GameBoard3D {
             }
             
             e.preventDefault();
-            // Si on est déjà en train de glisser, on ignore
-            if (this.isDragging) return;
+            
+            // Ajouter ce pointeur à la liste des pointeurs actifs
+            this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            
+            // Si on a 2 doigts, activer le pinch et annuler tout drag en cours
+            if (this.activePointers.size === 2) {
+                // Annuler tout drag en cours
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    this.dragStart = null;
+                    this.rigStartPosition = null;
+                    this.rigTargetPosition = null;
+                }
+                if (this.isDraggingCity) {
+                    this.isDraggingCity = false;
+                    this.draggedCity = null;
+                }
+                
+                // Initialiser le pinch
+                this.isPinching = true;
+                this.pinchStartZoom = this.zoomProgress;
+                const pointers = Array.from(this.activePointers.values());
+                this.lastPinchDistance = this.calculateDistance(pointers[0], pointers[1]);
+                
+                // Réinitialiser les états de clic
+                this.clickStartPosition = null;
+                this.clickStartTime = null;
+                this.activePointerId = null;
+                
+                // Capturer les deux pointeurs
+                this.container.setPointerCapture(e.pointerId);
+                return;
+            }
+            
+            // Si on a plus de 2 doigts, ignorer ce nouveau pointeur
+            if (this.activePointers.size > 2) {
+                this.activePointers.delete(e.pointerId);
+                return;
+            }
+            
+            // Si on est déjà en train de pinch, ignorer les nouveaux pointeurs
+            if (this.isPinching) return;
 
             const result = this.getMouseWorld(e);
             if (!result.point) return;
@@ -1015,8 +1104,8 @@ export class GameBoard3D {
             
             if (intersectPoint) {
                 this.dragStart = intersectPoint.clone();
-                this.cameraStartPosition = this.camera.position.clone();
-                this.cameraTargetPosition = this.camera.position.clone(); // Initialiser la cible
+                this.rigStartPosition = this.cameraRig.position.clone();
+                this.rigTargetPosition = this.cameraRig.position.clone(); // Initialiser la cible
                 
                 // Recalculer les bornes basées sur les tuiles au début du déplacement
                 this.calculateTileBounds();
@@ -1025,9 +1114,44 @@ export class GameBoard3D {
             // Capturer les événements pointer
             this.container.setPointerCapture(e.pointerId);
         }
-        // deplacement du plan
+        
+        // Calcule la distance entre deux pointeurs
+        calculateDistance(p1, p2) {
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
         onPointerMove(e) {
-            // Ne traiter que les événements du pointer actif
+            // Mettre à jour la position de ce pointeur
+            if (this.activePointers.has(e.pointerId)) {
+                this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            }
+            
+            // Si on est en mode pinch avec 2 doigts
+            if (this.isPinching && this.activePointers.size === 2) {
+                const pointers = Array.from(this.activePointers.values());
+                const currentDistance = this.calculateDistance(pointers[0], pointers[1]);
+                
+                if (this.lastPinchDistance) {
+                    // Calculer le ratio de changement de distance
+                    const distanceRatio = currentDistance / this.lastPinchDistance;
+                    
+                    // Calculer le delta de zoom (sensibilité ajustable)
+                    const zoomDelta = (distanceRatio - 1) * this.pinchSensitivity;
+                    
+                    // Calculer la nouvelle progression du zoom (écarter les doigts = zoomer, rapprocher = dézoomer)
+                    const newProgress = Math.max(0, Math.min(1, this.zoomProgress + zoomDelta));
+                    
+                    // Appliquer le zoom
+                    this.updateCameraZoom(newProgress);
+                }
+                
+                this.lastPinchDistance = currentDistance;
+                return;
+            }
+            
+            // Ne traiter le déplacement que si on n'est pas en pinch et qu'on a le bon pointeur actif
             if ((!this.isDragging && !this.isDraggingCity) || e.pointerId !== this.activePointerId) return;
 
             const result = this.getMouseWorld(e);
@@ -1044,13 +1168,14 @@ export class GameBoard3D {
                 return;
             }
 
-            // Sinon, déplacer la caméra
-            if (!this.dragStart || !this.cameraStartPosition) return;
+            // Sinon, déplacer le rig de caméra
+            if (!this.dragStart || !this.rigStartPosition) return;
             
             // IMPORTANT : Créer une caméra temporaire à la position de DÉPART pour le raycaster
-            // Cela évite que le raycaster utilise la position actuelle (qui a déjà bougé)
+            // On doit recréer la position mondiale complète (rig + caméra)
             const tempCamera = this.camera.clone();
-            tempCamera.position.copy(this.cameraStartPosition);
+            const worldStartPosition = this.rigStartPosition.clone().add(this.camera.position);
+            tempCamera.position.copy(worldStartPosition);
             tempCamera.updateMatrixWorld();
             
             // Calculer le point d'intersection avec le plan au sol depuis la position de départ
@@ -1066,14 +1191,14 @@ export class GameBoard3D {
                 // Calculer le delta entre le point de départ et le point actuel
                 const delta = new THREE.Vector3().subVectors(this.dragStart, currentPoint);
                 
-                // Appliquer le delta à la position de départ de la caméra
-                const newCameraPosition = this.cameraStartPosition.clone().add(delta);
+                // Appliquer le delta à la position de départ du rig
+                const newRigPosition = this.rigStartPosition.clone().add(delta);
                 
-                // Contraindre la position de la caméra dans les limites
-                this.constrainCameraPosition(newCameraPosition);
+                // Contraindre la position du rig dans les limites
+                this.constrainRigPosition(newRigPosition);
                 
-                // Appliquer directement la position (pas de lissage)
-                this.cameraTargetPosition = newCameraPosition;
+                // Appliquer la position cible pour le lissage
+                this.rigTargetPosition = newRigPosition;
             }
         }
         
@@ -1111,10 +1236,10 @@ export class GameBoard3D {
 
         }
 
-        // Méthode pour contraindre la position de la caméra dans les limites des tuiles
-        constrainCameraPosition(position) {
-            // Les bornes s'appliquent directement à la position de la caméra en coordonnées monde
-            // Contraindre la position X et Z de la caméra
+        // Méthode pour contraindre la position du rig de caméra dans les limites des tuiles
+        constrainRigPosition(position) {
+            // Les bornes s'appliquent à la position du rig en coordonnées monde
+            // Contraindre la position X et Z du rig
             let constrained = false;
             
             if (position.x < this.tileBounds.minX) {
@@ -1136,40 +1261,33 @@ export class GameBoard3D {
             return constrained;
         }
 
-        // Méthode pour contraindre la position du workplane dans les limites des tuiles (ANCIEN SYSTÈME - peut-être obsolète)
-        // constrainPosition(position) {
-        //     const scale = this.workplane.scale.x; // Le scale est uniforme
-            
-        //     // Calculer les limites effectives en tenant compte du scale
-        //     // Plus le scale est grand (zoom in), plus on peut se déplacer loin
-        //     const effectiveMinX = this.tileBounds.minX * scale;
-        //     const effectiveMaxX = this.tileBounds.maxX * scale;
-        //     const effectiveMinZ = this.tileBounds.minZ * scale;
-        //     const effectiveMaxZ = this.tileBounds.maxZ * scale;
 
-        //     // Contraindre la position
-        //     let constrained = false;
-            
-        //     if (position.x < -effectiveMaxX) {
-        //         position.x = -effectiveMaxX;
-        //         constrained = true;
-        //     }
-        //     if (position.x > -effectiveMinX) {
-        //         position.x = -effectiveMinX;
-        //         constrained = true;
-        //     }
-        //     if (position.z < -effectiveMaxZ) {
-        //         position.z = -effectiveMaxZ;
-        //         constrained = true;
-        //     }
-        //     if (position.z > -effectiveMinZ) {
-        //         position.z = -effectiveMinZ;
-        //         constrained = true;
-        //     }
-        // }
 
         onPointerUp(e) {
-            // Ne traiter que les événements du pointer actif
+            // Retirer ce pointeur de la liste des pointeurs actifs
+            this.activePointers.delete(e.pointerId);
+            
+            // Si on était en mode pinch et qu'il reste moins de 2 doigts
+            if (this.isPinching && this.activePointers.size < 2) {
+                this.isPinching = false;
+                this.lastPinchDistance = null;
+                this.pinchStartZoom = null;
+                
+                // Libérer la capture du pointer
+                try {
+                    this.container.releasePointerCapture(e.pointerId);
+                } catch (e) {}
+                
+                // Optimiser la shadow box après le pinch
+                if (this.shadowManager) {
+                    this.shadowManager.optimizeShadowBox(2);
+                }
+                
+                // Si on était en pinch, on ne traite pas le reste (pas de clic)
+                return;
+            }
+            
+            // Ne traiter que les événements du pointer actif pour le drag
             if (e.pointerId !== this.activePointerId) return;
 
             // Si on était en train de draguer une ville (et que le drag est activé)
@@ -1291,7 +1409,7 @@ export class GameBoard3D {
             this.activePointerId = null;
             this.clickStartPosition = null;
             this.clickStartTime = null;
-            this.cameraTargetPosition = null; // Réinitialiser la position cible
+            this.rigTargetPosition = null; // Réinitialiser la position cible du rig
             
             // Libérer la capture du pointer
             this.container.releasePointerCapture(e.pointerId);
@@ -1356,40 +1474,90 @@ export class GameBoard3D {
             this.animateTileTempRotation(this.tempTileRotation * Math.PI / 3);
         }
 
+        // Calcule les coefficients de la parabole y = a*z² + b*z + c
+        // qui passe par (0,0), (z0,y0) et (z1,y1)
+        updateParabolaCoefficients() {
+            // Point (0,0) donne : c = 0
+            const c = 0;
+            
+            const z0 = this.zoomZ0;
+            const y0 = this.zoomY0;
+            const z1 = this.zoomZ1;
+            const y1 = this.zoomY1;
+            
+            // Système d'équations :
+            // y0 = a*z0² + b*z0
+            // y1 = a*z1² + b*z1
+            
+            // Résolution :
+            // De la 2ème équation : b = (y1 - a*z1²) / z1
+            // Substitution dans la 1ère : y0 = a*z0² + z0 * (y1 - a*z1²) / z1
+            // y0 * z1 = a*z0²*z1 + z0*y1 - a*z0*z1²
+            // y0*z1 - z0*y1 = a*(z0²*z1 - z0*z1²)
+            // a = (y0*z1 - z0*y1) / (z0²*z1 - z0*z1²)
+            // a = (y0*z1 - z0*y1) / (z0*z1*(z0 - z1))
+            
+            const a = (y0 * z1 - z0 * y1) / (z0 * z1 * (z0 - z1));
+            const b = (y1 - a * z1 * z1) / z1;
+            
+            this.parabolaA = a;
+            this.parabolaB = b;
+            this.parabolaC = c;
+            
+            console.log(`📐 Coefficients parabole y = ${a.toFixed(4)}*z² + ${b.toFixed(4)}*z`);
+        }
+        
+        // Calcule Y en fonction de Z selon la parabole
+        calculateYFromZ(z) {
+            return this.parabolaA * z * z + this.parabolaB * z + this.parabolaC;
+        }
+        
+        // Calcule et applique la position et l'angle de la caméra en fonction de la progression du zoom
+        // Style Warcraft 3 : suit une trajectoire parabolique et regarde toujours vers (0,0)
+        updateCameraZoom(progress) {
+            // Contraindre la progression entre 0 et 1
+            const t = Math.max(0, Math.min(1, progress));
+            
+            // Interpolation linéaire de Z (la caméra avance)
+            const z = this.zoomZ0 + (this.zoomZ1 - this.zoomZ0) * t;
+            
+            // Calculer Y selon la parabole
+            const y = this.calculateYFromZ(z);
+            
+            // Calculer l'angle pour que la caméra regarde vers (0,0)
+            // Direction : (0,0,0) - (0,y,z) = (0,-y,-z)
+            // L'angle de rotation X pour regarder vers le bas est : atan(y/z)
+            // En Three.js, rotation.x négative = regarder vers le bas
+            const angle = -Math.atan2(y, z);
+            
+            // Position de la caméra (relative au rig)
+            this.camera.position.set(0, y, z);
+            
+            // Rotation de la caméra
+            this.camera.rotation.set(angle, 0, 0);
+            
+            // Stocker la progression actuelle
+            this.zoomProgress = t;
+        }
+
         onWheel(e) {
             e.preventDefault();
             
-            // Calculer le point d'intersection du curseur avec le plan au sol
-            const mouse = new THREE.Vector2();
-            mouse.x = (e.clientX / this.container.clientWidth) * 2 - 1;
-            mouse.y = -(e.clientY / this.container.clientHeight) * 2 + 1;
+            // Calculer la direction du zoom
+            const zoomDirection = e.deltaY < 0 ? 1 : -1; // 1 = zoom in, -1 = zoom out
+            const zoomSpeed = 0.05; // Vitesse de zoom (0.05 = 5% de progression par cran)
+            const deltaProgress = zoomDirection * zoomSpeed;
             
-            this.raycaster.setFromCamera(mouse, this.camera);
-            const targetPoint = new THREE.Vector3();
-            const intersected = this.raycaster.ray.intersectPlane(this.groundPlane, targetPoint);
+            // Calculer la nouvelle progression
+            const newProgress = this.zoomProgress + deltaProgress;
             
-            if (!intersected) return; // Pas d'intersection avec le plan
-            
-            // Calculer la direction de la caméra vers le point cible
-            const direction = new THREE.Vector3().subVectors(targetPoint, this.camera.position);
-            const distance = direction.length();
-            direction.normalize(); // Normaliser pour avoir un vecteur unitaire
-            
-            // Calculer la quantité de déplacement
-            const zoomDirection = e.deltaY < 0 ? 1 : -1; // 1 = zoom in (vers le point), -1 = zoom out (s'éloigner)
-            const zoomSpeed = 0.5; // Vitesse de zoom
-            const moveAmount = zoomDirection * zoomSpeed;
-            
-            // Nouvelle position de la caméra
-            const newPosition = this.camera.position.clone().add(direction.multiplyScalar(moveAmount));
-            
-            // Contraindre la hauteur Y entre les limites
-            if (newPosition.y < this.minCameraY || newPosition.y > this.maxCameraY) {
+            // Contraindre entre 0 et 1
+            if (newProgress < 0 || newProgress > 1) {
                 return; // Arrêter si on dépasse les limites
             }
             
-            // Appliquer la nouvelle position
-            this.camera.position.copy(newPosition);
+            // Appliquer le nouveau zoom
+            this.updateCameraZoom(newProgress);
             
             // Optimiser la shadow box après le zoom
             if (this.shadowManager) {
@@ -1427,22 +1595,20 @@ export class GameBoard3D {
             // Enregistrer le temps de ce frame
             this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
             
-            // Mise à jour de la position de la caméra
-            if (this.cameraTargetPosition) {
-                // Appliquer directement la position cible (pas de lissage pour éviter les glitches)
-                // this.camera.position.copy(this.cameraTargetPosition);
+            // Mise à jour de la position du rig de caméra (pour le déplacement)
+            if (this.rigTargetPosition) {
                 const lerpFactor = 1 - this.panSmoothingFactor;
                 
                 // Interpoler progressivement vers la position cible
-                this.camera.position.lerp(this.cameraTargetPosition, lerpFactor);
+                this.cameraRig.position.lerp(this.rigTargetPosition, lerpFactor);
                 
                 // Si on est très proche de la cible (< 0.01 unité), on snap à la position exacte
-                const distance = this.camera.position.distanceTo(this.cameraTargetPosition);
+                const distance = this.cameraRig.position.distanceTo(this.rigTargetPosition);
                 if (distance < 0.01) {
-                    this.camera.position.copy(this.cameraTargetPosition);
+                    this.cameraRig.position.copy(this.rigTargetPosition);
                     // Si on n'est plus en train de draguer, on peut effacer la cible
                     if (!this.isDragging) {
-                        this.cameraTargetPosition = null;
+                        this.rigTargetPosition = null;
                     }
                 }
             }
@@ -1494,26 +1660,81 @@ export class GameBoard3D {
             return this.targetFPS;
         }
 
-        // Définir le facteur de lissage du déplacement (pan)
-        setPanSmoothing(factor) {
-            this.panSmoothingFactor = Math.max(0, Math.min(1, factor)); // Limité entre 0 et 1
-            const percentage = Math.round((1 - this.panSmoothingFactor) * 100);
-            console.log(`🎯 Lissage du déplacement: ${this.panSmoothingFactor.toFixed(2)} (réactivité à ${percentage}%)`);
-            if (this.panSmoothingFactor === 0) {
-                console.log(`   → Pas de lissage (mouvement direct)`);
-            } else if (this.panSmoothingFactor === 0.5) {
-                console.log(`   → Moyenne entre ancienne et nouvelle position`);
-            } else if (this.panSmoothingFactor >= 0.8) {
-                console.log(`   → Lissage très important (mouvement lent)`);
-            }
+        // Définir les paramètres de zoom (appelable depuis la console)
+        setZoomParams(z0, y0, z1, y1) {
+            this.zoomZ0 = z0;
+            this.zoomY0 = y0;
+            this.zoomZ1 = z1;
+            this.zoomY1 = y1;
+            
+            // Recalculer les coefficients de la parabole
+            this.updateParabolaCoefficients();
+            
+            // Recalculer la position de la caméra avec les nouveaux paramètres
+            this.updateCameraZoom(this.zoomProgress);
+            
+            console.log(`🔍 Paramètres de zoom mis à jour:`);
+            console.log(`   Position initiale (dézoomé): Z=${z0}, Y=${y0}`);
+            console.log(`   Position finale (zoom max): Z=${z1}, Y=${y1}`);
+            console.log(`   La parabole passe par (0,0), (${z0},${y0}) et (${z1},${y1})`);
         }
 
-        // Obtenir le facteur de lissage actuel
-        getPanSmoothing() {
-            const percentage = Math.round((1 - this.panSmoothingFactor) * 100);
-            console.log(`🎯 Lissage du déplacement: ${this.panSmoothingFactor.toFixed(2)} (réactivité à ${percentage}%)`);
-            return this.panSmoothingFactor;
+        // Obtenir les paramètres de zoom actuels
+        getZoomParams() {
+            const currentAngle = THREE.MathUtils.radToDeg(this.camera.rotation.x);
+            console.log(`🔍 Paramètres de zoom actuels:`);
+            console.log(`   Position initiale (dézoomé): Z=${this.zoomZ0}, Y=${this.zoomY0}`);
+            console.log(`   Position finale (zoom max): Z=${this.zoomZ1}, Y=${this.zoomY1}`);
+            console.log(`   Parabole: y = ${this.parabolaA.toFixed(4)}*z² + ${this.parabolaB.toFixed(4)}*z`);
+            console.log(`   Progression: ${(this.zoomProgress * 100).toFixed(1)}%`);
+            console.log(`   Position actuelle: Z=${this.camera.position.z.toFixed(2)}, Y=${this.camera.position.y.toFixed(2)}, Angle=${currentAngle.toFixed(1)}°`);
+            return {
+                z0: this.zoomZ0,
+                y0: this.zoomY0,
+                z1: this.zoomZ1,
+                y1: this.zoomY1,
+                parabolaA: this.parabolaA,
+                parabolaB: this.parabolaB,
+                progress: this.zoomProgress,
+                currentZ: this.camera.position.z,
+                currentY: this.camera.position.y,
+                currentAngle: currentAngle
+            };
         }
+
+        // Définir la sensibilité du pinch tactile
+        setPinchSensitivity(sensitivity) {
+            this.pinchSensitivity = Math.max(0.1, Math.min(2, sensitivity)); // Limité entre 0.1 et 2
+            console.log(`👆 Sensibilité du pinch: ${this.pinchSensitivity.toFixed(2)}`);
+            console.log(`   (0.1 = peu sensible, 1 = normal, 2 = très sensible)`);
+        }
+
+        // Obtenir la sensibilité du pinch actuelle
+        getPinchSensitivity() {
+            console.log(`👆 Sensibilité du pinch: ${this.pinchSensitivity.toFixed(2)}`);
+            return this.pinchSensitivity;
+        }
+
+        // Définir le facteur de lissage du déplacement (pan)
+        // setPanSmoothing(factor) {
+        //     this.panSmoothingFactor = Math.max(0, Math.min(1, factor)); // Limité entre 0 et 1
+        //     const percentage = Math.round((1 - this.panSmoothingFactor) * 100);
+        //     console.log(`🎯 Lissage du déplacement: ${this.panSmoothingFactor.toFixed(2)} (réactivité à ${percentage}%)`);
+        //     if (this.panSmoothingFactor === 0) {
+        //         console.log(`   → Pas de lissage (mouvement direct)`);
+        //     } else if (this.panSmoothingFactor === 0.5) {
+        //         console.log(`   → Moyenne entre ancienne et nouvelle position`);
+        //     } else if (this.panSmoothingFactor >= 0.8) {
+        //         console.log(`   → Lissage très important (mouvement lent)`);
+        //     }
+        // }
+
+        // Obtenir le facteur de lissage actuel
+        // getPanSmoothing() {
+        //     const percentage = Math.round((1 - this.panSmoothingFactor) * 100);
+        //     console.log(`🎯 Lissage du déplacement: ${this.panSmoothingFactor.toFixed(2)} (réactivité à ${percentage}%)`);
+        //     return this.panSmoothingFactor;
+        // }
 
     
 
@@ -1570,46 +1791,4 @@ export class GameBoard3D {
             this.tempTileRotation = null;
         }
 
-        // Méthode de démonstration pour le nouveau système Territory
-    //     async testTerritorySystem() {
-    //         try {
-    //             // Vérifier qu'on a des territoires
-    //             if (!window.gameState?.game?.territories?.length) {
-    //                 return;
-    //             }
-                
-    //             // Prendre le premier territoire disponible
-    //             const territory = window.gameState.game.territories[0];
-                
-    //             // Configurer le territoire pour le test
-    //             territory.color = '#FF0000'; // Rouge pour test
-    //             territory.construction_type = 'ville';
-    //             territory.rempart = 'fortifiee';
-                
-    //             // Test 1: Créer une construction
-    //             territory.createConstruction(this, this.meepleManager);
-                
-    //             // Test 2: Créer des guerriers (3 pour tester le positionnement)
-    //             setTimeout(() => {
-    //                 territory.createWarriors(this, this.meepleManager, 3);
-                    
-    //                 // Test 3: Ajouter 2 guerriers supplémentaires après 2 secondes
-    //                 setTimeout(() => {
-    //                     territory.createWarriors(this, this.meepleManager, 2);
-                        
-    //                     // Test 4: Nettoyage après 3 secondes
-    //                     setTimeout(() => {
-    //                         territory.removeAllMeshes(this);
-                            
-    //                         // Réinitialiser le territoire
-    //                         territory.color = null;
-    //                         territory.construction_type = null;
-    //                         territory.rempart = null;
-    //                     }, 3000);
-    //                 }, 2000);
-    //             }, 1000);
-                
-    //         } catch (error) {
-    //     }
-    // }
 } 

@@ -123,6 +123,13 @@
       "zh": "中文"
     },
     "graphics_quality": "FPS alvo",
+    "render_quality": "Qualidade de renderização",
+    "render_quality_high": "Alta",
+    "render_quality_medium": "Média",
+    "render_quality_low": "Baixa",
+    "shadow_update": "Atualização de sombras",
+    "shadow_realtime": "Tempo real",
+    "shadow_every_5s": "A cada 5 segundos",
     "change_name": "Mudar nome",
     "change_password": "Mudar senha",
     "logout": "Sair",
@@ -169,7 +176,11 @@
     "quick_game": "Jogo rápido",
     "join_custom_game": "Entrar em jogo personalizado",
     "create_custom_game": "Criar jogo personalizado",
-    "options": "Opções"
+    "options": "Opções",
+    "rules_video": "Regras em Vídeo",
+    "rules_pdf": "Regras em PDF",
+    "rate_on_bgg": "Avaliar no BGG",
+    "buy_game": "Comprar o jogo"
   },
   "game_setup": {
     "join": {

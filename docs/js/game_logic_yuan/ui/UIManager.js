@@ -20,163 +20,8 @@ export class UIManager {
         // Variables pour le bidding
         this.currentBid = 0; // Valeur actuelle du numérateur
         this.maxBid = 6; // Valeur maximale du dénominateur
-        
-        // Détection smartphone et gestion des dimensions
-        this.isSmartphone = this.detectSmartphone();
-        this.setupResponsiveDimensions();
-    }
+        }
 
-    // Détecter si on est sur un smartphone
-    detectSmartphone() {
-        const userAgent = navigator.userAgent.toLowerCase();
-        const isMobile = /mobile|android|iphone|ipad|blackberry|windows phone/i.test(userAgent);
-        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        const isSmallScreen = window.innerWidth < 768;
-        const hasHighDPR = window.devicePixelRatio > 1;
-        
-        const isSmartphone = isMobile && isTouch && (isSmallScreen || hasHighDPR);
-        
-        return isSmartphone;
-    }
-
-    // Configurer les dimensions responsives pour les barres d'action
-    setupResponsiveDimensions() {
-        // Fonction pour mettre à jour les dimensions
-        const updateDimensions = () => {
-            const isPortrait = window.innerHeight > window.innerWidth;
-            
-            // Ajouter/supprimer la classe smartphone/desktop sur le body
-            if (this.isSmartphone) {
-                document.body.classList.add('smartphone');
-                document.body.classList.remove('desktop');
-                
-                // Sur smartphone, ajouter aussi la classe d'orientation
-                if (isPortrait) {
-                    document.body.classList.add('portrait');
-                    document.body.classList.remove('landscape');
-                } else {
-                    document.body.classList.add('landscape');
-                    document.body.classList.remove('portrait');
-                }
-            } else {
-                document.body.classList.add('desktop');
-                document.body.classList.remove('smartphone');
-                // Sur desktop, toujours en mode portrait
-                document.body.classList.add('portrait');
-                document.body.classList.remove('landscape');
-            }
-            
-            let barHeight, barWidth;
-            
-            if (this.isSmartphone) {
-                // Smartphone
-                const screenWidth = window.innerWidth;
-                const screenHeight = window.innerHeight;
-                
-                if (isPortrait) {
-                    // Mode portrait : height = 1/5 de la largeur, width = largeur de l'écran
-                    barHeight = screenWidth / 5;
-                    barWidth = screenWidth;
-                } else {
-                    // Mode paysage : height = hauteur de l'écran, width = 1/5 de la hauteur
-                    barHeight = screenHeight;
-                    barWidth = screenHeight / 5;
-
-
-                }
-            } else {
-                // Desktop
-                
-                    barHeight = 70;
-                    barWidth = 350;
-                
-                
-            }
-            
-            // Appliquer les dimensions à toutes les barres d'action
-            const actionBars = document.querySelectorAll('.player-action-bar');
-            actionBars.forEach(bar => {
-                if (bar) {
-                    bar.style.width = `${barWidth}px`;
-                    bar.style.height = `${barHeight}px`;
-                }
-            });
-            // Ajouter des marges à l'info panel en mode smartphone paysage
-            if (this.isSmartphone && gameState.game.game_status === 'simultaneous_play') {
-                if (!isPortrait) {
-                    // Mode smartphone paysage : ajouter barHeight aux marges gauche et droite de l'info panel
-                    const infoPanel = document.querySelector('#info-panel');
-                    if (infoPanel) {
-                        infoPanel.style.marginLeft = `${barWidth}px`;
-                        infoPanel.style.marginRight = `${barWidth}px`;
-                        infoPanel.style.marginTop = `0px`;
-                    }
-                } else {
-                    // Réinitialiser les marges pour les autres modes
-                    const infoPanel = document.querySelector('#info-panel');
-                    if (infoPanel) {
-                        infoPanel.style.marginLeft = '0px';
-                        infoPanel.style.marginRight = '0px';
-                        infoPanel.style.marginTop = `${barHeight}px`;
-                    }
-                }
-            }
-            
-            // Appliquer les mêmes dimensions à la barre d'information (seulement sur desktop)
-            if (!this.isSmartphone) {
-                const infoBar = document.querySelector('#simultaneous-play-info-bar');
-                if (infoBar) {
-                    infoBar.style.width = `${barWidth}px`;
-                    infoBar.style.height = `${barHeight}px`;
-                    
-                    // Styles communs
-                    infoBar.style.position = 'absolute';
-                    infoBar.style.zIndex = '10005'; // Au-dessus de tout
-                    infoBar.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)'; // Ombre portée
-                    infoBar.style.border = '2px solid rgba(255, 255, 255, 0.2)'; // Bordure subtile
-                    infoBar.style.backdropFilter = 'blur(10px)'; // Effet de flou en arrière-plan
-                    infoBar.style.backgroundColor = 'rgba(0, 0, 0, 0.80)'; // Fond semi-transparent
-                    
-
-                    infoBar.style.left = '50%'; // Centrer horizontalement
-                    infoBar.style.top = '0px'; // Position en haut, 0 px obligatoire
-                    infoBar.style.transform = 'translateX(-50%)'; // Centrer horizontalement
-                    infoBar.style.right = 'auto';
-                    infoBar.style.bottom = 'auto';
-                    infoBar.style.borderTopLeftRadius = '0px'; // Pas d'arrondi haut gauche
-                    infoBar.style.borderTopRightRadius = '0px'; // Pas d'arrondi haut droit
-                    infoBar.style.borderBottomLeftRadius = '20px'; // Coins arrondis bas gauche
-                    infoBar.style.borderBottomRightRadius = '20px'; // Coins arrondis bas droit
-
-                    const infoPanel = document.querySelector('#info-panel');
-                    if (infoPanel) {
-                        if (gameState.game.game_status === 'simultaneous_play') {
-                            infoPanel.style.top = '100px';
-                        } else {
-                            infoPanel.style.top = '30px';
-                        }
-                        infoPanel.style.left = '30px';
-                        infoPanel.style.right = '30px';
-
-                    }                              
-                }
-                
-
-            }
-        };
-
-        // Appliquer les dimensions initiales
-        updateDimensions();
-        
-        // Écouter les changements d'orientation et de taille
-        window.addEventListener('resize', updateDimensions);
-        window.addEventListener('orientationchange', () => {
-            // Attendre que l'orientation soit complètement changée
-            setTimeout(updateDimensions, 100);
-        });
-        
-
-    }
 
     // Charger l'interface UI du jeu
     async loadGameUI() {
@@ -212,7 +57,13 @@ export class UIManager {
             uiContainer.innerHTML = htmlContent;
             
             const allContainer = document.getElementById('all');
-            allContainer.innerHTML = htmlContent;
+            const preserve = document.getElementById('fullscreen-toggle');
+
+            Array.from(allContainer.children).forEach(child => {
+                if (child !== preserve) allContainer.removeChild(child);
+            });
+
+            allContainer.insertAdjacentHTML('beforeend', htmlContent);
             
             // Charger le CSS de l'interface
             const link = document.createElement('link');
@@ -239,72 +90,18 @@ export class UIManager {
             // Configuration des event listeners
             this.setupUIEventListeners();
             
-            // Réappliquer les dimensions responsives après le chargement
-            this.setupResponsiveDimensions();
+
             
             // Charger le GameBoard3D si pas déjà chargé
             await this.loadGameBoard3D();
 
-            this.setupFullscreenToggle();
+
             
         } catch (error) {
             throw error;
         }
     }
 
-    setupFullscreenToggle() {
-        const fullscreenBtn = document.getElementById('fullscreen-btn');
-        const allDiv = document.getElementById('all');
-        
-        if (!fullscreenBtn || !allDiv) return;
-        
-        fullscreenBtn.addEventListener('click', () => {
-            console.log('fullscreenBtn clicked');
-            if (!document.fullscreenElement && 
-                !document.webkitFullscreenElement && 
-                !document.mozFullScreenElement && 
-                !document.msFullscreenElement) {
-                // Entrer en plein écran
-                if (allDiv.requestFullscreen) {
-                    allDiv.requestFullscreen();
-                } else if (allDiv.webkitRequestFullscreen) {
-                    allDiv.webkitRequestFullscreen();
-                } else if (allDiv.mozRequestFullScreen) {
-                    allDiv.mozRequestFullScreen();
-                } else if (allDiv.msRequestFullscreen) {
-                    allDiv.msRequestFullscreen();
-                }
-                fullscreenBtn.textContent = '⛶';
-            } else {
-                // Sortir du plein écran
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-                fullscreenBtn.textContent = '⛶';
-            }
-        });
-        
-        // Mettre à jour l'icône quand l'état change
-        document.addEventListener('fullscreenchange', updateFullscreenIcon);
-        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
-        document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
-        document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
-        
-        function updateFullscreenIcon() {
-            const isFullscreen = document.fullscreenElement || 
-                               document.webkitFullscreenElement || 
-                               document.mozFullScreenElement || 
-                               document.msFullscreenElement;
-            fullscreenBtn.textContent = isFullscreen ? '⛶' : '⛶';
-            fullscreenBtn.title = isFullscreen ? 'Quitter le plein écran' : 'Mode plein écran';
-        }
-    }
 
     // Charger le GameBoard3D
     async loadGameBoard3D() {
@@ -815,10 +612,7 @@ export class UIManager {
             this.playerActionBar.style.display = 'flex';
             this.currentActionBar = this.playerActionBar;
             
-            // Forcer la mise à jour des dimensions après affichage
-            requestAnimationFrame(() => {
-                this.setupResponsiveDimensions();
-            });
+
             
             // Appliquer la couleur du clan au bouton de validation
             this.applyClanColorToValidateButton();
@@ -875,10 +669,7 @@ export class UIManager {
             this.nextBar.style.display = 'flex';
             this.currentActionBar = this.nextBar;
             
-            // Forcer la mise à jour des dimensions après affichage
-            requestAnimationFrame(() => {
-                this.setupResponsiveDimensions();
-            });
+
             
             // Désactiver la sélection de texte
             this.disableTextSelection();

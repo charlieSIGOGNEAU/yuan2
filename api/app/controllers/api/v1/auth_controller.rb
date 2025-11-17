@@ -29,7 +29,9 @@ class Api::V1::AuthController < ApplicationController
             name: user.name,
             email: user.email,
             language: user.language,
-            fps: user.fps
+            fps: user.fps,
+            resolutionScale: user.render_scale,
+            shadowRealtime: user.shadow_realtime
           },
           token: token
         }, status: :ok
@@ -76,7 +78,9 @@ class Api::V1::AuthController < ApplicationController
           name: user.name,
           email: user.email,
           language: user.language,
-          fps: user.fps
+          fps: user.fps,
+          resolutionScale: user.render_scale,
+          shadowRealtime: user.shadow_realtime
         },
         token: token
       }, status: :ok
@@ -127,7 +131,9 @@ class Api::V1::AuthController < ApplicationController
           name: user.name,
           email: user.email,
           language: user.language,
-          fps: user.fps
+          fps: user.fps,
+          resolutionScale: user.render_scale,
+          shadowRealtime: user.shadow_realtime
         },
         token: token
       }, status: :created
@@ -216,7 +222,9 @@ class Api::V1::AuthController < ApplicationController
           name: user.name,
           email: user.email,
           language: user.language,
-          fps: user.fps
+          fps: user.fps,
+          resolutionScale: user.render_scale,
+          shadowRealtime: user.shadow_realtime
         },
         token: token
       }, status: :ok
@@ -241,7 +249,9 @@ class Api::V1::AuthController < ApplicationController
           name: current_user.name,
           email: current_user.email,
           language: current_user.language,
-          fps: current_user.fps
+          fps: current_user.fps,
+          resolutionScale: current_user.render_scale,
+          shadowRealtime: current_user.shadow_realtime
         }
       }
     else
@@ -298,7 +308,9 @@ class Api::V1::AuthController < ApplicationController
           name: current_user.name,
           email: current_user.email,
           language: current_user.language,
-          fps: current_user.fps
+          fps: current_user.fps,
+          resolutionScale: current_user.render_scale,
+          shadowRealtime: current_user.shadow_realtime
         }
       }, status: :ok
     else

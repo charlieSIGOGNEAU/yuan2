@@ -212,4 +212,4 @@ export class renderTax {
     }
 }
 // pour debug
-export default renderTax;
+// export default renderTax;

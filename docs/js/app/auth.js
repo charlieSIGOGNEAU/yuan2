@@ -8,47 +8,10 @@ export const Auth = {
     currentUser: null,
     authToken: null,
     options: {
-        fps: 20
+        fps: 20,
+        resolutionScale: 1,
+        shadowRealtime: true
     },
-
-    // Connexion (ancienne méthode - gardée pour compatibilité)
-    // async login(name) {
-    //     try {
-    //         const response = await fetch(`${ServerConfig.HTTP_BASE}/auth/login`, {
-    //             method: 'POST',
-    //             headers: { 'Content-Type': 'application/json' },
-    //             body: JSON.stringify({ name })
-    //         });
-            
-    //         const data = await response.json();
-            
-    //         if (data.success) {
-    //             this.authToken = data.token;
-    //             this.currentUser = data.user;
-    //             console.log('✅ Connexion réussie:', this.currentUser.name);
-    //             console.log('🌍 Langue utilisateur:', this.currentUser.language);
-                
-    //             // Charger la langue de l'utilisateur si différente de la langue actuelle
-    //             if (this.currentUser.language && this.currentUser.language !== i18n.getLanguage()) {
-    //                 console.log('🌍 Changement de langue vers:', this.currentUser.language);
-    //                 await i18n.initialize(this.currentUser.language);
-    //             } else {
-    //                 console.log('✅ Langue identique, pas de rechargement');
-    //             }
-                
-    //             // Démarrer la connexion WebSocket après l'authentification
-    //             await WebSocketClient.connect();
-                
-    //             // Naviguer vers le menu du jeu
-    //             Router.navigateTo('game-menu');
-    //         } else {
-    //             alert('❌ Erreur: ' + data.message);
-    //         }
-    //     } catch (error) {
-    //         console.error('❌ Erreur connexion:', error);
-    //         alert('❌ Erreur de connexion au serveur');
-    //     }
-    // },
 
     // Connexion avec email/password
     async loginWithEmail(email, password) {
@@ -71,9 +34,17 @@ export const Auth = {
                     console.log('🌍 Changement de langue vers:', this.currentUser.language);
                     await i18n.initialize(this.currentUser.language);
                 }
-                if (this.currentUser.fps && this.currentUser.fps !== Auth.options.fps) {
-                    console.log('🎨 Changement de qualité graphique vers:', this.currentUser.fps);
+                if (this.currentUser.fps != null) {
+                    console.log('🎨 Chargement de la qualité graphique:', this.currentUser.fps);
                     Auth.options.fps = this.currentUser.fps;
+                }
+                if (this.currentUser.resolutionScale != null) {
+                    console.log('🎨 Chargement de la résolution:', this.currentUser.resolutionScale);
+                    Auth.options.resolutionScale = this.currentUser.resolutionScale;
+                }
+                if (this.currentUser.shadowRealtime != null) {
+                    console.log('🎨 Chargement des ombres en temps réel:', this.currentUser.shadowRealtime);
+                    Auth.options.shadowRealtime = this.currentUser.shadowRealtime;
                 }
                 
                 await WebSocketClient.connect();
