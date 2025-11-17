@@ -2,11 +2,22 @@
 html, body {
     margin: 0;
     padding: 0;
-    width: 100vw;
+    width: 100%;
     height: 100svh;
     min-height: -webkit-fill-available; /* fallback iOS */
     overflow-x: hidden; /* évite débordement horizontal */
+    overflow-y: auto;
+    position: relative;
   }
+
+/* Styles spécifiques pour iOS en mode paysage */
+@supports (-webkit-touch-callout: none) {
+    html, body {
+        width: 100%;
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+}
   
 #wrapper {
     position: relative;
@@ -20,16 +31,35 @@ html, body {
     position: fixed;       /* reste immobile */
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100svh;
+    width: 100%;
+    height: 100%;
     background-image: url('../images/landingPage.webp');
     min-height: -webkit-fill-available; /* fallback iOS */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     z-index: -1;           /* passe derrière tout le reste */
-    overflow-x: hidden; 
+    overflow: hidden; 
   }
+
+/* Ajustements spécifiques pour iOS - gestion des safe areas */
+@supports (-webkit-touch-callout: none) {
+    .background {
+        width: 100%;
+        height: 100vh;
+        height: -webkit-fill-available;
+        left: env(safe-area-inset-left, 0);
+        right: env(safe-area-inset-right, 0);
+        padding-left: env(safe-area-inset-left, 0);
+        padding-right: env(safe-area-inset-right, 0);
+    }
+    
+    #all {
+        width: 100%;
+        padding-left: env(safe-area-inset-left, 0);
+        padding-right: env(safe-area-inset-right, 0);
+    }
+}
   
 
 .titre-image {

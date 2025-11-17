@@ -61,6 +61,46 @@ function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 
+// Fonction pour gérer les dimensions sur iOS
+function fixiOSViewport() {
+  if (!isIOS()) return;
+  
+  // Forcer le recalcul de la hauteur pour iOS
+  const setVH = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
+    // Forcer la largeur à 100% de la fenêtre
+    document.documentElement.style.width = '100%';
+    document.body.style.width = '100%';
+    allDiv.style.width = '100%';
+  };
+  
+  setVH();
+  
+  // Écouter les changements d'orientation et de redimensionnement
+  window.addEventListener('resize', () => {
+    setVH();
+  });
+  
+  window.addEventListener('orientationchange', () => {
+    setTimeout(setVH, 100); // Petit délai pour laisser l'orientation se stabiliser
+  });
+  
+  // Empêcher le zoom sur double-tap (iOS)
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (event) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, false);
+}
+
+// Initialiser les fixes iOS
+fixiOSViewport();
+
 
 
 
