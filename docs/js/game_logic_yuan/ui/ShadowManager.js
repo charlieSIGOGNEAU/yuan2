@@ -9,7 +9,7 @@ export class ShadowManager {
         this.shadowsEnabled = true; // État des ombres
         
         // Limitation du taux de calcul des ombres
-        this.shadowUpdateLimited = true; // Si true, limite le calcul des ombres
+        this.shadowUpdateLimited = false; // Si true, limite le calcul des ombres
         this.shadowUpdateInterval = 2000; // Intervalle en ms (2 seconde par défaut)
         this.lastShadowUpdate = 0; // Timestamp du dernier calcul d'ombre
         
@@ -28,7 +28,7 @@ export class ShadowManager {
 
 
         //false pour calculer les ombres a chaque frame
-        this.setShadowUpdateLimited(false, 3000)
+        this.setShadowUpdateLimited(false, 1000)
     }
 
     // Configuration initiale des ombres
@@ -606,4 +606,4 @@ export function createShadowManager(renderer, directionalLight, camera = null, w
     return new ShadowManager(renderer, directionalLight, camera, workplane);
 }
 
-// window.ShadowManager = ShadowManager;
+window.ShadowManager = ShadowManager;

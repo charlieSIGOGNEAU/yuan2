@@ -470,8 +470,10 @@
     background: #ffffff;
     border: 3px solid #000000;
     border-radius: 50%;
-    position: absolute;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Tailles et positions spécifiques pour chaque cercle */
@@ -484,8 +486,8 @@
 }
 
 .fraction-circle {
-    width: 50%;
-    height: 50%;
+    width: 55%;
+    height: 55%;
     transform: translate(45%, 45%);
 }
 
@@ -528,37 +530,25 @@
 .shield-text,
 .sword-text {
     font-size: 1.8em;
-    width: 50%;
-    height: 50%;
-    transform: translate(45%, -45%);
 }
 
 .fraction-numerator {
     font-size: 1.5em;
-    width: 50%;
-    height: 50%;
-    transform: translate(25%, 40%);
+    transform: translate(-8px, -5px);
 }
-
-.fraction-denominator {
-    font-size: 1.5em;
-    width: 50%;
-    height: 50%;
-    transform: translate(65%, 60%);
-}
-
 .fraction-slash {
     font-size: 1.8em;
-    width: 50%;
-    height: 50%;
-    transform: translate(45%, 45%);
+    transform: rotate(10deg) translate(-2px, 0px);
 }
+.fraction-denominator {
+    font-size: 1.5em;
+    transform: translate(6px, 5px);
+}
+
+
 
 .chao-text {
     font-size: 1.8em;
-    width: 50%;
-    height: 50%;
-    transform: translate(0%, 0%);
 }
 
 /* Styles communs pour toutes les icônes */
