@@ -8,7 +8,9 @@ export const Auth = {
     currentUser: null,
     authToken: null,
     options: {
-        fps: 20
+        fps: 20,
+        resolutionScale: 1,
+        shadowRealtime: true
     },
 
     // Connexion avec email/password
@@ -35,6 +37,14 @@ export const Auth = {
                 if (this.currentUser.fps && this.currentUser.fps !== Auth.options.fps) {
                     console.log('🎨 Changement de qualité graphique vers:', this.currentUser.fps);
                     Auth.options.fps = this.currentUser.fps;
+                }
+                if (this.currentUser.resolutionScale && this.currentUser.resolutionScale !== Auth.options.resolutionScale) {
+                    console.log('🎨 Changement de résolution vers:', this.currentUser.resolutionScale);
+                    Auth.options.resolutionScale = this.currentUser.resolutionScale;
+                }
+                if (this.currentUser.shadowRealtime && this.currentUser.shadowRealtime !== Auth.options.shadowRealtime) {
+                    console.log('🎨 Changement de réalité des ombres vers:', this.currentUser.shadowRealtime);
+                    Auth.options.shadowRealtime = this.currentUser.shadowRealtime;
                 }
                 
                 await WebSocketClient.connect();

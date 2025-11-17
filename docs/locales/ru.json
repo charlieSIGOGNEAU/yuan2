@@ -123,6 +123,10 @@
       "zh": "中文"
     },
     "graphics_quality": "Целевой FPS",
+    "render_quality": "Качество рендеринга",
+    "render_quality_high": "Высокое",
+    "render_quality_medium": "Среднее",
+    "render_quality_low": "Низкое",
     "change_name": "Изменить имя",
     "change_password": "Изменить пароль",
     "logout": "Выйти",

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Auth } from '../../app/auth.js';
 
 export class ShadowManager {
     constructor(renderer, directionalLight, camera = null, workplane = null) {
@@ -24,9 +25,14 @@ export class ShadowManager {
         this.firstanimation = true;
         this.hasLightBeenUpdated = false;
 
-
-        //false pour calculer les ombres a chaque frame
-        this.setShadowUpdateLimited(true, 3000)
+        // limitation des ombres
+        this.shadowRealtime = Auth.options.shadowRealtime;
+        if (this.shadowRealtime) {
+            this.setShadowUpdateLimited(false, 1000)
+        }
+        else {
+            this.setShadowUpdateLimited(true, 5000)
+        }
     }
 
     // Configuration initiale des ombres
@@ -653,4 +659,4 @@ export function createShadowManager(renderer, directionalLight, camera = null, w
     return new ShadowManager(renderer, directionalLight, camera, workplane);
 }
 
-window.ShadowManager = ShadowManager;
+// window.ShadowManager = ShadowManager;

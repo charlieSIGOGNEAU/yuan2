@@ -61,7 +61,7 @@ export class GameBoard3D {
         this.lastFrameTime = 0; // Timestamp de la dernière frame rendue
 
         // limitation de la resolution
-        this.resolutionScale = 0.5;
+        this.resolutionScale = Auth.options.resolutionScale;
         
         // Lissage du déplacement (pan)
         this.panSmoothingFactor = 0.5; // 0 = pas de lissage, 1 = lissage maximal (0.5 = moyenne)
@@ -236,6 +236,11 @@ export class GameBoard3D {
         
         // Continuer avec l'initialisation normale
         this.init();
+    }
+
+    setResolutionScale(scale) {
+        this.resolutionScale = scale;
+        this.renderer.setPixelRatio(window.devicePixelRatio * this.resolutionScale);
     }
     
     init() {

@@ -5,6 +5,7 @@ import { ServerConfig } from '../app/config.js';
 import { Auth } from '../app/auth.js';
 import { handleLanguageChange as changeLanguage } from '../app/options.js';
 import { handleFPSChange } from '../app/options.js';
+import { handleRenderScaleChange } from '../app/options.js';
 
 
 
@@ -53,6 +54,18 @@ export class OptionsMenu {
                     ],
                     currentValue: String(Auth.options.fps),
                     onChange: this.handleFPSChange.bind(this)
+                },
+                {
+                    type: 'dropdown',
+                    label: i18n.t('options.render_quality'),
+                    id: 'render-quality-options-of-game',
+                    options: [
+                        { value: '1', label: i18n.t('options.render_quality_high') },
+                        { value: '0.66', label: i18n.t('options.render_quality_medium') },
+                        { value: '0.45', label: i18n.t('options.render_quality_low') }
+                    ],
+                    currentValue: String(Auth.options.resolutionScale || 1),
+                    onChange: this.handleRenderScaleChange.bind(this)
                 },
                 {
                     type: 'button',
@@ -216,6 +229,14 @@ export class OptionsMenu {
     }
     async handleFPSChange(newFPS) {
         await handleFPSChange(newFPS, {
+            onSuccess: () => {
+                // Fermer le menu
+                this.close();
+            },
+        });
+    }
+    async handleRenderScaleChange(newRenderScale) {
+        await handleRenderScaleChange(newRenderScale, {
             onSuccess: () => {
                 // Fermer le menu
                 this.close();

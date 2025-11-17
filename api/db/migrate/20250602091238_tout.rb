@@ -10,6 +10,8 @@ class Tout < ActiveRecord::Migration[7.2]
       t.string :name
       t.string :language, default: 'fr', null: false
       t.integer :fps, default: 60, null: false
+      t.decimal :render_scale, default: 1, null: false
+      t.boolean :shadow_realtime , default: true, null: false
 
       t.timestamps
     end

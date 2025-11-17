@@ -123,6 +123,10 @@
       "zh": "中文"
     },
     "graphics_quality": "목표 FPS",
+    "render_quality": "렌더링 품질",
+    "render_quality_high": "높음",
+    "render_quality_medium": "중간",
+    "render_quality_low": "낮음",
     "change_name": "이름 변경",
     "change_password": "비밀번호 변경",
     "logout": "로그아웃",

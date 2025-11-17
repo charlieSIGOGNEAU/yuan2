@@ -19,6 +19,7 @@ class Arrow {
         this.warriorMeshes = [];
         this.warriorOffsetIndices = [];
         
+        
         // Promesse qui se résout quand l'animation est terminée
         this.animationPromise = null;
         this.resolveAnimation = null;

@@ -123,6 +123,10 @@
       "zh": "中文"
     },
     "graphics_quality": "目標FPS",
+    "render_quality": "レンダリング品質",
+    "render_quality_high": "高",
+    "render_quality_medium": "中",
+    "render_quality_low": "低",
     "change_name": "名前を変更",
     "change_password": "パスワードを変更",
     "logout": "ログアウト",

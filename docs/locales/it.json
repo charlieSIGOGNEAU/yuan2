@@ -123,6 +123,10 @@
       "zh": "中文"
     },
     "graphics_quality": "FPS target",
+    "render_quality": "Qualità di rendering",
+    "render_quality_high": "Alta",
+    "render_quality_medium": "Media",
+    "render_quality_low": "Bassa",
     "change_name": "Cambia nome",
     "change_password": "Cambia password",
     "logout": "Disconnetti",

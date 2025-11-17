@@ -98,6 +98,32 @@ export async function handleFPSChange(fps) {
     }
 }
 
+export async function handleRenderScaleChange(renderScale) {
+    const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Auth.authToken}`
+        },
+        body: JSON.stringify({
+            render_scale: renderScale
+        })
+    });
+    const data = await response.json();
+    if (data.success) {
+        Auth.options.resolutionScale = parseFloat(renderScale);
+        
+        if (window.gameBoard) {
+            window.gameBoard.setResolutionScale(parseFloat(renderScale));
+        } else {
+            console.error('❌ GameBoard3D non trouvé');
+        }
+        console.log('✅ Qualité de rendu mise à jour sur le serveur');
+    } else {
+        console.error('❌ Erreur lors de la mise à jour de la qualité de rendu:', data);
+    }
+}
+
 // Page des options
 export const OptionsPage = {
     // Afficher la page
@@ -139,6 +165,15 @@ export const OptionsPage = {
                             <option value="20">20</option>
                             <option value="30">30</option>
                             <option value="60">60</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-item">
+                        <label for="render-quality">${i18n.t('options.render_quality')}</label>
+                        <select id="render-quality" class="option-select">
+                            <option value="1">${i18n.t('options.render_quality_high')}</option>
+                            <option value="0.66">${i18n.t('options.render_quality_medium')}</option>
+                            <option value="0.45">${i18n.t('options.render_quality_low')}</option>
                         </select>
                     </div>
                     
@@ -190,6 +225,12 @@ export const OptionsPage = {
             await handleFPSChange(e.target.value)
         });
 
+        // Changement de qualité de rendu
+        document.getElementById('render-quality')?.addEventListener('change', async (e) => {
+            // Envoyer la requête au serveur pour mettre à jour la qualité de rendu de l'utilisateur
+            await handleRenderScaleChange(e.target.value)
+        });
+
 
 
         // Activation des ombres
@@ -235,6 +276,12 @@ export const OptionsPage = {
         if (fpsSelect) {
             fpsSelect.value = Auth.options.fps;
             console.log('🎨 Qualité graphique actuelle:', Auth.options.fps);
+        }
+        
+        const renderScaleSelect = document.getElementById('render-quality');
+        if (renderScaleSelect) {
+            renderScaleSelect.value = Auth.options.resolutionScale || 1;
+            console.log('🎨 Qualité de rendu actuelle:', Auth.options.resolutionScale);
         }
     }
 };

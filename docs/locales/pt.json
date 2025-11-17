@@ -123,6 +123,10 @@
       "zh": "中文"
     },
     "graphics_quality": "FPS alvo",
+    "render_quality": "Qualidade de renderização",
+    "render_quality_high": "Alta",
+    "render_quality_medium": "Média",
+    "render_quality_low": "Baixa",
     "change_name": "Mudar nome",
     "change_password": "Mudar senha",
     "logout": "Sair",

@@ -123,6 +123,10 @@
       "zh": "中文"
     },
     "graphics_quality": "目标帧率",
+    "render_quality": "渲染质量",
+    "render_quality_high": "高",
+    "render_quality_medium": "中",
+    "render_quality_low": "低",
     "change_name": "更改名称",
     "change_password": "更改密码",
     "logout": "登出",
