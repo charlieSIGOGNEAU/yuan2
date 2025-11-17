@@ -139,18 +139,6 @@ export class ShadowManager {
         return true;
     }
 
-    // Méthode utilitaire pour activer les ombres sur un Group ou Scene
-    // enableShadowsOnContainer(container) {
-    //     // Patch pour activer automatiquement les ombres sur tous les objets ajoutés
-    //     const originalAdd = container.add.bind(container);
-    //     container.add = (...objects) => {
-    //         objects.forEach(obj => {
-    //             this.enableShadowsOnObject(obj);
-    //         });
-    //         originalAdd(...objects);
-    //     };
-    // }
-
     // Changer la direction de la lumière
     setLightDirection(x, y, z) {
         this.directionalLight.position.set(x, y, z);
@@ -215,11 +203,6 @@ export class ShadowManager {
         return maxDistance + 3;
     }
 
-    // Positionner la lumière sur la sphère avec coordonnées sphériques
-    // rx: rotation horizontale autour de l'axe Y (en degrés, 0-360)
-    //     0° = Nord (vers +Z), 90° = Est (vers +X), 180° = Sud (vers -Z), 270° = Ouest (vers -X)
-    // ry: élévation verticale (en degrés, 0-90)
-    //     0° = horizon (soleil couchant/levant), 45° = mi-hauteur, 90° = zénith (midi)
     setLightOnSphere(rx, ry) {
         // Calculer le centre et le rayon de la scène
         const center = this.getSceneCenter();
@@ -252,7 +235,7 @@ export class ShadowManager {
         // console.log(`   Position: (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)})`);
 
         // Optimiser la shadow box après le changement
-        this.optimizeShadowBox(2, true);
+        this.optimizeShadowBox(3, true);
     }
 
     startSunAnimation() {
@@ -506,12 +489,27 @@ export class ShadowManager {
             return false;
         }
 
-        // 2. Mettre à jour la matrice monde de la shadow camera pour avoir la bonne matrice inverse
+        // 2. NOUVELLE ÉTAPE: Borner les points du frustum aux limites des tiles
+        const tileBounds = this.getTilesBounds();
+        const clampedPoints = tileBounds 
+            ? groundPoints.map(point => this.clampPointToTileBounds(point, tileBounds))
+            : groundPoints;
+
+        if (!silent && tileBounds) {
+            console.log('📐 Limites des tiles:');
+            console.log(`   X: [${tileBounds.minX.toFixed(2)}, ${tileBounds.maxX.toFixed(2)}]`);
+            console.log(`   Z: [${tileBounds.minZ.toFixed(2)}, ${tileBounds.maxZ.toFixed(2)}]`);
+            console.log('✂️ Points bornés aux limites des tiles:', clampedPoints.map(p => 
+                `(${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)})`
+            ));
+        }
+
+        // 3. Mettre à jour la matrice monde de la shadow camera pour avoir la bonne matrice inverse
         this.directionalLight.shadow.camera.updateMatrixWorld(true);
         const lightViewMatrix = this.directionalLight.shadow.camera.matrixWorldInverse;
 
-        // 3. Transformer les points dans le repère de la lumière
-        const transformedPoints = groundPoints.map(point => {
+        // 4. Transformer les points bornés dans le repère de la lumière
+        const transformedPoints = clampedPoints.map(point => {
             const p = point.clone();
             p.applyMatrix4(lightViewMatrix);
             return p;
@@ -523,7 +521,7 @@ export class ShadowManager {
             ));
         }
 
-        // 4. Calculer la boîte englobante (AABB) dans le repère de la lumière
+        // 5. Calculer la boîte englobante (AABB) dans le repère de la lumière
         let minX = Infinity, maxX = -Infinity;
         let minY = Infinity, maxY = -Infinity;
         let minZ = Infinity, maxZ = -Infinity;
@@ -537,7 +535,7 @@ export class ShadowManager {
             maxZ = Math.max(maxZ, p.z);
         });
 
-        // 5. Ajouter une marge de sécurité pour inclure les objets en hauteur
+        // 6. Ajouter une marge de sécurité pour inclure les objets en hauteur
         minX -= margin;
         maxX += margin;
         minY -= margin;
@@ -545,7 +543,7 @@ export class ShadowManager {
         minZ -= margin;
         maxZ += margin;
 
-        // 6. Appliquer les valeurs à la shadow camera
+        // 7. Appliquer les valeurs à la shadow camera
         this.directionalLight.shadow.camera.left = minX;
         this.directionalLight.shadow.camera.right = maxX;
         this.directionalLight.shadow.camera.top = maxY;
@@ -553,7 +551,7 @@ export class ShadowManager {
         this.directionalLight.shadow.camera.near = -maxZ; // Inversé car on regarde dans -Z
         this.directionalLight.shadow.camera.far = -minZ;
 
-        // 7. Mettre à jour la matrice de projection
+        // 8. Mettre à jour la matrice de projection
         this.directionalLight.shadow.camera.updateProjectionMatrix();
 
         if (!silent) {
@@ -599,6 +597,57 @@ export class ShadowManager {
         });
 
         return waterTiles;
+    }
+
+    // Trouver toutes les tiles (pour optimisation des ombres)
+    findAllTiles() {
+        if (!this.workplane) {
+            console.log('❌ Workplane non défini');
+            return [];
+        }
+
+        const tiles = [];
+        this.workplane.traverse((child) => {
+            if (child.userData && child.userData.tileType) {
+                tiles.push(child);
+            }
+        });
+
+        return tiles;
+    }
+
+    // Calculer les limites (bounds) des tiles sur le plan XZ
+    getTilesBounds() {
+        const tiles = this.findAllTiles();
+        
+        if (tiles.length === 0) {
+            return null;
+        }
+
+        let minX = Infinity, maxX = -Infinity;
+        let minZ = Infinity, maxZ = -Infinity;
+
+        tiles.forEach(tile => {
+            const worldPos = new THREE.Vector3();
+            tile.getWorldPosition(worldPos);
+            minX = Math.min(minX, worldPos.x);
+            maxX = Math.max(maxX, worldPos.x);
+            minZ = Math.min(minZ, worldPos.z);
+            maxZ = Math.max(maxZ, worldPos.z);
+        });
+
+        return { minX, maxX, minZ, maxZ };
+    }
+
+    // Borner un point entre les limites des tiles
+    clampPointToTileBounds(point, bounds) {
+        if (!bounds) return point;
+        
+        const clampedPoint = point.clone();
+        clampedPoint.x = Math.max(bounds.minX, Math.min(bounds.maxX, point.x));
+        clampedPoint.z = Math.max(bounds.minZ, Math.min(bounds.maxZ, point.z));
+        
+        return clampedPoint;
     }
 }
 

@@ -172,8 +172,8 @@ class Arrow {
                     warriorIndexGlobal: baseIndex + i,
                     pairKey: pairKey
                 });
-                mesh.castShadow = false;
-                mesh.receiveShadow = false;
+                // mesh.castShadow = false;
+                // mesh.receiveShadow = false;
                 if (!mesh) continue;
 
                 // Position monde au départ (ignorer le décalage q/r de la flèche)

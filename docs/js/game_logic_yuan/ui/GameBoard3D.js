@@ -601,8 +601,8 @@ export class GameBoard3D {
                 }
             });
 
-            tile.castShadow = false;
-            console.log('🎮 tile.castShadow:', tile.castShadow);
+            // tile.castShadow = false;
+            // console.log('🎮 tile.castShadow:', tile.castShadow);
                         
             const pos = this.hexToCartesian(position);
             tile.position.set(pos.x, 0.2, pos.z); // Hauteur fixée à 0.2
