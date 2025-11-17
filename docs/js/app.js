@@ -131,22 +131,59 @@ if (isIOS()) {
     }
   });
 
-  // Mettre à jour le style du bouton et la hauteur du body quand le plein écran change
+  // Fonction pour recalculer les dimensions de l'écran (NON-iOS uniquement)
+  function recalculateViewportDimensions() {
+    if (isIOS()) {
+      return; // Ne rien faire sur iOS
+    }
+    
+    // Recalculer la hauteur viewport disponible
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
+    // Forcer le recalcul des dimensions
+    document.documentElement.style.height = `${window.innerHeight}px`;
+    document.body.style.height = `${window.innerHeight}px`;
+    allDiv.style.height = `${window.innerHeight}px`;
+    
+    // Logger pour debug
+    console.log(`📐 Dimensions recalculées: ${window.innerWidth}x${window.innerHeight}`);
+  }
+  
+  // Mettre à jour le style du bouton et les dimensions quand le plein écran change
   function updateBtn() {
     if (isIOS()) {
       return;
     }
+    
     const fsElement =
       document.fullscreenElement ||
       document.webkitFullscreenElement ||
       document.mozFullScreenElement ||
       document.msFullscreenElement;
-    btn.textContent = '⛶'; // tu peux changer le symbole si tu veux
+    
+    btn.textContent = '⛶';
     btn.title = fsElement ? 'Quitter le plein écran' : 'Mode plein écran';
-
+    
+    // Recalculer les dimensions après un court délai pour laisser
+    // le navigateur terminer la transition du plein écran
+    setTimeout(() => {
+      recalculateViewportDimensions();
+      
+      // Forcer un reflow pour s'assurer que les changements sont appliqués
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
   }
-
+  
+  // Écouter les changements de plein écran
   ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event =>
     document.addEventListener(event, updateBtn)
   );
+  
+  // Écouter aussi les redimensionnements de fenêtre (pour non-iOS)
+  window.addEventListener('resize', () => {
+    if (!isIOS()) {
+      recalculateViewportDimensions();
+    }
+  });
 }
