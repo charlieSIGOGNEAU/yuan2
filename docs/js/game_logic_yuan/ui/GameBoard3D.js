@@ -59,6 +59,9 @@ export class GameBoard3D {
         this.targetFPS = Auth.options.fps; // FPS cible (peut être modifié via setFPS) 
         this.frameInterval = 1000 / this.targetFPS; // Intervalle entre frames en ms
         this.lastFrameTime = 0; // Timestamp de la dernière frame rendue
+
+        // limitation de la resolution
+        this.resolutionScale = 0.5;
         
         // Lissage du déplacement (pan)
         this.panSmoothingFactor = 0.5; // 0 = pas de lissage, 1 = lissage maximal (0.5 = moyenne)
@@ -145,7 +148,7 @@ export class GameBoard3D {
         this.renderer = new THREE.WebGLRenderer({ antialias: false });
         
 
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(window.devicePixelRatio * this.resolutionScale);
         this.renderer.outputColorSpace = THREE.SRGBColorSpace; 
         
         // Utiliser la taille du container au lieu de window
