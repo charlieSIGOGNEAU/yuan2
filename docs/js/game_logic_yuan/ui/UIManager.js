@@ -1169,7 +1169,7 @@ export class UIManager {
     }
 
     // Afficher le message de victoire avec tableau de classement
-    showVictoryMessage(rankedClans, myClan, i18n) {
+    showVictoryMessage(rankedClans, myClan) {
         // Créer le tableau de classement
         let tableHTML = `
             <div class="victory-container">

@@ -10,6 +10,7 @@ import { arrowManager } from '../../gameplay/arrowManager.js';
 
 
 
+
 export const simultaneousPlayPhase = {
     // Stockage des cercles actuels (plusieurs cercles pour les actions)
     currentCircle: null, // { circle: THREE.Mesh, territory: Territory } - pour la sélection
@@ -327,10 +328,9 @@ export const simultaneousPlayPhase = {
 
 
         // Afficher le tableau de classement avec le message personnalisé
-        import('../../../core/i18n.js').then(i18nModule => {
-            const i18n = i18nModule.i18n;
-            uiManager.showVictoryMessage(rankedClans, gameState.game.myClan, i18n);
-        });
+        
+        uiManager.showVictoryMessage(rankedClans, gameState.game.myClan);
+        
 
         // Convertir les clans classés en gameUsers classés pour l'API
         const rankedGameUsers = rankedClans.map(clan => {

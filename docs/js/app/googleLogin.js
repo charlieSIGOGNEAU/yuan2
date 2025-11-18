@@ -20,7 +20,7 @@ export const GoogleLoginPage = {
                 
                 <div class="google-auth-container">
                     <button id="google-auth-btn" class="google-connect-btn">
-                        <img src="./images/google-icon.png" alt="Google" class="btn-icon">
+                        <img src="/images/google-icon.png" alt="Google" class="btn-icon">
                         ${i18n.t('auth.google_login.button')}
                     </button>
                     

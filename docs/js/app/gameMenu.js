@@ -9,14 +9,22 @@ import { i18n } from '../core/i18n.js';
 export const GameMenuPage = {
     // Afficher la page
     async show(data = {}) {
+        console.log('🎮 GameMenuPage.show() appelé');
+        console.log('👤 Auth.currentUser:', Auth.currentUser);
+        console.log('🔑 Auth.authToken:', Auth.authToken ? 'présent' : 'absent');
+        
         const html = this.renderHTML();
         document.getElementById('app').innerHTML = html;
         loadCSS('css/lobby.css');
+        
+        console.log('✅ HTML injecté dans #app');
         
         // Mettre à jour le statut WebSocket
         WebSocketClient.updateConnectionUI();
         
         this.setupEvents();
+        
+        console.log('✅ GameMenuPage affichée');
     },
 
     // Générer le HTML avec les traductions

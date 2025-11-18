@@ -2,7 +2,9 @@
 
 // Fonctions utilitaires
 export async function loadPartial(path) {
-    const response = await fetch(path);
+    // S'assurer que le chemin commence par / pour Vite
+    const fullPath = path.startsWith('/') ? path : `/${path}`;
+    const response = await fetch(fullPath);
     return await response.text();
 }
 
@@ -15,7 +17,8 @@ export function loadCSS(path) {
     const link = document.createElement('link');
     link.id = 'page-css';
     link.rel = 'stylesheet';
-    link.href = path;
+    // S'assurer que le chemin commence par / pour Vite
+    link.href = path.startsWith('/') ? path : `/${path}`;
     document.head.appendChild(link);
 }
 
