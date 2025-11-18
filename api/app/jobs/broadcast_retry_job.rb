@@ -1,9 +1,7 @@
-# Job Sidekiq pour vérifier et retenter les broadcasts non confirmés
+# Job pour vérifier et retenter les broadcasts non confirmés
 # S'exécute toutes les 5 secondes via le scheduler
 
-class BroadcastRetryJob
-  include Sidekiq::Job
-
+class BroadcastRetryJob < ApplicationJob
   def perform
     BroadcastConfirmationService.check_and_retry_pending_broadcasts
   end
