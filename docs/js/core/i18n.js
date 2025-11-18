@@ -1,15 +1,35 @@
 // Gestionnaire de traductions (i18n)
 export class I18nManager {
     constructor() {
-        this.currentLanguage = 'fr'; // Langue par défaut
-        this.translations = {}; // Cache des traductions chargées
-        this.loadedLanguages = new Set(); // Langues déjà chargées
+        // Restaurer l'état depuis window si disponible (pour survivre au HMR de Vite)
+        if (typeof window !== 'undefined' && window.__I18N_STATE__) {
+            console.log('🔄 Restauration de l\'état i18n depuis window');
+            this.currentLanguage = window.__I18N_STATE__.currentLanguage;
+            this.translations = window.__I18N_STATE__.translations;
+            this.loadedLanguages = new Set(window.__I18N_STATE__.loadedLanguages);
+        } else {
+            this.currentLanguage = 'fr'; // Langue par défaut
+            this.translations = {}; // Cache des traductions chargées
+            this.loadedLanguages = new Set(); // Langues déjà chargées
+        }
+    }
+    
+    // Sauvegarder l'état dans window
+    _saveState() {
+        if (typeof window !== 'undefined') {
+            window.__I18N_STATE__ = {
+                currentLanguage: this.currentLanguage,
+                translations: this.translations,
+                loadedLanguages: Array.from(this.loadedLanguages)
+            };
+        }
     }
 
     // Définir la langue courante de l'utilisateur
     setLanguage(language) {
         this.currentLanguage = language;
         console.log(`🌍 Langue définie: ${language}`);
+        this._saveState();
     }
 
     // Récupérer la langue courante
@@ -26,7 +46,10 @@ export class I18nManager {
 
         try {
             console.log(`🌍 Chargement des traductions pour: ${language}`);
-            const response = await fetch(`./locales/${language}.json?v=${Date.now()}`);
+            // Utiliser un chemin absolu pour Vite
+            const path = `/locales/${language}.json?v=${Date.now()}`;
+            console.log(`🔗 Chargement depuis: ${path}`);
+            const response = await fetch(path);
             
             if (!response.ok) {
                 throw new Error(`Fichier de langue ${language} non trouvé`);
@@ -35,8 +58,10 @@ export class I18nManager {
             const translations = await response.json();
             this.translations[language] = translations;
             this.loadedLanguages.add(language);
+            this._saveState();
             
             console.log(`✅ Traductions ${language} chargées:`, Object.keys(translations).length, 'clés');
+            console.log(`💾 État i18n sauvegardé, langues chargées:`, Array.from(this.loadedLanguages));
             
         } catch (error) {
             console.error(`❌ Erreur lors du chargement de la langue ${language}:`, error);
@@ -125,4 +150,25 @@ export class I18nManager {
 }
 
 // Instance unique du gestionnaire de traductions
-export const i18n = new I18nManager(); 
+// Réutiliser l'instance existante si elle existe (pour survivre au HMR)
+let i18n;
+if (typeof window !== 'undefined' && window.i18n) {
+    console.log('🔄 Réutilisation de l\'instance i18n existante');
+    i18n = window.i18n;
+} else {
+    console.log('🆕 Création d\'une nouvelle instance i18n');
+    i18n = new I18nManager();
+    // Exposer i18n globalement
+    if (typeof window !== 'undefined') {
+        window.i18n = i18n;
+    }
+}
+
+export { i18n };
+
+// Support du HMR de Vite
+if (import.meta.hot) {
+    import.meta.hot.accept(() => {
+        console.log('🔥 i18n module rechargé par HMR, instance préservée');
+    });
+} 

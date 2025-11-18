@@ -147,22 +147,35 @@ export const PlayerWaitingPage = {
     },
 
     async giveUpGame() {
-        const response = await fetch(`${ServerConfig.HTTP_BASE}/games/give_up_game`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${Auth.authToken}`
-            },
-            body: JSON.stringify({
-                game_id: this.game_id,
-            })
-        });
-        const data = await response.json();
-        console.log('🎮 Données reçues:', data);
-        if (data.success) {
+        try {
+            const response = await fetch(`${ServerConfig.HTTP_BASE}/games/give_up_game`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Auth.authToken}`
+                },
+                body: JSON.stringify({
+                    game_id: this.game_id,
+                })
+            });
+            
+            const data = await response.json();
+            console.log('🎮 Données reçues:', data);
+            
+            // Si la partie n'existe plus (404) ou si on a réussi à la quitter
+            // Dans les deux cas, retourner au menu
+            if (data.success || response.status === 404 || data.message === 'Game not found') {
+                console.log('🔙 Retour au menu (partie quittée ou inexistante)');
+                Router.navigateTo('game-menu');
+            } else {
+                console.error('❌ Erreur:', data.message);
+                alert('❌ Erreur: ' + (data.message || 'Erreur de connexion au serveur'));
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors de la tentative de quitter:', error);
+            // En cas d'erreur, retourner quand même au menu
+            // car l'utilisateur ne peut rien faire d'autre
             Router.navigateTo('game-menu');
-        } else {
-            alert('❌ Erreur de connexion au serveur');
         }
     },
 

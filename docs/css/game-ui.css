@@ -215,7 +215,7 @@
 /* Déclaration de la police personnalisée */
 @font-face {
     font-family: 'EBGaramond';
-    src: url('../police/EBGaramond08-Regular.ttf') format('truetype');
+    src: url('/police/EBGaramond08-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }

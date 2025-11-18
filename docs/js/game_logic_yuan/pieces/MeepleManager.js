@@ -12,32 +12,32 @@ export class MeepleManager {
         // Types de meeples et leurs caractéristiques
         this.meepleTypes = {
             ville: { 
-                path: './glb/meeple/ville.glb', 
+                path: '/glb/meeple/ville.glb', 
                 colorable: true,
                 scale: { x: 1, y: 1, z: 1 }
             },
             village: { 
-                path: './glb/meeple/village.glb', 
+                path: '/glb/meeple/village.glb', 
                 colorable: true,
                 scale: { x: 1, y: 1, z: 1 }
             },
             guerrier: { 
-                path: './glb/meeple/guerrier.glb', 
+                path: '/glb/meeple/guerrier.glb', 
                 colorable: true,
                 scale: { x: 1, y: 1, z: 1 }
             },
             '2villes': { 
-                path: './glb/meeple/2villes.glb', 
+                path: '/glb/meeple/2villes.glb', 
                 colorable: true,
                 scale: { x: 1, y: 1, z: 1 }
             },
             temple: { 
-                path: './glb/meeple/Temple.glb', 
+                path: '/glb/meeple/Temple.glb', 
                 colorable: false,
                 scale: { x: 1, y: 1, z: 1 }
             },
             fortification: { 
-                path: './glb/meeple/fortification.glb', 
+                path: '/glb/meeple/fortification.glb', 
                 colorable: false,
                 scale: { x: 1, y: 1, z: 1 }
             }
@@ -46,7 +46,7 @@ export class MeepleManager {
         // Types de cercles et leurs caractéristiques
         this.circleTypes = {
             selection: {
-                path: './images/cercle.webp',
+                path: '/images/cercle.webp',
                 scale: 1.0, // Scale de base
                 colorable: true,
                 defaultColor: 0xffffff
@@ -65,7 +65,7 @@ export class MeepleManager {
                 solidColor: true // Carré plein sans texture
             },
             pathDisc: {
-                path: './images/disqueAlpha.png',
+                path: '/images/disqueAlpha.png',
                 size: 0.1,
                 colorable: true,
                 defaultColor: 0xff0000,
@@ -74,7 +74,7 @@ export class MeepleManager {
                 solidColor: false
             },
             pathArrow: {
-                path: './images/arow.png', // Flèche avec canal alpha
+                path: '/images/arow.png', // Flèche avec canal alpha
                 size: 0.3, // Plus grande que les carrés pour être visible
                 colorable: true,
                 defaultColor: 0xff0000, // Rouge
@@ -83,7 +83,7 @@ export class MeepleManager {
                 solidColor: false // Avec texture
             },
             tax1Chao: {
-                path: './images/1chao.webp',
+                path: '/images/1chao.webp',
                 size: 0.5,
                 colorable: false,
                 defaultColor: 0xffffff,
@@ -92,7 +92,7 @@ export class MeepleManager {
                 solidColor: false
             },
             tax2Chao: {
-                path: './images/2chao.webp',
+                path: '/images/2chao.webp',
                 size: 0.5,
                 colorable: false,
                 defaultColor: 0xffffff,
@@ -101,7 +101,7 @@ export class MeepleManager {
                 solidColor: false
             },
             echao: {
-                path: './images/echao.webp',
+                path: '/images/echao.webp',
                 size: 0.5,
                 colorable: false,
                 defaultColor: 0xffffff,
@@ -110,7 +110,7 @@ export class MeepleManager {
                 solidColor: false
             },
             rotation: {
-                path: './images/rotation.webp',
+                path: '/images/rotation.webp',
                 size: 1.0,
                 colorable: false,
                 defaultColor: 0xffffff,
@@ -119,7 +119,7 @@ export class MeepleManager {
                 solidColor: false
             },
             buttonOk: {
-                path: './images/buttonOk.webp',
+                path: '/images/buttonOk.webp',
                 size: 1.0,
                 colorable: false,
                 defaultColor: 0xffffff,
