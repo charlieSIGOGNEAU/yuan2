@@ -42,7 +42,7 @@ export function copyAssetsPlugin() {
             const docsDir = resolve(__dirname, 'docs');
             
             // Dossiers à copier
-            const assetsDirs = ['images', 'glb', 'locales', 'police', 'svg', 'partials'];
+            const assetsDirs = ['images', 'glb', 'locales', 'police', 'svg', 'partials', 'css'];
             
             console.log('📦 Copie des assets statiques...');
             

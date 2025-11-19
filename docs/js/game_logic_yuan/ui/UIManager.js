@@ -47,10 +47,20 @@ export class UIManager {
     // Méthode interne pour le chargement
     async _loadGameUIInternal() {
         try {
+            console.log('🎮 UIManager._loadGameUIInternal() - Début du chargement');
             
             // Charger le HTML de l'interface
-            const response = await fetch(`./partials/game-ui.html`);
+            const partialPath = `/partials/game-ui.html`;
+            console.log('📄 Chargement du partial:', partialPath);
+            const response = await fetch(partialPath);
+            console.log('📄 Réponse fetch partial:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                throw new Error(`Erreur chargement partial: ${response.status} ${response.statusText}`);
+            }
+            
             const htmlContent = await response.text();
+            console.log('📄 Partial chargé, longueur:', htmlContent.length, 'caractères');
             
             // Injecter l'interface dans le body
             const uiContainer = document.createElement('div');
@@ -64,17 +74,26 @@ export class UIManager {
             });
 
             allContainer.insertAdjacentHTML('beforeend', htmlContent);
+            console.log('✅ HTML injecté dans #all');
             
             // Charger le CSS de l'interface
+            const cssPath = `/css/game-ui.css`;
+            console.log('🎨 Chargement CSS:', cssPath);
             const link = document.createElement('link');
             link.rel = 'stylesheet';
-            link.href = `./css/game-ui.css`;
+            link.href = cssPath;
+            link.onload = () => console.log('✅ CSS game-ui chargé');
+            link.onerror = () => console.error('❌ Erreur chargement CSS game-ui');
             document.head.appendChild(link);
             
             // Charger le CSS du menu d'options
+            const optionsCssPath = `/css/options-menu.css`;
+            console.log('🎨 Chargement CSS options:', optionsCssPath);
             const optionsLink = document.createElement('link');
             optionsLink.rel = 'stylesheet';
-            optionsLink.href = `./css/options-menu.css`;
+            optionsLink.href = optionsCssPath;
+            optionsLink.onload = () => console.log('✅ CSS options-menu chargé');
+            optionsLink.onerror = () => console.error('❌ Erreur chargement CSS options-menu');
             document.head.appendChild(optionsLink);
             
             // Références vers les éléments UI

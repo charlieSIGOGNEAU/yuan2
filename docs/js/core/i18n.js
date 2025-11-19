@@ -8,9 +8,9 @@ export class I18nManager {
             this.translations = window.__I18N_STATE__.translations;
             this.loadedLanguages = new Set(window.__I18N_STATE__.loadedLanguages);
         } else {
-            this.currentLanguage = 'fr'; // Langue par défaut
-            this.translations = {}; // Cache des traductions chargées
-            this.loadedLanguages = new Set(); // Langues déjà chargées
+        this.currentLanguage = 'fr'; // Langue par défaut
+        this.translations = {}; // Cache des traductions chargées
+        this.loadedLanguages = new Set(); // Langues déjà chargées
         }
     }
     

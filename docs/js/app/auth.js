@@ -152,7 +152,7 @@ const AuthInstance = {
             Router.navigateTo('landing');
         }
     }
-};
+}; 
 
 // Réutiliser l'instance existante si elle existe (pour survivre au HMR)
 let Auth;
@@ -166,7 +166,7 @@ if (typeof window !== 'undefined' && window.Auth) {
     Auth = AuthInstance;
     // Exposer Auth globalement
     if (typeof window !== 'undefined') {
-        window.Auth = Auth;
+window.Auth = Auth;
     }
 }
 
