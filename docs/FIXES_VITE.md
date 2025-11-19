@@ -103,3 +103,4 @@ Assurez-vous que :
 2. Vérifier la console pour les erreurs
 3. Si les traductions ne fonctionnent toujours pas, essayer l'Option 2 (déplacer vers `public/`)
 
+

@@ -143,3 +143,4 @@ npm install
 
 **✨ Configuration Vite terminée et prête à l'emploi !**
 
+
