@@ -1,6 +1,7 @@
 Yuan – Online Strategy Game (Production)
 
-
+![demo](yuanPaysage2.gif)  
+Pensé et jouable sur smartphone (portrait et paysage, contraintes d’écran réduites)
 
 Yuan est un jeu de stratégie multijoueur en ligne, basé sur des règles complexes et des interactions simultanées entre joueurs.
 Le projet a été mené en autonomie, de la conception des règles jusqu’au déploiement en production.
@@ -80,7 +81,8 @@ Limites assumées
  - Certains fichiers front sont trop volumineux et pourraient être davantage découpés
  - Stack choisie pour la vitesse d’itération plutôt que pour un cadre industriel strict
 
-
+---
+  
 État du projet
 
 Le projet est fonctionnel, déployé et jouable, mais reste un projet d’auto-formation.
