@@ -104,3 +104,4 @@ Assurez-vous que :
 3. Si les traductions ne fonctionnent toujours pas, essayer l'Option 2 (déplacer vers `public/`)
 
 
+
