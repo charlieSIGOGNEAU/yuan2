@@ -282,7 +282,7 @@ export const biddingPhase = {
             if (circleInstance) {
                 // Convertir les coordonnées hexagonales en cartésiennes pour le positionnement
                 const cartesianPos = gameBoard.hexToCartesian(position);
-                circleInstance.position.set(cartesianPos.x, 0.1, cartesianPos.z);
+                circleInstance.position.set(cartesianPos.x, 0.11, cartesianPos.z);
                 
                 // Cloner le matériau pour éviter les conflits d'opacité entre instances
                 if (circleInstance.material) {

@@ -153,6 +153,9 @@ export const simultaneousPlayPhase = {
 
         // mes le chois des action a zero
         uiManager.setActionChoicesToZero();
+
+        // met le chao temp a la valeur de available_chao du clan du joueur
+        gameState.game.myChaoTemp = gameState.game.myClan.available_chao;
     },
 
 
@@ -422,7 +425,7 @@ export const simultaneousPlayPhase = {
         
         console.log(`🎨 Couleur du clan du joueur: ${clanColor} (${playerClan ? playerClan.name : 'aucun clan'})`);
         
-        const circle = await this.createCircle(gameBoard, territory.position, 1.0, 0.1, clanColor);
+        const circle = await this.createCircle(gameBoard, territory.position, 1.0, 0.11, clanColor);
         
         if (!circle) {
             console.error('❌ Impossible de créer le cercle pour le territoire');
@@ -543,7 +546,7 @@ export const simultaneousPlayPhase = {
             for (let i = 0; i < actionGroup.length; i++) {
                 const actionData = actionGroup[i];
                 const scale = 1.0 + (i * 0.15); // Premier cercle: 1.0, puis 1.15, 1.30, etc.
-                const height = 0.1; // Hauteur fixe pour tous les cercles
+                const height = 0.11; // Hauteur fixe pour tous les cercles
                 const isMultiple = actionGroup.length > 1; // Vérifier s'il y a plusieurs cercles
                 
                 try {
@@ -592,7 +595,7 @@ export const simultaneousPlayPhase = {
     },
 
     // Créer un cercle pour une action spécifique
-    async createActionCircle(gameBoard, position, color, scale = 1.0, height = 0.1, isMultiple = false) {
+    async createActionCircle(gameBoard, position, color, scale = 1.0, height = 0.11, isMultiple = false) {
         try {
             // Utiliser le MeepleManager pour créer l'instance de cercle
             const circle = await gameBoard.meepleManager.createCircleInstance('selection', position, scale, height, color, {
@@ -724,16 +727,17 @@ export const simultaneousPlayPhase = {
             militarisation_level: militarisationLevel
           };
           
-        
-        console.log('📤 Envoi de l\'action à l\'API:', actionData);
 
         // Vérifier si l'action est possible
         const isActionPossible = this.isActionPossible(actionData).possible;
         const saveMessage = this.isActionPossible(actionData).saveMessage;
 
         if (!isActionPossible) {
+            console.log('❌ Action impossible');
             return;
         }
+
+        console.log('📤 Envoi de l\'action à l\'API:', actionData);
         // Importer et appeler gameApi
         import('../../gameApi.js').then(module => {
             module.gameApi.sendActionToApi(actionData, saveMessage);
@@ -920,10 +924,6 @@ export const simultaneousPlayPhase = {
         
         console.log('✅ Traitement des biddings victorieux terminé');
         
-        // Incrémenter le tour de jeu simultané
-        // gameState.game.simultaneous_play_turn = 1;
-        
-        // Mettre à jour toutes les cases de la barre d'information
         uiManager.updateSimultaneousPlayInfoBar();
         
         // Afficher le message d'accueil avec la couleur du clan du joueur
