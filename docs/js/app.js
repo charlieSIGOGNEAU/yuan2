@@ -146,8 +146,7 @@ if (isIOS()) {
     document.body.style.height = `${window.innerHeight}px`;
     allDiv.style.height = `${window.innerHeight}px`;
     
-    // Logger pour debug
-    console.log(`📐 Dimensions recalculées: ${window.innerWidth}x${window.innerHeight}`);
+
   }
   
   // Mettre à jour le style du bouton et les dimensions quand le plein écran change

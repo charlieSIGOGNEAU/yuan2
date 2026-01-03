@@ -3,3 +3,5 @@ python3 -m http.server 8000
 
 Ouvrir DevDb via la palette de commandes :
 Ctrl+Shift+P → tape DevDb: Open → sélectionne la table api/storage/development.sklite3
+
+lancer Vite:  npm run dev

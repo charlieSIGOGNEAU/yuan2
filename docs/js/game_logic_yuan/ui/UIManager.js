@@ -320,8 +320,7 @@ export class UIManager {
             totalAdjustedCost += adjustedCost;
         });
 
-
-
+        // normalement dispensable car effectué au debut de chaque tour
         if (gameState.game.myChaoTemp === undefined) {
             gameState.game.myChaoTemp = gameState.game.myClan.available_chao;
           }
