@@ -41,4 +41,27 @@ class Action < ApplicationRecord
   
     result
   end
+
+  def format_action_response()
+    response = {
+      id: id,
+      game_user_id: game_user_id,
+      game_id: game_id,
+      turn: turn,
+      position_q: position_q,
+      position_r: position_r,
+      development_level: development_level,
+      fortification_level: fortification_level,
+      militarisation_level: militarisation_level,
+      created_at: created_at
+    }
+    
+    # Ajouter updated_at seulement si différent de created_at
+    response[:updated_at] = updated_at if updated_at != created_at
+    
+    response
+  end
+
+
+
 end 

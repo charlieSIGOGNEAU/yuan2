@@ -265,7 +265,6 @@ class Api::V1::GamesController < ApplicationController
     end
 
     if game.simultaneous_play_turn != params[:simultaneous_play_turn]
-      p "1"*100
       render json: {
         success: false,
         message: "Mauvais tour"
@@ -274,30 +273,27 @@ class Api::V1::GamesController < ApplicationController
     end
 
     if game.updated_at > (game.turn_duration ).seconds.ago
-      p "2"*100
-      p game.updated_at
-      p game.turn_duration.seconds.ago
-      p "2"*100
       render json: {
         success: false,
         message: "Tour non forcément terminé"
       }, status: :ok
-    
-    else
-      result = Action.force_end_turn(game,params[:simultaneous_play_turn])
-      if result == "some players did not play this turn"
-        render json: {
-          success: true,
-          message: result
-        }, status: :ok
-        GameBroadcast.game_broadcast_game_details(game.id)
-      else
-        render json: {
-          success: false,
-          message: result
-        }, status: :ok
-      end
+      return
     end
+        
+    result = Action.force_end_turn(game,params[:simultaneous_play_turn])
+    if result == "some players did not play this turn"
+      render json: {
+        success: true,
+        message: result
+      }, status: :ok
+      GameBroadcast.game_broadcast_game_details(game.id)
+    else
+      render json: {
+        success: false,
+        message: result
+      }, status: :ok
+    end
+    
   end
 
   private

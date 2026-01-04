@@ -136,32 +136,45 @@ class Api::V1::ActionsController < ApplicationController
   end
 
   def save_and_render(action)
-    # Transaction pour lock sur la game et sauvegarde de l'action
     success = Game.transaction do
-      @game.lock!
-  
+      @game.reload.lock!  #pour s'assurer qu'un broadcast ne s'envois avec des information perimées
       current_turn = @game.simultaneous_play_turn
       if action.turn != current_turn
         render json: { success: false, message: "trop tard, le tour est déjà terminé" }, status: :forbidden
-        false  # renvoie false pour indiquer l'échec
+        false  
       elsif !action.save
         error_msg = "Erreur: #{action.errors.full_messages.join(', ')}"
         puts "❌ #{error_msg}"
         render json: { success: false, message: error_msg, errors: action.errors.full_messages }, status: :unprocessable_entity
         false
       else
-        true  # tout s'est bien passé
+        true  
       end
     end
   
-    return unless success  # sort si la transaction a échoué
+    return unless success  # sort si la transaction a échoué, les render sont deja fais. mais pas de render si true
   
-    # Hors transaction : broadcast sécurisé
     puts "✅ Action enregistrée pour le joueur #{action.game_user.user_name}"
     result = @game.check_turn_completion_and_broadcast(action, @current_user)
-    status_code = action.created_at == action.updated_at ? :created : :ok
-    render json: result, status: status_code
+    messages = {
+      tour_finished: "Tour terminé avec succès",
+      already_completed: "Le tour était déjà finalisé",
+      still_waiting: "Action enregistrée, en attente des autres joueurs"
+    }
+    render json: {
+      success: true,
+      message: messages[result],
+      turn_completed: [:tour_finished, :already_completed].include?(result),
+      action: action.format_action_response()
+      }, status: :ok
   end
+
+
+
+
+  #   status_code = action.created_at == action.updated_at ? :created : :ok
+  #   render json: result, status: status_code
+  # end
   
 
 end 

@@ -377,98 +377,86 @@ class Game < ApplicationRecord
 
 
 
-      
 
-
-  # je n'ai pas check ce qu'a fais cursor, il y a probablement beaucoup de choses non necessaire et à optimiser
   def check_turn_completion_and_broadcast(action, current_user)
-    # creer des action passer le tour pour les joueurs qui ont abandonné
-    game_users_abandoned = game_users.where(abandoned: true)
-    if game_users_abandoned.count > 0
-      game_users_abandoned.each do |game_user|
-        game_user_id = game_user.id
-        # regarder si il a jouer ce tour
-        existing_action = actions.find_by(game_user_id: game_user_id, turn: action.turn)
-        # si il n'a pas jouer ce tour, creer une action passer le tour
-        if existing_action.nil?
-          actions.create(game_user_id: game_user_id, turn: action.turn, position_q: nil, position_r: nil, development_level: 0, fortification_level: 0, militarisation_level: 0)
-        end
-      end
+    result_status = transaction_finalization(action)
+    case result_status
+    when :tour_finished
+      GameBroadcast.game_broadcast_game_details(self.id)
+    when :still_waiting
+      GameBroadcast.user_broadcast_waiting_for_others(current_user.id, self.id)
     end
-
-    current_turn = action.turn
-    # Compter les actions avec le même turn dans la même game
-    actions_count = actions.where(turn: current_turn).count
-    players_count = game_users.count
-    
-    puts "📊 Actions du turn #{current_turn}: #{actions_count}/#{players_count}"
-    
-    result = {}
-    
-    if actions_count == players_count
-      puts "🏆 Toutes les actions sont terminées pour ce turn, tentative de finalisation..."
-      
-      # PROTECTION RACE CONDITION : Verrou atomique sur le statut de la game
-      turn_completed = false
-      
-      transaction do
-        reload.lock!  # Verrou pessimiste sur la game
-        
-        # Vérifier que la game est encore en simultaneous_play
-        if simultaneous_play?
-          puts "🔒 Verrou acquis, traitement de la fin du tour"
-
-          # Incrémenter simultaneous_play_turn
-          new_simultaneous_play_turn = simultaneous_play_turn + 1
-          update!(simultaneous_play_turn: new_simultaneous_play_turn)
-          puts "🎮 simultaneous_play_turn incrémenté: #{new_simultaneous_play_turn}"
-          
-          turn_completed = true
-        else
-          puts "⚠️ Un autre joueur a déjà finalisé ce tour (statut: #{game_status})"
-        end
-      end
-      
-      # Broadcast SEULEMENT si ce thread a gagné le verrou
-      if turn_completed
-        puts "📡 Broadcasting des résultats du tour..."
-        GameBroadcast.game_broadcast_game_details(self.id)
-        
-        result = {
-          success: true,
-          message: "Action #{action.created_at == action.updated_at ? 'créée' : 'mise à jour'} avec succès - Tour terminé",
-          action: format_action_response(action),
-          turn_completed: true
-        }
-      else
-        puts "📡 Tour déjà finalisé par un autre joueur, broadcast des détails actuels..."
-        GameBroadcast.game_broadcast_game_details(self.id)
-        
-        result = {
-          success: true,
-          message: "Action #{action.created_at == action.updated_at ? 'créée' : 'mise à jour'} avec succès - Tour déjà terminé",
-          action: format_action_response(action),
-          turn_completed: true,
-          already_completed: true
-        }
-      end
-    else
-      puts "⏳ En attente des autres joueurs (#{actions_count}/#{players_count})"
-      
-      # Notifier ce joueur qu'il attend les autres
-      GameBroadcast.user_broadcast_waiting_for_others(current_user.id, id)
-      
-      result = {
-        success: true,
-        message: "Action #{action.created_at == action.updated_at ? 'créée' : 'mise à jour'} avec succès - En attente des autres joueurs",
-        action: format_action_response(action),
-        turn_completed: false,
-        waiting_for_players: players_count - actions_count
-      }
-    end
-    
-    result
+    result_status
   end
+
+
+
+  #   # creer des action passer le tour pour les joueurs qui ont abandonné
+  #   fill_missing_actions_for_abandoned(action.turn) 
+
+  #   current_turn = action.turn
+  #   actions_count = actions.where(turn: current_turn).count
+    
+  #   result = {}
+    
+  #   if actions_count == player_count
+  #     puts "🏆 Toutes les actions sont terminées pour ce turn, tentative de finalisation..."
+      
+  #     turn_completed = false
+      
+  #     transaction do
+  #       reload.lock!  #pour s'assurer que le broadcast ne s'envois avec des Actions perimées
+  #       if current_turn != simultaneous_play_turn
+  #         puts "⚠️ Un autre joueur a déjà finalisé ce tour (statut: #{game_status})"
+  #         return {success: false, message: "Un autre joueur a déjà finalisé ce tour"}
+  #       end
+
+  #       new_simultaneous_play_turn = simultaneous_play_turn + 1
+  #       update!(simultaneous_play_turn: new_simultaneous_play_turn)
+  #       puts "🎮 simultaneous_play_turn incrémenté: #{new_simultaneous_play_turn}"
+  #       turn_completed = true
+  #     end
+      
+  #     # Broadcast SEULEMENT si ce thread a gagné le verrou
+  #     if turn_completed
+  #       puts "📡 Broadcasting des résultats du tour..."
+  #       GameBroadcast.game_broadcast_game_details(self.id)
+        
+  #       result = {
+  #         success: true,
+  #         message: "Action #{action.created_at == action.updated_at ? 'créée' : 'mise à jour'} avec succès - Tour terminé",
+  #         action: format_action_response(action),
+  #         turn_completed: true
+  #       }
+  #     else
+  #       puts "📡 Tour déjà finalisé par un autre joueur, broadcast des détails actuels..."
+  #       GameBroadcast.game_broadcast_game_details(self.id)
+        
+  #       result = {
+  #         success: true,
+  #         message: "Action #{action.created_at == action.updated_at ? 'créée' : 'mise à jour'} avec succès - Tour déjà terminé",
+  #         action: format_action_response(action),
+  #         turn_completed: true,
+  #         already_completed: true
+  #       }
+  #     end
+  #   else
+  #     puts "⏳ En attente des autres joueurs (#{actions_count}/#{player_count})"
+      
+  #     # Notifier ce joueur qu'il attend les autres
+  #     GameBroadcast.user_broadcast_waiting_for_others(current_user.id, id)
+      
+  #     result = {
+  #       success: true,
+  #       message: "Action #{action.created_at == action.updated_at ? 'créée' : 'mise à jour'} avec succès - En attente des autres joueurs",
+  #       action: format_action_response(action),
+  #       turn_completed: false,
+  #       waiting_for_players: player_count - actions_count
+  #     }
+  #   end
+    
+  #   result
+  # end
 
   # je n'ai pas check ce qu'a fais cursor, il y a probablement beaucoup de choses non necessaire et à optimiser
   def check_game_completion_after_abandon
@@ -528,24 +516,42 @@ class Game < ApplicationRecord
     raise
   end
 
-  def format_action_response(action)
-    response = {
-      id: action.id,
-      game_user_id: action.game_user_id,
-      game_id: action.game_id,
-      turn: action.turn,
-      position_q: action.position_q,
-      position_r: action.position_r,
-      development_level: action.development_level,
-      fortification_level: action.fortification_level,
-      militarisation_level: action.militarisation_level,
-      created_at: action.created_at
-    }
-    
-    # Ajouter updated_at seulement si différent de created_at
-    response[:updated_at] = action.updated_at if action.updated_at != action.created_at
-    
-    response
+  
+
+  # creer des action passer le tour pour les joueurs qui ont abandonné
+  def fill_missing_actions_for_abandoned(turn)
+    game_users.where(abandoned: true).each do |game_user|
+      next if actions.exists?(game_user_id: game_user.id, turn: turn)
+      actions.create!(
+        game_user_id: game_user.id, turn: turn,
+        position_q: nil, position_r: nil,
+        development_level: 0, fortification_level: 0, militarisation_level: 0
+      )
+    end
   end
+
+  def transaction_finalization(action)
+    status = nil
+    transaction do
+      reload.lock!
+      if action.turn != simultaneous_play_turn
+        status = :already_completed
+      else  
+        fill_missing_actions_for_abandoned(simultaneous_play_turn)
+        
+        if actions.where(turn: simultaneous_play_turn).count == player_count
+          increment!(:simultaneous_play_turn)
+          status = :tour_finished
+        else    
+          status = :still_waiting
+        end
+      end
+    end
+    return status
+  rescue ActiveRecord::RecordNotUnique #au cas ou mais ne devrais normalement pas se produire car lock sur la game
+    return :already_completed
+  end
+  
+  
 
 end 
