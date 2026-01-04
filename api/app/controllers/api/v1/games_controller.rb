@@ -254,47 +254,79 @@ class Api::V1::GamesController < ApplicationController
 
   def force_end_turn
     game = @game
-
-    if params[:simultaneous_play_turn].nil?
-      puts "⚠️ Paramètre manquant: simultaneous_play_turn"
-      render json: {
-        success: false,
-        message: "Paramètre 'simultaneous_play_turn' manquant"
-      }, status: :bad_request
-      return
+    turn_param = params[:simultaneous_play_turn].to_i
+  
+    # 1. Vérification des paramètres
+    if turn_param.zero?
+      return render json: { success: false, message: "Paramètre manquant" }, status: :bad_request
     end
-
-    if game.simultaneous_play_turn != params[:simultaneous_play_turn]
-      render json: {
-        success: false,
-        message: "Mauvais tour"
-      }, status: :ok
-      return
+  
+    # 2. Vérification du tour actuel
+    if game.simultaneous_play_turn != turn_param
+      return render json: { success: false, message: "Le tour a déjà évolué" }, status: :ok
     end
-
-    if game.updated_at > (game.turn_duration ).seconds.ago
-      render json: {
-        success: false,
-        message: "Tour non forcément terminé"
-      }, status: :ok
-      return
+  
+    # 3. Vérification du temps (Est-ce que le temps est vraiment écoulé ?)
+    # On compare le temps actuel avec le temps de la dernière mise à jour + durée du tour
+    if game.updated_at > game.turn_duration.seconds.ago
+      return render json: { success: false, message: "Le temps n'est pas encore écoulé" }, status: :ok
     end
-        
-    result = Action.force_end_turn(game,params[:simultaneous_play_turn])
-    if result == "some players did not play this turn"
-      render json: {
-        success: true,
-        message: result
-      }, status: :ok
+  
+    # 4. Exécution de la logique
+    result = Action.force_end_turn(game, turn_param)
+  
+    # 5. Réponse et Broadcast
+    if [:forced_success, :all_played].include?(result)
       GameBroadcast.game_broadcast_game_details(game.id)
+      render json: { success: true, message: "Tour terminé" }, status: :ok
     else
-      render json: {
-        success: false,
-        message: result
-      }, status: :ok
+      render json: { success: false, message: "Erreur ou déjà terminé" }, status: :ok
     end
-    
   end
+
+  # def force_end_turn
+  #   game = @game
+
+  #   if params[:simultaneous_play_turn].nil?
+  #     puts "⚠️ Paramètre manquant: simultaneous_play_turn"
+  #     render json: {
+  #       success: false,
+  #       message: "Paramètre 'simultaneous_play_turn' manquant"
+  #     }, status: :bad_request
+  #     return
+  #   end
+
+  #   if game.simultaneous_play_turn != params[:simultaneous_play_turn]
+  #     render json: {
+  #       success: false,
+  #       message: "Mauvais tour"
+  #     }, status: :ok
+  #     return
+  #   end
+
+  #   if game.updated_at > (game.turn_duration ).seconds.ago
+  #     render json: {
+  #       success: false,
+  #       message: "Tour non forcément terminé"
+  #     }, status: :ok
+  #     return
+  #   end
+        
+  #   result = Action.force_end_turn(game,params[:simultaneous_play_turn])
+  #   if result == "some players did not play this turn"
+  #     render json: {
+  #       success: true,
+  #       message: result
+  #     }, status: :ok
+  #     GameBroadcast.game_broadcast_game_details(game.id)
+  #   else
+  #     render json: {
+  #       success: false,
+  #       message: result
+  #     }, status: :ok
+  #   end
+    
+  # end
 
   private
   def set_player_count

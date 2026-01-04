@@ -7,40 +7,72 @@ class Action < ApplicationRecord
   scope :for_turn, ->(turn) { where(turn: turn) }
   scope :ordered, -> { order(:turn, :created_at) }
   
-  def self.force_end_turn(game, simultaneous_play_turn)
-    result = nil
-  
+  def self.force_end_turn(game, turn_to_handle)
+    result_status = nil
     Game.transaction do
       game.lock!
   
-      actions = Action.where(game_id: game.id, turn: simultaneous_play_turn)
-      if actions.count < game.player_count
-        user_played_games = actions.map(&:game_user_id)
-        all_game_users = game.game_users.pluck(:id)
-        not_played_game_users = all_game_users - user_played_games
+      if game.simultaneous_play_turn != turn_to_handle
+        result_status = :already_ended
+      else
+        played_ids = game.actions.where(turn: turn_to_handle).pluck(:game_user_id)
+        missing_users = game.game_users.where.not(id: played_ids).pluck(:id)
   
-        not_played_game_users.each do |game_user_id|
+        missing_users.each do |user_id|
           Action.create!(
             game_id: game.id,
-            game_user_id: game_user_id,
-            turn: simultaneous_play_turn,
+            game_user_id: user_id,
+            turn: turn_to_handle,
             development_level: 0,
             fortification_level: 0,
             militarisation_level: 0
           )
         end
   
-        if game.simultaneous_play_turn == simultaneous_play_turn
-          game.update!(simultaneous_play_turn: simultaneous_play_turn + 1)
-          result = "some players did not play this turn"
-        end
-      else
-        result = "all players played this turn"
+        game.increment!(:simultaneous_play_turn)
+        result_status = :forced_success
       end
-    end
+    end 
   
-    result
+    result_status 
   end
+
+
+
+
+  #   result = nil
+  
+  #   Game.transaction do
+  #     game.lock!
+  
+  #     actions = Action.where(game_id: game.id, turn: simultaneous_play_turn)
+  #     if actions.count < game.player_count
+  #       user_played_games = actions.map(&:game_user_id)
+  #       all_game_users = game.game_users.pluck(:id)
+  #       not_played_game_users = all_game_users - user_played_games
+  
+  #       not_played_game_users.each do |game_user_id|
+  #         Action.create!(
+  #           game_id: game.id,
+  #           game_user_id: game_user_id,
+  #           turn: simultaneous_play_turn,
+  #           development_level: 0,
+  #           fortification_level: 0,
+  #           militarisation_level: 0
+  #         )
+  #       end
+  
+  #       if game.simultaneous_play_turn == simultaneous_play_turn
+  #         game.update!(simultaneous_play_turn: simultaneous_play_turn + 1)
+  #         result = "some players did not play this turn"
+  #       end
+  #     else
+  #       result = "all players played this turn"
+  #     end
+  #   end
+  
+  #   result
+  # end
 
   def format_action_response()
     response = {
