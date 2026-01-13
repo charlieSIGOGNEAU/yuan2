@@ -11,9 +11,12 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "actions", force: :cascade do |t|
-    t.integer "game_user_id", null: false
-    t.integer "game_id", null: false
+    t.bigint "game_user_id", null: false
+    t.bigint "game_id", null: false
     t.integer "turn"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -23,26 +26,25 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
     t.integer "fortification_level"
     t.integer "militarisation_level"
     t.index ["game_id"], name: "index_actions_on_game_id"
-    t.index ["game_user_id", "turn"], name: "index_actions_on_game_user_id_and_turn_and_action", unique: true
     t.index ["game_user_id"], name: "index_actions_on_game_user_id"
   end
 
   create_table "biddings", force: :cascade do |t|
-    t.integer "game_id", null: false
-    t.integer "game_user_id", null: false
+    t.bigint "game_id", null: false
+    t.bigint "game_user_id", null: false
     t.integer "turn"
     t.integer "chao"
     t.boolean "victory"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "clan_id"
+    t.bigint "clan_id"
     t.index ["clan_id"], name: "index_biddings_on_clan_id"
     t.index ["game_id"], name: "index_biddings_on_game_id"
     t.index ["game_user_id"], name: "index_biddings_on_game_user_id"
   end
 
   create_table "clans", force: :cascade do |t|
-    t.integer "game_id", null: false
+    t.bigint "game_id", null: false
     t.string "color"
     t.string "name"
     t.integer "start_q"
@@ -53,9 +55,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
   end
 
   create_table "game_users", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.integer "game_id", null: false
-    t.integer "clan_id"
+    t.bigint "user_id", null: false
+    t.bigint "game_id", null: false
+    t.bigint "clan_id"
     t.boolean "player_ready", default: false, null: false
     t.string "user_name"
     t.datetime "created_at", null: false
@@ -98,8 +100,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
     t.integer "position_q"
     t.integer "position_r"
     t.integer "rotation"
-    t.integer "game_user_id", null: false
-    t.integer "game_id", null: false
+    t.bigint "game_user_id", null: false
+    t.bigint "game_id", null: false
     t.integer "turn"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

@@ -318,29 +318,25 @@ class Game < ApplicationRecord
 
   def reassign_players(place_available)
     other_game = Game.where(game_status: "waiting_for_players", game_type: "quick_game").first
-    if other_game
-      num_players_to_move = 0
-      Game.transaction do
-        other_game.lock!
-        if other_game.game_status == "waiting_for_players"
-          num_players_to_move = [place_available, other_game.waiting_players_count].min
-          other_game.waiting_players_count -= num_players_to_move
-          other_game.save!
-
-          num_players_to_move.times do |i|
-            game_user = other_game.game_users.first
-            game_user.game_id = self.id
-            game_user.save!
-
-          end
-          self.waiting_players_count += num_players_to_move
-          self.save!
-        else
-          raise ActiveRecord::Rollback
-        end
+    return unless other_game
+  
+    Game.transaction do
+      other_game.lock!
+      self.lock!
+  
+      if other_game.game_status == "waiting_for_players" && self.game_status == "waiting_for_players"
+        num_players_to_move = [place_available, other_game.waiting_players_count].min
+  
+        other_game.decrement!(:waiting_players_count, num_players_to_move)
+        self.increment!(:waiting_players_count, num_players_to_move)
+  
+        other_game.game_users.limit(num_players_to_move).update_all(game_id: self.id)
+      else
+        raise ActiveRecord::Rollback
       end
     end
   end
+  
 
   def give_up_game(game_user)
     transaction do

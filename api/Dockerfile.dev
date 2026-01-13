@@ -1,0 +1,72 @@
+# Dockerfile pour le développement
+# syntax = docker/dockerfile:1
+
+ARG RUBY_VERSION=3.4.2
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+# Rails app lives here
+WORKDIR /rails
+
+# Install base packages
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    curl \
+    libjemalloc2 \
+    libvips \
+    libpq-dev \
+    build-essential \
+    git \
+    pkg-config \
+    libyaml-dev \
+    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Set development environment
+ENV RAILS_ENV="development" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_JOBS=4 \
+    BUNDLE_TIMEOUT=300 \
+    BUNDLE_RETRY=5
+
+# Install Bundler
+RUN gem install bundler:2.6.3
+
+# Configurer bundle pour utiliser un miroir plus rapide
+RUN bundle config set --global mirror.https://rubygems.org https://gems.ruby-china.com || true
+
+# Copy Gemfile and install gems
+COPY Gemfile Gemfile.lock* ./
+
+# Installer les gems critiques d'abord, puis bundle install
+RUN gem install pg -v 1.5.3 --no-document && \
+    gem install rails -v 7.2.2 --no-document && \
+    gem install puma --no-document && \
+    gem install redis --no-document && \
+    gem install bcrypt -v 3.1.7 --no-document && \
+    gem install jwt --no-document && \
+    gem install bootsnap --no-document && \
+    gem install rack-cors --no-document && \
+    gem install google-id-token --no-document && \
+    gem install dotenv-rails --no-document && \
+    bundle install --verbose || bundle install --local || true
+
+# Copy application code (sera monté via volume en dev, mais nécessaire pour l'image)
+COPY . .
+
+# Precompile bootsnap (optionnel en dev, mais accélère le démarrage)
+RUN bundle exec bootsnap precompile --gemfile app/ lib/ || true
+
+# Create necessary directories
+RUN mkdir -p tmp/pids log storage
+
+# Run as non-root user
+RUN groupadd --system --gid 1000 rails && \
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    chown -R rails:rails /rails
+USER 1000:1000
+
+# Expose port
+EXPOSE 3000
+
+# Default command (sera override par docker-compose)
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
+

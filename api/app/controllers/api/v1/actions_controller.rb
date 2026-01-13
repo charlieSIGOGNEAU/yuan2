@@ -169,12 +169,4 @@ class Api::V1::ActionsController < ApplicationController
       }, status: :ok
   end
 
-
-
-
-  #   status_code = action.created_at == action.updated_at ? :created : :ok
-  #   render json: result, status: status_code
-  # end
-  
-
 end 

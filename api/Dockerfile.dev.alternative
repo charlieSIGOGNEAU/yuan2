@@ -1,0 +1,68 @@
+# Dockerfile alternatif qui installe les gems sans bundle install
+# syntax = docker/dockerfile:1
+
+ARG RUBY_VERSION=3.4.2
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+WORKDIR /rails
+
+# Install base packages
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    curl \
+    libjemalloc2 \
+    libvips \
+    libpq-dev \
+    build-essential \
+    git \
+    pkg-config \
+    libyaml-dev \
+    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Set development environment
+ENV RAILS_ENV="development" \
+    BUNDLE_PATH="/usr/local/bundle"
+
+# Install Bundler
+RUN gem install bundler:2.6.3
+
+# Configurer bundle pour utiliser un miroir et éviter les timeouts
+RUN bundle config set --global mirror.https://rubygems.org https://gems.ruby-china.com || true && \
+    bundle config set --global timeout 300 && \
+    bundle config set --global retry 5
+
+# Copy Gemfile and Gemfile.lock (si disponible)
+COPY Gemfile Gemfile.lock* ./
+
+# Installer les gems directement (évite les problèmes de résolution de dépendances)
+# Utiliser || true pour continuer même si certaines gems échouent (elles peuvent être installées plus tard)
+RUN gem install pg -v 1.5.3 --no-document && \
+    gem install rails -v 7.2.2 --no-document && \
+    gem install puma --no-document && \
+    gem install redis --no-document && \
+    (gem install bcrypt -v 3.1.7 --no-document || gem install bcrypt --no-document || true) && \
+    gem install jwt --no-document && \
+    gem install bootsnap --no-document && \
+    gem install rack-cors --no-document && \
+    gem install google-id-token --no-document && \
+    gem install dotenv-rails --no-document && \
+    gem install debug --no-document && \
+    (gem install brakeman --no-document || true) && \
+    (gem install rubocop-rails-omakase --no-document || true)
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p tmp/pids log storage
+
+# Run as non-root user
+RUN groupadd --system --gid 1000 rails && \
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    chown -R rails:rails /rails
+USER 1000:1000
+
+EXPOSE 3000
+
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
+

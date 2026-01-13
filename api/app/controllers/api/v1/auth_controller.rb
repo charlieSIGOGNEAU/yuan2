@@ -116,7 +116,7 @@ class Api::V1::AuthController < ApplicationController
       password_confirmation: params[:password],
       provider: 'email',
       language: language,
-      fps: 20
+      fps: 60
     )
 
     if user.save
@@ -194,7 +194,7 @@ class Api::V1::AuthController < ApplicationController
           name: name,
           provider: 'google',
           language: language,
-          fps: 20
+          fps: 60
         )
         
         if user.save

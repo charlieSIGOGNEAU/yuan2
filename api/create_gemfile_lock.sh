@@ -1,0 +1,165 @@
+#!/bin/bash
+# Script pour créer un Gemfile.lock minimal
+
+cd /home/dipsi0/thp/yuan2/api
+
+# Créer un Gemfile.lock minimal avec les versions installées
+cat > Gemfile.lock << 'EOFLOCK'
+GEM
+  remote: https://rubygems.org/
+  specs:
+    actioncable (7.2.2)
+      actionpack (= 7.2.2)
+      activesupport (= 7.2.2)
+      nio4r (~> 2.0)
+      websocket-driver (>= 0.6.1)
+    actionmailbox (7.2.2)
+      actionpack (= 7.2.2)
+      activejob (= 7.2.2)
+      activerecord (= 7.2.2)
+      activestorage (= 7.2.2)
+      activesupport (= 7.2.2)
+      mail (>= 2.7.1)
+      net-imap
+      net-pop
+      net-smtp
+    actionmailer (7.2.2)
+      actionpack (= 7.2.2)
+      actionview (= 7.2.2)
+      activejob (= 7.2.2)
+      activesupport (= 7.2.2)
+      mail (~> 2.5, >= 2.5.4)
+      net-imap
+      net-pop
+      net-smtp
+      rails-dom-testing (~> 2.2)
+    actionpack (7.2.2)
+      actionview (= 7.2.2)
+      activesupport (= 7.2.2)
+      nokogiri (>= 1.8.5)
+      racc
+      rack (>= 2.2.2, < 3.1)
+      rack-session (>= 1.0.1)
+      rack-test (>= 0.6.3)
+      rails-dom-testing (~> 2.2)
+      rails-html-sanitizer (~> 1.6)
+    actiontext (7.2.2)
+      actionpack (= 7.2.2)
+      activerecord (= 7.2.2)
+      activestorage (= 7.2.2)
+      activesupport (= 7.2.2)
+      globalid (>= 0.6.0)
+      nokogiri (>= 1.8.5)
+    actionview (7.2.2)
+      activesupport (= 7.2.2)
+      builder (~> 3.1)
+      erubi (~> 1.11)
+      rails-dom-testing (~> 2.2)
+      rails-html-sanitizer (~> 1.6)
+    activejob (7.2.2)
+      activesupport (= 7.2.2)
+      globalid (>= 0.3.6)
+    activemodel (7.2.2)
+      activesupport (= 7.2.2)
+    activerecord (7.2.2)
+      activemodel (= 7.2.2)
+      activesupport (= 7.2.2)
+      timeout (>= 0.4.0)
+    activestorage (7.2.2)
+      actionpack (= 7.2.2)
+      activejob (= 7.2.2)
+      activerecord (= 7.2.2)
+      activesupport (= 7.2.2)
+      marcel (~> 1.0)
+      mini_mime (>= 0.2.0)
+    activesupport (7.2.2)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (>= 1.6, < 2)
+      minitest (>= 5.1)
+      tzinfo (~> 2.0)
+    bcrypt (3.1.7)
+    bootsnap (1.20.1)
+      msgpack (~> 1.6)
+    brakeman (7.0.2)
+    debug (1.10.0)
+      irb (>= 1.10.1)
+      reline (>= 0.5.1)
+    dotenv (3.2.0)
+    dotenv-rails (3.2.0)
+      dotenv (= 3.2.0)
+      railties (>= 3.2)
+    google-id-token (1.4.2)
+      jwt (>= 1.5.2)
+    jwt (3.1.2)
+    pg (1.5.3)
+    puma (7.1.0)
+      nio4r (~> 2.0)
+    rack (2.3.0)
+    rack-cors (3.0.0)
+      rack (>= 2.0.0)
+    rails (7.2.2)
+      actioncable (= 7.2.2)
+      actionmailbox (= 7.2.2)
+      actionmailer (= 7.2.2)
+      actionpack (= 7.2.2)
+      actiontext (= 7.2.2)
+      activejob (= 7.2.2)
+      activemodel (= 7.2.2)
+      activerecord (= 7.2.2)
+      activestorage (= 7.2.2)
+      activesupport (= 7.2.2)
+      bundler (>= 1.15.0)
+      railties (= 7.2.2)
+    railties (7.2.2)
+      actionpack (= 7.2.2)
+      activesupport (= 7.2.2)
+      method_source
+      rake (>= 12.2)
+      thor (~> 1.0, >= 1.2.2)
+      zeitwerk (~> 2.6)
+    redis (5.4.1)
+    rubocop (1.70.0)
+      base64 (~> 0.1.1)
+      json (~> 2.6)
+      language_server-protocol (>= 3.17.0)
+      parallel (~> 1.10)
+      parser (>= 3.3.0.2)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 1.8, < 3.0)
+      rexml (>= 3.2.5, < 4.0)
+      rubocop-ast (>= 1.30.0, < 2.0)
+      uri (~> 0.13)
+      yaml (~> 0.2)
+    rubocop-rails (2.32.0)
+      activesupport (>= 4.2.0)
+      rack (>= 1.1)
+      rubocop (>= 1.40.0, < 2.0)
+    rubocop-rails-omakase (1.1.0)
+      rubocop (~> 1.70)
+      rubocop-rails (~> 2.32)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bcrypt (~> 3.1.7)
+  bootsnap
+  brakeman
+  debug
+  dotenv-rails
+  google-id-token
+  jwt
+  pg (~> 1.5)
+  puma (>= 5.0)
+  rack-cors
+  rails (~> 7.2.2, >= 7.2.2.1)
+  redis (>= 4.0.1)
+  rubocop-rails-omakase
+
+BUNDLED WITH
+   2.6.3
+EOFLOCK
+
+echo "Gemfile.lock créé avec succès !"
+ls -lh Gemfile.lock
+
