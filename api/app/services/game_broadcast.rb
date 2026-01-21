@@ -94,14 +94,15 @@ class GameBroadcast
 
 
     # comme game_broadcast_game_details mais pour un seul joueur
-    def self.user_broadcast_game_details(user_id, game_id)
+    # @param skip_registration [Boolean] si true, ne pas enregistrer le broadcast (utilisé pour les retries)
+    def self.user_broadcast_game_details(user_id, game_id, skip_registration: false)
         game_user = GameUser.find_by(user_id: user_id, game_id: game_id)
         game_user_id = game_user&.id
         
         return unless game_user_id
         
-        # Enregistrer le broadcast en attente de confirmation
-        BroadcastConfirmationService.register_pending_broadcast(game_user_id, game_id)
+        # Enregistrer le broadcast en attente de confirmation (sauf si c'est un retry)
+        BroadcastConfirmationService.register_pending_broadcast(game_user_id, game_id) unless skip_registration
         
         # Charger proprement le game avec toutes ses associations
         game = Game.includes(:game_users, :tiles, :actions, :clans, :biddings).find(game_id)

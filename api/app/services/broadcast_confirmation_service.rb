@@ -74,10 +74,10 @@ class BroadcastConfirmationService
           
           Rails.logger.info "🔄 Retry #{new_count}/#{MAX_RETRIES} pour game_user_id=#{game_user_id}, game_id=#{game_id}"
           
-          # Retenter le broadcast
+          # Retenter le broadcast (sans réenregistrer pour éviter de réinitialiser le compteur)
           begin
             game_user = GameUser.find(game_user_id)
-            GameBroadcast.user_broadcast_game_details(game_user.user_id, game_id.to_i)
+            GameBroadcast.user_broadcast_game_details(game_user.user_id, game_id.to_i, skip_registration: true)
           rescue ActiveRecord::RecordNotFound => e
             Rails.logger.error "❌ GameUser #{game_user_id} introuvable: #{e.message}"
             redis.del(key)
