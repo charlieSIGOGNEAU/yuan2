@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_25_125947) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -25,6 +25,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
     t.integer "development_level"
     t.integer "fortification_level"
     t.integer "militarisation_level"
+    t.index ["game_id", "turn", "game_user_id"], name: "index_actions_unique_game_turn_user", unique: true
     t.index ["game_id"], name: "index_actions_on_game_id"
     t.index ["game_user_id"], name: "index_actions_on_game_user_id"
   end
@@ -86,6 +87,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_114846) do
     t.integer "creator_id"
     t.string "custom_code"
     t.index ["custom_code"], name: "index_games_on_custom_code", unique: true
+    t.index ["game_type", "game_status"], name: "index_unique_waiting_quick_game", unique: true, where: "((game_status = 0) AND (game_type = 0))"
     t.index ["submitted_by_user_id"], name: "index_games_on_submitted_by_user_id"
   end
 

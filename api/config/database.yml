@@ -34,6 +34,8 @@ test:
   <<: *default
   database: yuan2_test
   port: <%= ENV.fetch("DATABASE_PORT") { 5433 } %>
+  # Pool élevé pour supporter les tests de concurrence multi-threads
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 20 } %>
 
 production:
   <<: *default

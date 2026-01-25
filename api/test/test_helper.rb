@@ -22,7 +22,8 @@ module ActiveSupport
       User.create!(
         name: name,
         email: email,
-        password_digest: BCrypt::Password.create("password123"),
+        password: "password123",  # has_secure_password attend password, pas password_digest
+        provider: "email",
         language: "fr",
         fps: 60,
         render_scale: 1.0,
@@ -124,7 +125,8 @@ module ActionDispatch
       User.create!(
         name: name,
         email: email,
-        password_digest: BCrypt::Password.create("password123"),
+        password: "password123",  # has_secure_password attend password, pas password_digest
+        provider: "email",
         language: "fr",
         fps: 60,
         render_scale: 1.0,

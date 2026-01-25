@@ -124,52 +124,65 @@ class Game < ApplicationRecord
   def self.find_or_create_waiting_game(user)
     # verrifie si l'utilisateur a une partie en cours
     ongoing_game = self.ongoing_game(user)
-    if ongoing_game
-      return ongoing_game
-    end
+    return ongoing_game if ongoing_game
 
-    # Si on ne peut pas rejoindre la partie, on cherche une autre partie
-    waiting_game = where(game_status: :waiting_for_players, game_type: :quick_game).first
+    attempts = 0
 
-    if waiting_game
-      result = waiting_game.add_player(user)
-      game_user = result[:game_user]
-      message = result[:message]
-      case message
-      when "yes waiting for other players"
-        return { game: waiting_game, game_user: game_user, message: "waiting for players" }
-      when "too many players"
-        # self.find_or_create_waiting_game(user)
-      when "game ready installation_phase"
-        return { game: waiting_game, game_user: game_user, message: "game ready installation_phase" }
+    # loop pour les race conditions
+    loop do
+      attempts += 1
+      raise "Too many attempts" if attempts > 3
+
+      # Si on ne peut pas rejoindre la partie, on cherche une autre partie
+      waiting_game = where(game_status: :waiting_for_players, game_type: :quick_game).first
+
+      if waiting_game
+        result = waiting_game.add_player(user)
+        game_user = result[:game_user]
+        message = result[:message]
+        case message
+        when "yes waiting for other players"
+          return { game: waiting_game, game_user: game_user, message: "waiting for players" }
+        when "too many players"
+          # ca boucle, plusieurs 3 eme joueurs simultanement, on cherche une autre partie
+        when "game ready installation_phase"
+          return { game: waiting_game, game_user: game_user, message: "game ready installation_phase" }
+        end
+      else
+        begin
+          game = create!(
+            player_count: 3,
+            game_status: :waiting_for_players,
+            game_type: :quick_game,
+            waiting_players_count: 1,
+            turn_duration: 120
+          )
+          game_user = game.game_users.create(user: user)
+          return {game: game, game_user: game_user, message: "new game"}
+          # si creation de partie simultanee
+        rescue ActiveRecord::RecordNotUnique
+          # ca boucle pour eviter la creation de partie simultanee
+        end
       end
-    else
-      game = create(
-        player_count: 3,
-        game_status: :waiting_for_players,
-        game_type: :quick_game,
-        waiting_players_count: 1,
-        turn_duration: 120
-      )
-      game_user = game.game_users.create(user: user)
-      return {game: game, game_user: game_user, message: "new game"}
     end
   end
 
   # ajoute et creer un game_user a waiting_for_players, on renvoi un message pour dire si il reste de la place ou si la game est full
   def add_player(user)
+
     transaction do
-      reload.lock!
+      # reload.lock!
+            
       if (self.waiting_players_count < (player_count - 1)) && (self.game_status == "waiting_for_players")
-        self.waiting_players_count += 1
-        self.save
+        self.increment!(:waiting_players_count)
         game_user = self.game_users.create(user: user)
         return {message: "yes waiting for other players", game_user: game_user}
 
       elsif (self.waiting_players_count == (player_count - 1)) && (self.game_status == "waiting_for_players")
-        self.waiting_players_count += 1
-        self.game_status = :waiting_for_confirmation_players
-        self.save
+        self.update!(
+          waiting_players_count: self.waiting_players_count + 1,
+          game_status: :waiting_for_confirmation_players
+        )        
         game_user = self.game_users.create(user: user)
         return {message: "game ready installation_phase", game_user: game_user}
 
@@ -385,6 +398,22 @@ class Game < ApplicationRecord
     result_status
   end
 
+  def transaction_finalization(action)
+    status = nil
+    fill_missing_actions_for_abandoned(simultaneous_play_turn)
+    if actions.where(turn: simultaneous_play_turn).count == player_count 
+      #update conditionel pour s'assurer qu'un seul joueur cloture le tour pour avoir un seul broadcast
+      updated = Game #retourne le nombre de ligne modifier, donc 1 si reussie, 0 si echoué car race condition
+        .where(id: id, simultaneous_play_turn: action.turn)
+        .update_all("simultaneous_play_turn = simultaneous_play_turn + 1")
+    
+      status = updated == 1 ? :tour_finished : :already_completed #1 ligne modifiee donc tour termine, 0 donc tour deja cloture par un autre joueur
+    else
+      status = :still_waiting
+    end
+    return status
+  end
+
 
   def check_game_completion_after_abandon
     # Compter les joueurs qui n'ont pas abandonné
@@ -425,9 +454,6 @@ class Game < ApplicationRecord
 
 
 
-
-  
-
   private
 
   def can_add_player?
@@ -443,42 +469,23 @@ class Game < ApplicationRecord
     raise
   end
 
-  
 
+    
   # creer des action passer le tour pour les joueurs qui ont abandonné
   def fill_missing_actions_for_abandoned(turn)
     game_users.where(abandoned: true).each do |game_user|
-      next if actions.exists?(game_user_id: game_user.id, turn: turn)
-      actions.create!(
-        game_user_id: game_user.id, turn: turn,
-        position_q: nil, position_r: nil,
-        development_level: 0, fortification_level: 0, militarisation_level: 0
-      )
-    end
-  end
-
-  def transaction_finalization(action)
-    status = nil
-    transaction do
-      reload.lock!
-      if action.turn != simultaneous_play_turn
-        status = :already_completed
-      else  
-        fill_missing_actions_for_abandoned(simultaneous_play_turn)
-        
-        if actions.where(turn: simultaneous_play_turn).count == player_count
-          increment!(:simultaneous_play_turn)
-          status = :tour_finished
-        else    
-          status = :still_waiting
-        end
+      begin
+        actions.create!(
+          game_user_id: game_user.id,
+          turn: turn,
+          position_q: nil, position_r: nil,
+          development_level: 0, fortification_level: 0, militarisation_level: 0
+        )
+      rescue ActiveRecord::RecordNotUnique
+        # déjà créé par un autre thread donc pas de probleme
       end
     end
-    return status
-  rescue ActiveRecord::RecordNotUnique #au cas ou mais ne devrais normalement pas se produire car lock sur la game
-    return :already_completed
   end
-  
   
 
 end 
