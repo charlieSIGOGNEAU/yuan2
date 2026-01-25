@@ -20,7 +20,7 @@ class RaceConditionTest < ActiveSupport::TestCase
 
       # User3 et User4 rejoignent SIMULTANÉMENT via threads
       results = {}
-      barrier = Concurrent::CountDownLatch.new(2)  # on va attendre 2 threads pour commencer
+      barrier = Concurrent::CountDownLatch.new(2)  # on va attendre 2
       threads = [users[2], users[3]].map do |user|
         Thread.new do
           begin
@@ -107,10 +107,8 @@ class RaceConditionTest < ActiveSupport::TestCase
       User.delete_all
       Game.delete_all
 
-
+      # initialisation du test
       game = Game.create!(game_type: :quick_game, game_status: :simultaneous_play, player_count: 3, simultaneous_play_turn: 1)
-
-
       game_user_1 = GameUser.create!(
         user: User.create!(name: "player1", email: "player1@test.com", password: "player1@test.com"),
         game_id: game.id,
@@ -157,4 +155,53 @@ class RaceConditionTest < ActiveSupport::TestCase
     end
   end
 
+  test "launch_custom_game witch 3nd player join kick game" do
+    iterations = 5
+    iterations.times do |i|
+      GameUser.delete_all
+      Game.delete_all
+      User.delete_all
+    
+      users = 6.times.map { |j| create_test_user(name: "Player#{j+1}_#{i}") }
+
+      # User1 et User2 rejoignent séquentiellement
+      quick_game = Game.find_or_create_waiting_game(users[0])[:game]
+      Game.find_or_create_waiting_game(users[1])
+      game_user_1 = GameUser.where(game_id: quick_game.id, user_id: users[0].id).first
+      game_user_2 = GameUser.where(game_id: quick_game.id, user_id: users[1].id).first
+      
+      custom_game = Game.creat_custom_game(users[2])[:game]
+      Game.ongoing_game_custom(users[3],custom_game.custom_code)
+
+      threads = []
+      barrier = Concurrent::CountDownLatch.new(2) 
+
+      threads << Thread.new do
+        barrier.count_down
+        barrier.wait(5)
+        Game.find_or_create_waiting_game(users[4])
+      ensure
+        ActiveRecord::Base.connection_pool.release_connection
+      end
+
+      threads << Thread.new do
+        barrier.count_down
+        barrier.wait(5)
+        custom_game.launch_custom_game(120)
+      ensure
+        ActiveRecord::Base.connection_pool.release_connection
+      end
+      threads.each(&:join)
+
+      quick_game.reload
+      if quick_game.game_status != "waiting_for_players"
+        assert_equal 3, quick_game.game_users.count,
+          "la game doit avoir 3 joueurs"
+      else
+        assert_includes [0,1,2], quick_game.game_users.count,
+          "la game doit avoir 0||1||2 joueurs"
+      end
+
+    end
+  end
 end
