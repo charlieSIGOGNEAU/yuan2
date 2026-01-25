@@ -2,7 +2,7 @@
 
 [![Yuan démo 18 seconde](https://img.youtube.com/vi/vSdPwUxjG74/sddefault.jpg)](https://youtu.be/vSdPwUxjG74)
 
-Pensé et jouable sur smartphone ( portrait et paysage, contraintes d’écran réduites)
+Cliquez sur l’image pour voir la vidéo du jeu en action (18 secondes). Pensé et jouable sur smartphone (portrait et paysage)
 
 Yuan est un jeu de stratégie multijoueur en ligne, basé sur des règles complexes et des interactions simultanées entre joueurs.
 Le projet a été mené en autonomie, de la conception des règles jusqu’au déploiement en production.
