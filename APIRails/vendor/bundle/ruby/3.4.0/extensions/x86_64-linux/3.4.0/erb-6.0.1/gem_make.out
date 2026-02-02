@@ -1,0 +1,19 @@
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/erb-6.0.1/ext/erb/escape
+/home/dipsi0/.rvm/rubies/ruby-3.4.2/bin/ruby extconf.rb
+checking for rb_ext_ractor_safe() in ruby.h... yes
+creating Makefile
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/erb-6.0.1/ext/erb/escape
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-m1ag5t sitelibdir\=./.gem.20260202-18774-m1ag5t clean
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/erb-6.0.1/ext/erb/escape
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-m1ag5t sitelibdir\=./.gem.20260202-18774-m1ag5t
+compiling escape.c
+linking shared-object erb/escape.so
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/erb-6.0.1/ext/erb/escape
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-m1ag5t sitelibdir\=./.gem.20260202-18774-m1ag5t install
+/usr/bin/install -m 0755 escape.so ./.gem.20260202-18774-m1ag5t/erb
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/erb-6.0.1/ext/erb/escape
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-m1ag5t sitelibdir\=./.gem.20260202-18774-m1ag5t clean

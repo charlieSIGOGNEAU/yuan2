@@ -1,0 +1,41 @@
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/puma-7.1.0/ext/puma_http11
+/home/dipsi0/.rvm/rubies/ruby-3.4.2/bin/ruby extconf.rb
+checking for pkg-config for openssl... [" ", "", "-lssl -lcrypto"]
+──── Using OpenSSL pkgconfig (openssl.pc) ────
+checking for openssl/bio.h... yes
+
+──── Below are yes for 1.0.2 & later ────
+checking for DTLS_method() in openssl/ssl.h... yes
+checking for SSL_CTX_set_session_cache_mode(NULL, 0) in openssl/ssl.h... yes
+
+──── Below are yes for 1.1.0 & later ────
+checking for TLS_server_method() in openssl/ssl.h... yes
+checking for SSL_CTX_set_min_proto_version(NULL, 0) in openssl/ssl.h... yes
+
+──── Below is yes for 1.1.0 and later, but isn't documented until 3.0.0 ────
+checking for SSL_CTX_set_dh_auto(NULL, 0) in openssl/ssl.h... yes
+
+──── Below is yes for 1.1.1 & later ────
+checking for SSL_CTX_set_ciphersuites(NULL, "") in openssl/ssl.h... yes
+
+──── Below is yes for 3.0.0 & later ────
+checking for SSL_get1_peer_certificate() in openssl/ssl.h... yes
+
+creating Makefile
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/puma-7.1.0/ext/puma_http11
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-lbb5wk sitelibdir\=./.gem.20260202-18774-lbb5wk clean
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/puma-7.1.0/ext/puma_http11
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-lbb5wk sitelibdir\=./.gem.20260202-18774-lbb5wk
+compiling http11_parser.c
+compiling mini_ssl.c
+compiling puma_http11.c
+linking shared-object puma/puma_http11.so
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/puma-7.1.0/ext/puma_http11
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-lbb5wk sitelibdir\=./.gem.20260202-18774-lbb5wk install
+/usr/bin/install -m 0755 puma_http11.so ./.gem.20260202-18774-lbb5wk/puma
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/puma-7.1.0/ext/puma_http11
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-lbb5wk sitelibdir\=./.gem.20260202-18774-lbb5wk clean

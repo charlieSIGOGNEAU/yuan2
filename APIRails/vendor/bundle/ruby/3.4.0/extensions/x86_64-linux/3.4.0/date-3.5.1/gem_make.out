@@ -1,0 +1,24 @@
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/date-3.5.1/ext/date
+/home/dipsi0/.rvm/rubies/ruby-3.4.2/bin/ruby extconf.rb
+checking for rb_category_warn()... yes
+checking for timezone in time.h with -Werror... yes
+checking for altzone in time.h with -Werror... no
+creating Makefile
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/date-3.5.1/ext/date
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-ytzdw5 sitelibdir\=./.gem.20260202-18774-ytzdw5 clean
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/date-3.5.1/ext/date
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-ytzdw5 sitelibdir\=./.gem.20260202-18774-ytzdw5
+compiling date_core.c
+compiling date_parse.c
+compiling date_strftime.c
+compiling date_strptime.c
+linking shared-object date_core.so
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/date-3.5.1/ext/date
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-ytzdw5 sitelibdir\=./.gem.20260202-18774-ytzdw5 install
+/usr/bin/install -m 0755 date_core.so ./.gem.20260202-18774-ytzdw5
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/date-3.5.1/ext/date
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-ytzdw5 sitelibdir\=./.gem.20260202-18774-ytzdw5 clean

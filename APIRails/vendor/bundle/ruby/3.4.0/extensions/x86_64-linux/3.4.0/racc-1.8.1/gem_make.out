@@ -1,0 +1,18 @@
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/racc-1.8.1/ext/racc/cparse
+/home/dipsi0/.rvm/rubies/ruby-3.4.2/bin/ruby extconf.rb
+creating Makefile
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-o96iti sitelibdir\=./.gem.20260202-18774-o96iti clean
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-o96iti sitelibdir\=./.gem.20260202-18774-o96iti
+compiling cparse.c
+linking shared-object racc/cparse.so
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-o96iti sitelibdir\=./.gem.20260202-18774-o96iti install
+/usr/bin/install -m 0755 cparse.so ./.gem.20260202-18774-o96iti/racc
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-o96iti sitelibdir\=./.gem.20260202-18774-o96iti clean

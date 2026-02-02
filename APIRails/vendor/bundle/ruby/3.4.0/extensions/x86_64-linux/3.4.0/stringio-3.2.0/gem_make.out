@@ -1,0 +1,19 @@
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/stringio-3.2.0/ext/stringio
+/home/dipsi0/.rvm/rubies/ruby-3.4.2/bin/ruby extconf.rb
+checking for rb_io_mode_t in ruby/io.h... no
+creating Makefile
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/stringio-3.2.0/ext/stringio
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-dgqyts sitelibdir\=./.gem.20260202-18774-dgqyts clean
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/stringio-3.2.0/ext/stringio
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-dgqyts sitelibdir\=./.gem.20260202-18774-dgqyts
+compiling stringio.c
+linking shared-object stringio.so
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/stringio-3.2.0/ext/stringio
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-dgqyts sitelibdir\=./.gem.20260202-18774-dgqyts install
+/usr/bin/install -m 0755 stringio.so ./.gem.20260202-18774-dgqyts
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/stringio-3.2.0/ext/stringio
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-dgqyts sitelibdir\=./.gem.20260202-18774-dgqyts clean

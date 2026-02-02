@@ -1,0 +1,18 @@
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/cgi-0.5.1/ext/cgi/escape
+/home/dipsi0/.rvm/rubies/ruby-3.4.2/bin/ruby extconf.rb
+creating Makefile
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/cgi-0.5.1/ext/cgi/escape
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-3fthkn sitelibdir\=./.gem.20260202-18774-3fthkn clean
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/cgi-0.5.1/ext/cgi/escape
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-3fthkn sitelibdir\=./.gem.20260202-18774-3fthkn
+compiling escape.c
+linking shared-object cgi/escape.so
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/cgi-0.5.1/ext/cgi/escape
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-3fthkn sitelibdir\=./.gem.20260202-18774-3fthkn install
+/usr/bin/install -m 0755 escape.so ./.gem.20260202-18774-3fthkn/cgi
+
+current directory: /home/dipsi0/thp/yuan2/api/vendor/bundle/ruby/3.4.0/gems/cgi-0.5.1/ext/cgi/escape
+make DESTDIR\= sitearchdir\=./.gem.20260202-18774-3fthkn sitelibdir\=./.gem.20260202-18774-3fthkn clean
