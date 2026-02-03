@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Supprime l'enveloppe "data" des API Resources
+        // JsonResource::withoutWrapping();
     }
 }

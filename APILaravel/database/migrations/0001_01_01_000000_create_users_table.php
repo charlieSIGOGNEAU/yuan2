@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->string('email')->unique();
             $table->string('provider')->default('email');
-            $table->string('password_digest')->nullable();
+            $table->string('password')->nullable();
             $table->timestamps();
         });
     }
