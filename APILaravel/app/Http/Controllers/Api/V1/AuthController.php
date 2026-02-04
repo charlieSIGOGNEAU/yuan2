@@ -8,10 +8,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\UserResource;
-//use Google_Client; // Assure-toi d'avoir google/apiclient
+use App\Traits\HasLanguageValidation;
+use Google_Client;
 
 class AuthController extends Controller
 {
+    use HasLanguageValidation;
     /**
      * POST /api/v1/auth/signup
      */
@@ -46,7 +48,7 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Inscription réussie",
-            'user'    => new UserResource($user), // Utilisation de notre ressource
+            'user'    => new UserResource($user), 
             'token'   => $token
         ], 201);
     }
@@ -118,15 +120,89 @@ class AuthController extends Controller
         }
     }
 
+    public function changeName(Request $request)
+    {
+        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
+        $guard = auth('api');
+        /** @var \App\Models\User $user */
+        $user = $guard->user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        //verifier password
+        if ($user->provider === 'email' && !Hash::check($request->password, $user->password)) {
+            return response()->json(['success' => false, 'message' => 'Mot de passe incorrect'], 401);
+        }
+
+        if (!$request->name ) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Le nom est requis'
+            ], 422);
+        }
+
+
+        $user->name = $request->name;
+        $user->save();
+        return response()->json(['success' => true, 'message' => 'Nom changé avec succès', 'user' => new UserResource($user)], 200);
+    }
+
+    public function changePassword(Request $request)
+    {
+        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
+        $guard = auth('api');
+        
+        /** @var \App\Models\User $user */
+        $user = $guard->user();
+
+        if ($user->provider !== 'email') {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Cette action est réservée aux comptes email.'
+            ], 403);
+        }
+    
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password'     => 'required|string|min:8|confirmed',
+        ]);
+    
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'L\'ancien mot de passe est incorrect'
+            ], 401);
+        }
+    
+        $user->password = $request->new_password; 
+        $user->save();
+    
+        return response()->json([
+            'success' => true, 
+            'message' => 'Mot de passe modifié avec succès'
+        ]);
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
+        $guard = auth('api');
+        /** @var \App\Models\User $user */
+        $user = $guard->user();
+        
+        if ($user->provider === 'email' && (!$request->password || !Hash::check($request->password, $user->password))) {
+            return response()->json(['success' => false, 'message' => 'Mot de passe incorrect'], 401);
+        }
+        $guard->logout();
+        $user->delete();
+        return response()->json(['success' => true, 'message' => 'Compte supprimé avec succès'], 200);
+    }
+
     /**
      * Fonctions utilitaires (Privées)
      */
-    private function validateLanguage($lang)
-    {
-        $supported = ['fr', 'en', 'zh', 'ja', 'ko', 'de', 'es', 'pt', 'ru', 'it'];
-        $lang = strtolower($lang);
-        return in_array($lang, $supported) ? $lang : 'en';
-    }
 
     private function respondWithToken($token, $user, $status = 200)
     {
