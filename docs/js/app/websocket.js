@@ -28,10 +28,26 @@ export const WebSocketClient = {
         };
 
         this.connection.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+            let rawData = JSON.parse(event.data);
             
-            // 🎯 AFFICHAGE SIMPLE DU JSON (sauf les pings automatiques)
-            gameApi.handleGameMessage(data);
+            if (ServerConfig.TYPE === 'laravel') {
+                // Gérer le ping
+                if (rawData.event === "pusher:ping") {
+                    this.connection.send(JSON.stringify({ event: "pusher:pong" }));
+                    return;
+                }
+        
+                // Si c'est un message de ton canal, on extrait le contenu
+                if (rawData.event === 'message') { // 'message' est défini dans ton broadcastAs()
+                    // Reverb envoie parfois le champ data comme une String JSON
+                    const data = typeof rawData.data === 'string' ? JSON.parse(rawData.data) : rawData.data;
+                    gameApi.handleGameMessage(data);
+                    return;
+                }
+            }
+        
+            // Comportement Rails par défaut ou message brut
+            gameApi.handleGameMessage(rawData);
         };
 
         this.connection.onclose = () => {
@@ -86,27 +102,46 @@ export const WebSocketClient = {
     subscribeToChannel() {
         // S'abonner seulement au canal utilisateur personnel (évite la duplication)
         if (Auth.currentUser && Auth.currentUser.id) {
-            this.subscribeToUserChannel(Auth.currentUser.id);
+            if (ServerConfig.TYPE === 'rails') {
+                this.subscribeToUserChannelRails(Auth.currentUser.id);
+            } else if (ServerConfig.TYPE === 'laravel') {
+                this.subscribeToUserChannelLaravel(Auth.currentUser.id);
+            }
         }
+    },
+    subscribeToUserChannelLaravel(userId) {
+        const subscribeMessage = {
+            event: 'pusher:subscribe', // Reverb attend 'event', pas 'command'
+            data: {
+                channel: `private-user_${userId}` // 'private-' est obligatoire pour les canaux sécurisés
+            }
+        };
+        this.sendLaravel(subscribeMessage);
+        console.log(`👤 Abonnement au canal utilisateur: private-user_${userId}`);
     },
 
     // S'abonner au canal utilisateur personnel
-    subscribeToUserChannel(userId) {
+    subscribeToUserChannelRails(userId) {
         const subscribeMessage = {
             command: 'subscribe',
             identifier: JSON.stringify({ channel: 'UserChannel', user_id: userId })
         };
-        this.send(subscribeMessage);
+        this.sendRails(subscribeMessage);
         console.log(`👤 Abonnement au canal utilisateur: user_${userId}`);
     },
 
     // Envoyer un message
-    send(data) {
+    sendRails(data) {
         if (this.connection && this.connection.readyState === WebSocket.OPEN) {
             this.connection.send(JSON.stringify(data));
             return true;
         }
         return false;
+    },
+    sendLaravel(data) {
+        if (this.connection && this.connection.readyState === WebSocket.OPEN) {
+            this.connection.send(JSON.stringify(data));
+        }
     },
 
     // Déconnexion

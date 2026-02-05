@@ -145,7 +145,7 @@ export const GoogleAuth = {
             console.log('🌍 Envoi de la langue pour le nouveau compte Google:', currentLanguage);
             
             // Envoyer le credential au backend
-            const apiResponse = await fetch(`${ServerConfig.HTTP_BASE}auth/google_login`, {
+            const apiResponse = await fetch(`${ServerConfig.HTTP_BASE}/auth/google_login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -196,7 +196,7 @@ export const GoogleAuth = {
         
         // Option 2: Récupérer depuis un endpoint API (plus sécurisé pour la production d'apres cursor, mais j'en doute. pour le momant non fonctionel)
         try {
-            const response = await fetch(`${ServerConfig.HTTP_BASE}config/google_client_id`);
+            const response = await fetch(`${ServerConfig.HTTP_BASE}/config/google_client_id`);
             const data = await response.json();
             if (data.client_id) {
                 console.log('✅ GOOGLE_CLIENT_ID récupéré depuis l\'API');

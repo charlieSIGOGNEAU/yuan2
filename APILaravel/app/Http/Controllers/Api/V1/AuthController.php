@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\UserResource;
 use App\Traits\HasLanguageValidation;
 use Google_Client;
-
+use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
     use HasLanguageValidation;
@@ -21,14 +21,14 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|confirmed|min:6',
+            'password' => 'required|min:6',
             'language' => 'nullable|string'
         ]);
     
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => "Erreur lors de l'inscription",
+                'message' => "Erreur lors de l'inscription, email deja utilisé ou mot de passe trop court (min 6 caracteres)",
                 'errors'  => $validator->errors()->all() 
             ], 422);
         }
@@ -49,7 +49,7 @@ class AuthController extends Controller
             'success' => true,
             'message' => "Inscription réussie",
             'user'    => new UserResource($user), 
-            'token'   => $token
+            'token'   => Auth::guard('api')->login($user)
         ], 201);
     }
 
@@ -61,19 +61,15 @@ class AuthController extends Controller
         $credentials = $request->only(['email', 'password']);
         $credentials['provider'] = 'email';
     
-        // c'est pour que l'IDE ne nous mette pas de rouge sur attempt, mais on pourais s'en passer
-        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
-        $guard = auth('api');
-    
         // attempt fais tout: il cherche l'user avec le mail et provider sur email et verrifie le password puis renvoi le token
-        if (!$token = $guard->attempt($credentials)) {
+        if (!$token = Auth::guard('api')->attempt($credentials)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Email ou mot de passe incorrect'
             ], 401);
         }
     
-        $user = $guard->user();
+        $user = Auth::guard('api')->user();
     
         return response()->json([
             'success' => true,
@@ -110,10 +106,7 @@ class AuthController extends Controller
                 ]
             );
 
-            /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
-            $guard = auth('api');
-            $token = $guard->login($user);
-            return $this->respondWithToken($token, $user);
+            return $this->respondWithToken(Auth::guard('api')->login($user), $user);
 
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Erreur serveur Google'], 500);
@@ -122,10 +115,7 @@ class AuthController extends Controller
 
     public function changeName(Request $request)
     {
-        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
-        $guard = auth('api');
-        /** @var \App\Models\User $user */
-        $user = $guard->user();
+        $user = $request->user();
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -143,7 +133,6 @@ class AuthController extends Controller
             ], 422);
         }
 
-
         $user->name = $request->name;
         $user->save();
         return response()->json(['success' => true, 'message' => 'Nom changé avec succès', 'user' => new UserResource($user)], 200);
@@ -151,11 +140,7 @@ class AuthController extends Controller
 
     public function changePassword(Request $request)
     {
-        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
-        $guard = auth('api');
-        
-        /** @var \App\Models\User $user */
-        $user = $guard->user();
+        $user = $request->user();
 
         if ($user->provider !== 'email') {
             return response()->json([
@@ -187,15 +172,12 @@ class AuthController extends Controller
 
     public function deleteAccount(Request $request)
     {
-        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
-        $guard = auth('api');
-        /** @var \App\Models\User $user */
-        $user = $guard->user();
+        $user = $request->user();
         
         if ($user->provider === 'email' && (!$request->password || !Hash::check($request->password, $user->password))) {
             return response()->json(['success' => false, 'message' => 'Mot de passe incorrect'], 401);
         }
-        $guard->logout();
+        Auth::guard('api')->logout();
         $user->delete();
         return response()->json(['success' => true, 'message' => 'Compte supprimé avec succès'], 200);
     }

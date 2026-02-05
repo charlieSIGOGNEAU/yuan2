@@ -15,10 +15,7 @@ class UserController extends Controller
      */
     public function update(Request $request)
     {
-        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
-        $guard = auth('api');
-        /** @var \App\Models\User $user */
-        $user = $guard->user();
+        $user = $request->user();
 
         $request->validate([
             'language'        => 'sometimes|string',

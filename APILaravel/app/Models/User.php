@@ -91,12 +91,10 @@ class User extends Authenticatable implements JWTSubject
         static::saving([static::class, 'generateNameFromEmail']);
     }
 
-    protected static function generateNameFromEmail($user)
+    public static function generateNameFromEmail($user)
     {
         if (empty($user->name) && !empty($user->email)) {
             $user->name = explode('@', $user->email)[0];
         }
     }
-
-
 }

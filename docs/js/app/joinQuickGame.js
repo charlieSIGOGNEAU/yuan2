@@ -38,7 +38,7 @@ export const JoinQuickGamePage = {
         console.log('🎮 Tentative de rejoindre la partie avec le code:', code);
         
         try {
-            const response = await fetch(`${ServerConfig.HTTP_BASE}games/join_game_custom`, {
+            const response = await fetch(`${ServerConfig.HTTP_BASE}/games/join_game_custom`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

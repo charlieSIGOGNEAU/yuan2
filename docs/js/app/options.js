@@ -26,7 +26,7 @@ export async function handleLanguageChange(newLanguage, callbacks = {}) {
         }
 
         // Envoyer la requête au serveur pour mettre à jour la langue de l'utilisateur
-        const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+        const response = await fetch(`${ServerConfig.HTTP_BASE}/user`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ export async function handleLanguageChange(newLanguage, callbacks = {}) {
 }
 
 export async function handleFPSChange(fps) {
-    const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+    const response = await fetch(`${ServerConfig.HTTP_BASE}/user`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ export async function handleFPSChange(fps) {
 }
 
 export async function handleRenderScaleChange(renderScale) {
-    const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+    const response = await fetch(`${ServerConfig.HTTP_BASE}/user`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ export async function handleRenderScaleChange(renderScale) {
 
 export async function handleShadowRealtimeChange(shadowRealtime) {
     const shadowRealtimeBool = shadowRealtime === 'true';
-    const response = await fetch(`${ServerConfig.HTTP_BASE}user`, {
+    const response = await fetch(`${ServerConfig.HTTP_BASE}/user`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',

@@ -3,13 +3,15 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\UserController;
-// N'oublie pas d'importer tes futurs contrôleurs de jeu ici
+
+Route::get('test', function() {
+    return response()->json(['message' => 'L\'API fonctionne !']);
+});
 
 Route::group(['prefix' => 'v1'], function () {
 
     // --- Routes d'authentification (Publiques) ---
-    Route::post('auth/login', [AuthController::class, 'login']);
-    Route::post('auth/login_email', [AuthController::class, 'login']); // Souvent la même méthode
+    Route::post('auth/login_email', [AuthController::class, 'loginEmail']); // Souvent la même méthode
     Route::post('auth/signup', [AuthController::class, 'signup']);
     Route::post('auth/google_login', [AuthController::class, 'googleLogin']);
 
@@ -22,7 +24,7 @@ Route::group(['prefix' => 'v1'], function () {
     Route::group(['middleware' => 'auth:api'], function () {
 
         // Profil & Compte
-        Route::get('auth/me', [AuthController::class, 'me']);
+        // Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/change_name', [AuthController::class, 'changeName']);
         Route::post('auth/change_password', [AuthController::class, 'changePassword']);
         Route::delete('auth/delete_account', [AuthController::class, 'deleteAccount']);
