@@ -18,7 +18,13 @@ export const WebSocketClient = {
         this.connectionStatus = 'connecting';
         this.updateConnectionUI();
 
-        const wsUrl = `${ServerConfig.WS_URL}?token=${Auth.authToken}`;
+        let wsUrl;
+        if (ServerConfig.TYPE === 'laravel') {
+            wsUrl = `${ServerConfig.WS_URL}?protocol=7&client=js&version=8.4.0&flash=false`;
+        } else {
+            wsUrl = `${ServerConfig.WS_URL}?token=${Auth.authToken}`;
+        }
+
         this.connection = new WebSocket(wsUrl);
 
         this.connection.onopen = () => {
