@@ -10,7 +10,7 @@ export const WebSocketClient = {
     connection: null,
     gameSubscriptions: [],
     connectionStatus: 'disconnected',
-    
+
     // Connexion WebSocket
     async connect() {
         if (!Auth.authToken) return;
@@ -20,23 +20,37 @@ export const WebSocketClient = {
 
         const wsUrl = `${ServerConfig.WS_URL}?token=${Auth.authToken}`;
         this.connection = new WebSocket(wsUrl);
-        
+
         this.connection.onopen = () => {
             this.connectionStatus = 'connected';
             this.updateConnectionUI();
-            this.subscribeToChannel();
+
+            // Pour Rails, on s'abonne tout de suite
+            if (ServerConfig.TYPE === 'rails') {
+                this.subscribeToChannel();
+            }
+            // Pour Laravel, on attend l'événement pusher:connection_established qui donne le socket_id
         };
 
         this.connection.onmessage = (event) => {
             let rawData = JSON.parse(event.data);
-            
+
             if (ServerConfig.TYPE === 'laravel') {
                 // Gérer le ping
                 if (rawData.event === "pusher:ping") {
                     this.connection.send(JSON.stringify({ event: "pusher:pong" }));
                     return;
                 }
-        
+
+                // Gérer la connexion établie (Reverb/Pusher)
+                if (rawData.event === 'pusher:connection_established') {
+                    const data = typeof rawData.data === 'string' ? JSON.parse(rawData.data) : rawData.data;
+                    this.socketId = data.socket_id;
+                    console.log('🔌 Connecté à Reverb avec socket_id:', this.socketId);
+                    this.subscribeToChannel();
+                    return;
+                }
+
                 // Si c'est un message de ton canal, on extrait le contenu
                 if (rawData.event === 'message') { // 'message' est défini dans ton broadcastAs()
                     // Reverb envoie parfois le champ data comme une String JSON
@@ -45,24 +59,25 @@ export const WebSocketClient = {
                     return;
                 }
             }
-        
+
             // Comportement Rails par défaut ou message brut
             gameApi.handleGameMessage(rawData);
         };
 
         this.connection.onclose = () => {
             this.connectionStatus = 'disconnected';
-            
+            this.socketId = null;
+
             // Sauvegarder les channels avant reconnexion
             const channelsToRestore = [...this.gameSubscriptions];
             this.gameSubscriptions = []; // Reset
-            
+
             this.updateConnectionUI();
-            
+
             // Reconnexion avec attente vraie
             setTimeout(async () => {
                 await this.connect();
-                
+
                 // Attendre que la connexion soit vraiment prête
                 if (channelsToRestore.length > 0) {
                     await this.waitForConnectionAndRestore(channelsToRestore);
@@ -74,26 +89,30 @@ export const WebSocketClient = {
     // Fonction qui attend la connexion puis restaure les channels
     async waitForConnectionAndRestore(channelsToRestore) {
         console.log('⏳ Attente connexion pour restaurer:', channelsToRestore);
-        
+
         // Attendre que la connexion soit vraiment ouverte
         return new Promise((resolve) => {
             const checkConnection = () => {
-                if (this.connection && this.connection.readyState === WebSocket.OPEN) {
+                // Pour Laravel, il faut aussi avoir le socketId
+                const isReady = this.connection && this.connection.readyState === WebSocket.OPEN &&
+                    (ServerConfig.TYPE !== 'laravel' || this.socketId);
+
+                if (isReady) {
                     console.log('✅ Connexion établie, restauration des channels...');
-                    
+
                     // Restaurer les channels
                     channelsToRestore.forEach(gameId => {
                         console.log(`🔄 Restauration channel game ${gameId}`);
                         this.subscribeToGameChannel(gameId);
                     });
-                    
+
                     resolve();
                 } else {
                     // Réessayer dans 100ms
                     setTimeout(checkConnection, 100);
                 }
             };
-            
+
             checkConnection();
         });
     },
@@ -109,15 +128,51 @@ export const WebSocketClient = {
             }
         }
     },
-    subscribeToUserChannelLaravel(userId) {
-        const subscribeMessage = {
-            event: 'pusher:subscribe', // Reverb attend 'event', pas 'command'
-            data: {
-                channel: `private-user_${userId}` // 'private-' est obligatoire pour les canaux sécurisés
+    async subscribeToUserChannelLaravel(userId) {
+        if (!this.socketId) {
+            console.error('❌ Impossible de s\'abonner : pas de socket_id');
+            return;
+        }
+
+        const channelName = `private-user_${userId}`;
+        console.log(`🔑 Authentification du canal ${channelName}...`);
+
+        try {
+            // URL d'auth : on remonte d'un niveau par rapport à /api/v1 pour aller à /api/broadcasting/auth
+            const authUrl = ServerConfig.HTTP_BASE.replace('/v1', '/broadcasting/auth');
+
+            const response = await fetch(authUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Auth.authToken}`
+                },
+                body: JSON.stringify({
+                    socket_id: this.socketId,
+                    channel_name: channelName
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur auth broadcast: ${response.statusText}`);
             }
-        };
-        this.sendLaravel(subscribeMessage);
-        console.log(`👤 Abonnement au canal utilisateur: private-user_${userId}`);
+
+            const authData = await response.json();
+            console.log('✅ Signature reçue:', authData);
+
+            const subscribeMessage = {
+                event: 'pusher:subscribe',
+                data: {
+                    auth: authData.auth,
+                    channel: channelName
+                }
+            };
+            this.sendLaravel(subscribeMessage);
+            console.log(`👤 Abonnement au canal utilisateur: ${channelName}`);
+
+        } catch (error) {
+            console.error('❌ Erreur authentification canal:', error);
+        }
     },
 
     // S'abonner au canal utilisateur personnel

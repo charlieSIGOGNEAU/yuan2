@@ -171,7 +171,8 @@ class Game < ApplicationRecord
   def add_player(user)
 
     transaction do
-      # reload.lock!
+      #j'ai decomenté reload.lock! car je pense que c'etait un oublie
+      reload.lock!
             
       if (self.waiting_players_count < (player_count - 1)) && (self.game_status == "waiting_for_players")
         self.increment!(:waiting_players_count)

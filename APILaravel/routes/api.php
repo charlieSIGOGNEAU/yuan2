@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
+
+Broadcast::routes(['middleware' => ['auth:api']]);
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\GameController;
@@ -34,7 +37,7 @@ Route::group(['prefix' => 'v1'], function () {
 
         // --- Logique de Jeu (GameController) ---
         Route::prefix('games')->group(function () {
-            Route::post('quick_game', [GameController::class, 'quick_game']);
+            Route::post('quick_game', [GameController::class, 'quickGame']);
         //     Route::post('creat_custom_game', [GameController::class, 'creat_custom_game']);
         //     Route::post('join_game_custom', [GameController::class, 'join_game_custom']);
         //     Route::post('launch_custom_game', [GameController::class, 'launch_custom_game']);

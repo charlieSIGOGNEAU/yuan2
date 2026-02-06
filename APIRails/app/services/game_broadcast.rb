@@ -73,10 +73,6 @@ class GameBroadcast
             }
     end
 
-
-
-
-
     def self.game_broadcast_game_details(game_id)
         game = Game.find(game_id)
         gameUsers = game.game_users.where(abandoned: false)

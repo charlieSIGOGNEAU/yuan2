@@ -11,8 +11,6 @@ class Api::V1::GamesController < ApplicationController
     message = result[:message]
     game_user = result[:game_user]
 
-  
-
     if game
       case message
       when "ongoing game"
