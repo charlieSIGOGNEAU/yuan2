@@ -60,8 +60,10 @@ export const WebSocketClient = {
                 // Si c'est un message de ton canal, on extrait le contenu
                 if (rawData.event === 'message') { // 'message' est défini dans ton broadcastAs()
                     // Reverb envoie parfois le champ data comme une String JSON
-                    const data = typeof rawData.data === 'string' ? JSON.parse(rawData.data) : rawData.data;
-                    gameApi.handleGameMessage(data);
+                    const payload = typeof rawData.data === 'string' ? JSON.parse(rawData.data) : rawData.data;
+                    // On adapte le format pour matcher celui de Rails (attendu par gameApi)
+                    // Rails envoie { message: { ... } }, Laravel envoie { data: { ... }, userId: ... }
+                    gameApi.handleGameMessage({ message: payload.data });
                     return;
                 }
             }

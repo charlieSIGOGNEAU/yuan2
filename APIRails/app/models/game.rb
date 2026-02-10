@@ -243,6 +243,7 @@ class Game < ApplicationRecord
       custom_code = nil
       loop do
         custom_code = SecureRandom.alphanumeric(6).upcase
+        # il faut probablement suprimer creator: user
         game = self.create(game_type: :custom_game, game_status: :waiting_for_players, creator: user, custom_code: custom_code, player_count: 8, waiting_players_count: 1, creator_id: user.id)
         unless game.persisted?
           puts "❌ Erreurs : #{game.errors.full_messages.join(', ')}"
@@ -259,12 +260,13 @@ class Game < ApplicationRecord
     # on rejoind une partie si on a une partie en cours
     ongoing_game = self.ongoing_game(user)
     if ongoing_game
+      # normalement le game_user est deja dans ongoing_game
       game_user = ongoing_game.game_users.find_by(user_id: user.id)
       return {game: ongoing_game, game_user: game_user, message: "ongoing game"}
     # sinon on cree une nouvelle partie
     else
       game = self.where(custom_code: custom_code)
-           .where("waiting_players_count <= ?", 8)
+           .where("waiting_players_count <= ?", 8)   # plutot "<" ?
            .first
       unless game
         return {message: "game not found"}
@@ -338,7 +340,7 @@ class Game < ApplicationRecord
       other_game.lock!
       self.lock!
   
-      if other_game.game_status == "waiting_for_players" && self.game_status == "waiting_for_players"
+      if other_game.game_status == "waiting_for_players"
         num_players_to_move = [place_available, other_game.waiting_players_count].min
   
         other_game.decrement!(:waiting_players_count, num_players_to_move)

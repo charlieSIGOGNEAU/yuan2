@@ -8,26 +8,26 @@
 
 // vertion fonctionelle  sans uttiliser le smarphone
 // export const ServerConfig = {
-// TYPE: 'rails',
-// 	HTTP_BASE: 'http://localhost:3000/api/v1',
-// 	WS_URL: 'ws://localhost:3000/cable',
-// 	GOOGLE_CLIENT_ID : '929416731081-oseq2arg4ofd9tpbs4ku9s6so0tl0028.apps.googleusercontent.com'
+//     TYPE: 'rails',
+//     HTTP_BASE: 'http://localhost:3000/api/v1',
+//     WS_URL: 'ws://localhost:3000/cable',
+//     GOOGLE_CLIENT_ID: '929416731081-oseq2arg4ofd9tpbs4ku9s6so0tl0028.apps.googleusercontent.com'
 // };
 
 // version fonctionelle pour le deploiement
 // export const ServerConfig = {
-// TYPE: 'rails',
-// 	HTTP_BASE: 'https://yuan-game.com/api/v1',
-// 	WS_URL: 'wss://yuan-game.com/cable',
-// 	GOOGLE_CLIENT_ID : '1035919176567-8lmu5ncnm9un9m04kqksjaeqvth8a0dv.apps.googleusercontent.com'
+//     TYPE: 'rails',
+//     HTTP_BASE: 'https://yuan-game.com/api/v1',
+//     WS_URL: 'wss://yuan-game.com/cable',
+//     GOOGLE_CLIENT_ID: '1035919176567-8lmu5ncnm9un9m04kqksjaeqvth8a0dv.apps.googleusercontent.com'
 // };
 
 
 //pour laravel en dev
 export const ServerConfig = {
-	TYPE: 'laravel',
+    TYPE: 'laravel',
     HTTP_BASE: 'http://127.0.0.1:8000/api/v1',
     // Pour le WebSocket (Reverb sur le port 8080)
-    WS_URL: 'ws://localhost:8080/app/b2nkshlmwnb1zezw35zz', 
-	GOOGLE_CLIENT_ID : '929416731081-oseq2arg4ofd9tpbs4ku9s6so0tl0028.apps.googleusercontent.com'
+    WS_URL: 'ws://localhost:8080/app/b2nkshlmwnb1zezw35zz',
+    GOOGLE_CLIENT_ID: '929416731081-oseq2arg4ofd9tpbs4ku9s6so0tl0028.apps.googleusercontent.com'
 };

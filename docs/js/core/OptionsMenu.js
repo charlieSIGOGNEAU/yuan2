@@ -21,7 +21,7 @@ export class OptionsMenu {
 
     // Paramètres du menu d'options
     getMenuParams() {
-        
+
         return {
             title: i18n.t('options.title'),
             sections: [
@@ -107,7 +107,7 @@ export class OptionsMenu {
         }
         this.text_button_abandon = text_button_abandon;
         console.log('🔧 Ouverture du menu d\'options');
-        
+
         if (this.isOpen) {
             console.log('⚠️ Le menu d\'options est déjà ouvert');
             return;
@@ -120,18 +120,18 @@ export class OptionsMenu {
     // Fermer le menu d'options
     close() {
         console.log('🔧 Fermeture du menu d\'options');
-        
+
         if (!this.isOpen) {
             return;
         }
 
         this.isOpen = false;
-        
+
         if (this.overlayElement) {
             this.overlayElement.remove();
             this.overlayElement = null;
         }
-        
+
         if (this.menuElement) {
             this.menuElement.remove();
             this.menuElement = null;
@@ -228,7 +228,7 @@ export class OptionsMenu {
             onSuccess: () => {
                 // Fermer le menu
                 this.close();
-                
+
                 // Réouvrir le menu pour mettre à jour les traductions
                 setTimeout(() => {
                     this.open();
@@ -267,16 +267,16 @@ export class OptionsMenu {
     // Gérer l'abandon de la partie
     async handleAbandonGame() {
         console.log('🚪 Demande d\'abandon de partie');
-        console.log('🔍 Auth.authToken:', Auth.authToken);        
+        console.log('🔍 Auth.authToken:', Auth.authToken);
         // Demander confirmation
         if (gameState.game.game_status === 'simultaneous_play') {
             // Demander confirmation
-            const confirmation = confirm(i18n.t('options.abandon_confirmation'));  
+            const confirmation = confirm(i18n.t('options.abandon_confirmation'));
             if (!confirmation) {
                 console.log('❌ Abandon annulé');
                 return;
             }
-        
+
             console.log("faire l'action passer son tour");
             const gameapi = await import('../game_logic_yuan/gameApi.js');
             await gameapi.gameApi.sendActionToApi({
@@ -287,26 +287,26 @@ export class OptionsMenu {
                 militarisation_level: 0
             }, false);
         }
-        
+
 
 
         try {
             // Récupérer le token d'authentification et l'ID du game_user
-            const token =  Auth.authToken;
+            const token = Auth.authToken;
             if (!token) {
                 console.error('❌ Token non trouvé');
                 return;
             }
             const gameUserId = gameState.myGameUserId;
             const gameId = gameState.game.id;
-            
+
             if (!gameUserId || !gameId) {
                 console.error('❌ Informations de jeu non trouvées');
                 return;
-            }          
+            }
 
             // Envoyer la requête au serveur pour abandonner la partie
-            const response = await fetch(`${this.baseUrl}games/${gameId}/game_users/${gameUserId}/abandon`, {
+            const response = await fetch(`${this.baseUrl}/games/${gameId}/game_users/${gameUserId}/abandon`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -317,16 +317,16 @@ export class OptionsMenu {
             const data = await response.json();
 
             if (data.success) {
-                console.log('✅ Partie abandonnée avec succès');                
+                console.log('✅ Partie abandonnée avec succès');
                 // Fermer le menu
-                this.close();                
+                this.close();
                 // Afficher un message de confirmation
                 if (window.uiManager) {
                     window.uiManager.showTemporaryMessage(
                         i18n.t('options.game_abandoned'),
                         3000
                     );
-                }                
+                }
                 // Rediriger vers le menu principal après 1.5 secondes
                 setTimeout(async () => {
                     const { SessionManager } = await import('../app/sessionManager.js');
@@ -334,11 +334,11 @@ export class OptionsMenu {
                 }, 1500);
             } else {
                 console.error('❌ Erreur1 lors de l\'abandon de la partie:', data);
-                
+
             }
         } catch (error) {
             console.error('❌ Erreur2 lors de l\'abandon de la partie:', error);
-            
+
         }
     }
 }

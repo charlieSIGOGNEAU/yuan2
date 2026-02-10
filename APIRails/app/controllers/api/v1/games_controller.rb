@@ -56,7 +56,7 @@ class Api::V1::GamesController < ApplicationController
       render json: { success: false, message: "You are already in a game" }
       game = result[:game]
       game_user = result[:game_user]
-      GameBroadcast.game_broadcast_waiting_for_players(game.id)
+      GameBroadcast.game_broadcast_waiting_for_players(game.id) # ca devrais etre plutot game_details ?
 
     elsif message == "game not found"
       render json: { success: false, message: "Game not found" }

@@ -1,18 +1,27 @@
 <?php
 
-namespace App\Services;
+namespace App\Actions\Games;
 
 use App\Models\User;
 use App\Models\Game;
 use App\Enums\GameStatus;
 use App\Enums\GameType;
+use App\Services\Games\GameService;
 use Illuminate\Support\Facades\DB;
-class GameService
+
+class JoinOrCreateGame
 {
-    public function findOrCreateWaitingGame(User $user)
+    public function __construct(private GameService $gameService)
     {
-        $ongoingGame = $this->ongoingGame($user);
-        if ($ongoingGame) {
+    }
+    /**
+     * Cherche ou crée une partie en attente.
+     * * @param User $user
+     * @return array|null
+     */
+    public function __invoke(User $user) : ?array
+    {
+        if ($ongoingGame = $this->gameService->ongoingGame($user)) {
             return $ongoingGame;
         }
         $attempts = 0;
@@ -21,14 +30,14 @@ class GameService
 
             try {
 
-                return DB::transaction(function () use ($user) {
+                return DB::transaction(function () use ($user) : ?array {
                 
                     $waitingGame = Game::where('game_status', GameStatus::WAITING_FOR_PLAYERS)
                         ->where('game_type', GameType::QUICK_GAME)
                         ->lockForUpdate()
                         ->first();
                     if ($waitingGame) {
-                        $result = $waitingGame->addPlayer($user);
+                        $result = $this->addPlayer($waitingGame, $user);
                         return $result;
                     }
                     $game = Game::create([
@@ -45,8 +54,7 @@ class GameService
                     ];
                 });
             } catch (\Illuminate\Database\QueryException $e) {
-                // On ne loggue que si on veut débugger les collisions
-                // La boucle continue automatiquement vers l'essai suivant
+                // On ne loggue que si on veut débugger les collision                // La boucle continue automatiquement vers l'essai suivant
                 if ($attempts >= 3) {
                     throw $e; // On finit par lâcher l'erreur si ça échoue trop souvent
                 }
@@ -55,27 +63,7 @@ class GameService
         return null;
     }
 
-    private function ongoingGame(User $user)
-    {
-        $existingGameForUser = Game::whereHas('gameUsers', function ($query) use ($user) {
-            $query->where('user_id', $user->id)
-                ->where('abandoned', false);
-        })
-        ->whereNotIn('game_status', [GameStatus::COMPLETED, GameStatus::ABANDONED])
-        ->first();
-
-        if (!$existingGameForUser) {
-            return null;
-        }
-
-        $gameUser = $existingGameForUser->gameUsers()->where('user_id', $user->id)->first();
-        $message = $existingGameForUser->game_status == GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS ? "waiting for confirmation players" : "ongoing game";
-        return [
-            'game' => $existingGameForUser,
-            'game_user' => $gameUser,
-            'message' => $message
-        ];
-    }
+    
 
     // est dans une transaction
     private function addPlayer(Game $game, User $user)
