@@ -170,4 +170,38 @@ class GameController extends Controller
             'game_id' => $game->id,
         ], 200);
     }
+
+    public function iAmReady(Request $request, IAmReady $iAmReady, GameBroadcastService $gameBroadcastService)
+    {
+        $validated = $request->validate([
+            'game_id' => 'required|integer|exists:games,id',
+        ]);
+
+        $user = $request->user();
+        $gameUser = $user->gameUsers()->where('game_id', $validated['game_id'])->first();
+        $game = $gameUser->game;
+        
+        $result = $iAmReady($gameUser);
+        $message = $result['message'];
+
+        switch ($message) {
+            case 'player ready and game full':
+                $gameBroadcastService->gameBroadcastGameDetails($game);
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                ], 200);
+            case 'player ready and game not full':
+                $gameBroadcastService->gameBroadcastReadyToPlay($game);
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                ], 200);
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Game not in waiting_for_confirmation_players',
+                ], 200);
+        }
+    }
 }
