@@ -179,9 +179,17 @@ class GameController extends Controller
 
         $user = $request->user();
         $gameUser = $user->gameUsers()->where('game_id', $validated['game_id'])->first();
+
+        if (!$gameUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not a participant in this game.'
+            ], 403);
+        }
+
         $game = $gameUser->game;
         
-        $result = $iAmReady($gameUser);
+        $result = $iAmReady($gameUser, $game);
         $message = $result['message'];
 
         switch ($message) {
@@ -201,7 +209,86 @@ class GameController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Game not in waiting_for_confirmation_players',
-                ], 200);
+                ], 422);
         }
+    }
+
+    public function submitVictory(Request $request, SubmitVictory $submitVictory)
+    {
+        $validated = $request->validate([
+            'game_id' => 'required|integer|exists:games,id',
+            'rankings' => 'required|array',
+        ]);
+
+        $user = $request->user();
+        $gameUser = $user->gameUsers()->where('game_id', $validated['game_id'])->first();
+
+        if (!$gameUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not a participant in this game.'
+            ], 403);
+        }
+        
+        $game = $gameUser->game;
+
+        $result = $submitVictory($game, $user, $validated['rankings']);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function startGameAfterDelay(Request $request, StartGameAfterDelay $startGameAfterDelay, GameBroadcastService $gameBroadcastService)
+    {
+        $validated = $request->validate([
+            'game_id' => 'required|integer|exists:games,id',
+        ]);
+
+        $user = $request->user();
+        $gameUser = $user->gameUsers()->where('game_id', $validated['game_id'])->first();
+
+        if (!$gameUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not a participant in this game.'
+            ], 403);
+        }
+        
+        $game = $gameUser->game;
+
+        if ($game->game_status !== GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Game not in waiting_for_confirmation_players',
+            ], 200);
+        }
+
+        $result = $startGameAfterDelay($game);
+        $message = $result['message'];
+
+        switch ($message) {
+            case 'game ready installation_phase':
+                $gameBroadcastService->gameBroadcastGameDetails($game);
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                ], 200);
+            case 'missing player, waiting for player':
+                $gameBroadcastService->gameBroadcastWaitingForPlayers($game);
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 200);
+            case 'game destroyed':
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 200);
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Game not in waiting_for_confirmation_players',
+                ], 422);
+        };
+
     }
 }

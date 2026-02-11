@@ -32,6 +32,39 @@ class GameService
         ];
     }
 
+    public function startInstallationPhase(Game $game)
+    {
+        $gameUsers = $game->gameUsers()->where('abandoned', false)->get();
+        $game->update([
+            'game_status' => GameStatus::INSTALLATION_PHASE,
+            'player_count' => $gameUsers->count(),
+            'clan_names' => $game->theClans()
+        ]);
+        $this->createTilesForPlayers($game, $gameUsers);
+    }
+
+
+
+    public function createTilesForPlayers(Game $game, Collection $gameUsers)
+    {
+        $tileCount = $game->calculateTileCount();
+        $userCount = $gameUsers->count();
+
+        for ($i = 0; $i < $tileCount; $i++) {
+            $currentUser = $gameUsers[$i % $userCount];
+            
+            $tilesData[] = [
+                'game_id'      => $game->id,
+                'game_user_id' => $currentUser->id,
+                'turn'         => $i,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ];
+        }
+
+        Tile::insert($tilesData);
+    }
+
 
         
 }
