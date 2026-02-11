@@ -10,6 +10,7 @@ use App\Actions\Games\JoinCustomGame;
 use App\Actions\Games\LaunchCustomGame;
 use App\Services\GameBroadcastService;
 use App\Models\Game;
+use App\Http\Requests\GameMemberRequest;
 
 class GameController extends Controller
 {
@@ -125,15 +126,14 @@ class GameController extends Controller
         }
     }
     
-    public function launchCustomGame(Request $request, LaunchCustomGame $launchCustomGame, GameBroadcastService $gameBroadcastService)
+    public function launchCustomGame(GameMemberRequest $request, LaunchCustomGame $launchCustomGame, GameBroadcastService $gameBroadcastService)
     {
         $validated = $request->validate([
-            'game_id' => 'required|integer|exists:games,id',
             'game_duration' => 'nullable|integer|min:30|max:600',
         ]);
 
         $user = $request->user();
-        $game = Game::find($validated['game_id']); 
+        $game = Game::find($request->game_id); 
 
         if ($user->id !== $game->creator_id) {
             return response()->json([
@@ -171,23 +171,10 @@ class GameController extends Controller
         ], 200);
     }
 
-    public function iAmReady(Request $request, IAmReady $iAmReady, GameBroadcastService $gameBroadcastService)
+    public function iAmReady(GameMemberRequest $request, IAmReady $iAmReady, GameBroadcastService $gameBroadcastService)
     {
-        $validated = $request->validate([
-            'game_id' => 'required|integer|exists:games,id',
-        ]);
-
-        $user = $request->user();
-        $gameUser = $user->gameUsers()->where('game_id', $validated['game_id'])->first();
-
-        if (!$gameUser) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not a participant in this game.'
-            ], 403);
-        }
-
-        $game = $gameUser->game;
+        $gameUser = $request->gameUser;
+        $game = $request->game;
         
         $result = $iAmReady($gameUser, $game);
         $message = $result['message'];
@@ -213,24 +200,15 @@ class GameController extends Controller
         }
     }
 
-    public function submitVictory(Request $request, SubmitVictory $submitVictory)
+    public function submitVictory(GameMemberRequest $request, SubmitVictory $submitVictory)
     {
         $validated = $request->validate([
-            'game_id' => 'required|integer|exists:games,id',
             'rankings' => 'required|array',
         ]);
 
         $user = $request->user();
-        $gameUser = $user->gameUsers()->where('game_id', $validated['game_id'])->first();
-
-        if (!$gameUser) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not a participant in this game.'
-            ], 403);
-        }
-        
-        $game = $gameUser->game;
+        $gameUser = $request->gameUser;
+        $game = $request->game;
 
         $result = $submitVictory($game, $user, $validated['rankings']);
 
@@ -288,7 +266,7 @@ class GameController extends Controller
                     'success' => false,
                     'message' => 'Game not in waiting_for_confirmation_players',
                 ], 422);
-        };
+        }
 
     }
 }
