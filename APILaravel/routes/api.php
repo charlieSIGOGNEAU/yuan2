@@ -38,18 +38,18 @@ Route::group(['prefix' => 'v1'], function () {
         // --- Logique de Jeu (GameController) ---
         Route::prefix('games')->group(function () {
             Route::post('quick_game', [GameController::class, 'quickGame']);
-        //     Route::post('creat_custom_game', [GameController::class, 'creat_custom_game']);
-        //     Route::post('join_game_custom', [GameController::class, 'join_game_custom']);
-        //     Route::post('launch_custom_game', [GameController::class, 'launch_custom_game']);
+            Route::post('creat_custom_game', [GameController::class, 'createCustomGame']);
+            Route::post('join_game_custom', [GameController::class, 'joinCustomGame']);
+            Route::post('launch_custom_game', [GameController::class, 'launchCustomGame']);
         //     Route::post('startGameAfterTimeout', [GameController::class, 'startGameAfterTimeout']);
-        //     Route::post('i_am_ready', [GameController::class, 'i_am_ready']);
+            Route::post('i_am_ready', [GameController::class, 'iAmReady']);
         //     Route::post('startGameAfterDelay', [GameController::class, 'startGameAfterDelay']);
         //     Route::post('give_up_game', [GameController::class, 'give_up_game']);
         //     Route::post('confirm_game_details_reception', [GameController::class, 'confirm_game_details_reception']);
 
         //     // Routes avec ID de jeu (équivalent member do / resources)
         //     Route::group(['prefix' => '{game}'], function () {
-        //         Route::post('submit_victory', [GameController::class, 'submit_victory']);
+                Route::post('submit_victory', [GameController::class, 'submitVictory']);
         //         Route::post('force_end_turn', [GameController::class, 'force_end_turn']);
                 
         //         // Nesting (Tuiles, Clans, Bidding)
