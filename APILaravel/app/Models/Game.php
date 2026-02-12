@@ -30,6 +30,10 @@ class Game extends Model
         'turn_duration',
         'simultaneous_play_turn',
     ];
+    protected $casts = [
+        'game_status' => GameStatus::class,
+        'game_type' => GameType::class,
+    ];
     public function users()
     {
         return $this->belongsToMany(User::class, 'game_users');
@@ -57,5 +61,25 @@ class Game extends Model
     public function submittedByUser()
     {
         return $this->belongsTo(User::class, 'submitted_by_user_id');
+    }
+
+    public function theClans() : string
+    {
+        $clans = ["black_clan","red_clan","green_clan","orange_clan","white_clan","blue_clan","purple_clan","yellow_clan"];
+        return implode(" ", array_slice($clans, 0, $this->player_count));
+    }
+
+    public function calculateTileCount(): int
+    {
+        return match ($this->player_count) {
+            2 => 8,
+            3 => 12,
+            4 => 15,
+            5 => 19,
+            6 => 22,
+            7 => 27,
+            8 => 30,
+            default => 0,
+        };
     }
 }

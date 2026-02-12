@@ -14,7 +14,7 @@ class StartGameAfterDelay
     public function __invoke(Game $game)
     {
         return DB::transaction(function () use ($game) {
-            $game->lockForUpdate();
+            $game->lockForUpdate()->refresh();
 
             if ($game->game_status !== GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS) {
                 return ['message' => 'invalid status'];

@@ -37,8 +37,7 @@ class JoinCustomGame
             return ['message' => 'game full'];
         }
         return DB::transaction(function () use ($game, $user) {
-            $game->lockForUpdate();
-            $game->refresh();
+            $game->lockForUpdate()->refresh();
             if ($game->waiting_players_count >= 8) {
                 return [ 'message' => 'game full'];          
             }

@@ -15,8 +15,7 @@ class LaunchCustomGame
         $placeAvailable = 0;
         try{
             DB::transaction(function () use ($game, &$placeAvailable) {
-                $game->lockForUpdate();
-                $game->refresh();
+                $game->lockForUpdate()->refresh();
                 if ($game->game_status !== GameStatus::WAITING_FOR_PLAYERS) {
                     throw new \Exception("Game not in waiting_for_players");
                 }

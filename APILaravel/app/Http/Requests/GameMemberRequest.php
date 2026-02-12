@@ -10,7 +10,8 @@ class GameMemberRequest extends FormRequest
     {
         if ($this->route('game')) {
             $this->merge([
-                'game_id' => $this->route('game')
+                'game_id' => $this->route('game'),
+                'custom_code' => $this->custom_code ? strtoupper($this->custom_code) : null,
             ]);
         }
     }
@@ -32,6 +33,8 @@ class GameMemberRequest extends FormRequest
     {
         return [
             'game_id' => 'required|integer|exists:games,id',
+            'simultaneous_play_turn' => 'sometimes|integer',
+            'custom_code' => 'sometimes|string|size:6',
         ];
     }
 }

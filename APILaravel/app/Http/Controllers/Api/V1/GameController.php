@@ -8,6 +8,7 @@ use App\Actions\Games\JoinOrCreateGame;
 use App\Actions\Games\CreateCustomGame;
 use App\Actions\Games\JoinCustomGame;
 use App\Actions\Games\LaunchCustomGame;
+use App\Actions\Games\GiveUpGame;
 use App\Services\GameBroadcastService;
 use App\Models\Game;
 use App\Http\Requests\GameMemberRequest;
@@ -133,7 +134,7 @@ class GameController extends Controller
         ]);
 
         $user = $request->user();
-        $game = Game::find($request->game_id); 
+        $game = $request->game;
 
         if ($user->id !== $game->creator_id) {
             return response()->json([
@@ -215,24 +216,10 @@ class GameController extends Controller
         return response()->json($result, $result['success'] ? 200 : 422);
     }
 
-    public function startGameAfterDelay(Request $request, StartGameAfterDelay $startGameAfterDelay, GameBroadcastService $gameBroadcastService)
+    public function startGameAfterDelay(GameMemberRequest $request, StartGameAfterDelay $startGameAfterDelay, GameBroadcastService $gameBroadcastService)
     {
-        $validated = $request->validate([
-            'game_id' => 'required|integer|exists:games,id',
-        ]);
-
-        $user = $request->user();
-        $gameUser = $user->gameUsers()->where('game_id', $validated['game_id'])->first();
-
-        if (!$gameUser) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not a participant in this game.'
-            ], 403);
-        }
+        $game = $request->game;
         
-        $game = $gameUser->game;
-
         if ($game->game_status !== GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS) {
             return response()->json([
                 'success' => false,
@@ -268,5 +255,35 @@ class GameController extends Controller
                 ], 422);
         }
 
+    }
+
+    public function giveUpGame(GameMemberRequest $request, GiveUpGame $giveUpGame, GameBroadcastService $gameBroadcastService)
+    {
+        $game = $request->game;
+        $gameUser = $request->gameUser;
+
+        $result = $giveUpGame($game, $gameUser);
+        $message = $result['message'];
+
+        switch ($message) {
+            case 'player give up':
+                if ($game->game_status === GameStatus::WAITING_FOR_PLAYERS) {
+                    $gameBroadcastService->gameBroadcastWaitingForPlayers($game);
+                } else {
+                    $gameBroadcastService->gameBroadcastReadyToPlay($game);
+                }
+                return response()->json(['success' => true, 'message' => 'Player give up']);
+
+            case 'player give up and game ready installation_phase':
+                $gameBroadcastService->gameBroadcastGameDetails($game);
+                return response()->json(['success' => true, 'message' => $message]);
+
+            case 'player give up and game waiting for players':
+                $gameBroadcastService->gameBroadcastWaitingForPlayers($game);
+                return response()->json(['success' => true, 'message' => $message]);
+
+            default:
+                return response()->json(['success' => false, 'message' => $message]);
+        }
     }
 }
