@@ -9,6 +9,7 @@ use App\Actions\Games\CreateCustomGame;
 use App\Actions\Games\JoinCustomGame;
 use App\Actions\Games\LaunchCustomGame;
 use App\Actions\Games\GiveUpGame;
+use App\Actions\Games\ForceEndTurnAction;
 use App\Services\GameBroadcastService;
 use App\Models\Game;
 use App\Http\Requests\GameMemberRequest;
@@ -257,6 +258,7 @@ class GameController extends Controller
 
     }
 
+    // abandon de la partie uniquement avant qu'elle ai commencé
     public function giveUpGame(GameMemberRequest $request, GiveUpGame $giveUpGame, GameBroadcastService $gameBroadcastService)
     {
         $game = $request->game;
@@ -285,5 +287,33 @@ class GameController extends Controller
             default:
                 return response()->json(['success' => false, 'message' => $message]);
         }
+    }
+
+    //   def confirm_game_details_reception a implementer
+
+    public function forceEndTurn(GameMemberRequest $request, ForceEndTurnAction $forceEndTurnAction, GameBroadcastService $gameBroadcastService)
+    {
+        $game = $request->game;
+        if ($request->missing('simultaneous_play_turn')) {
+            return response()->json(['success' => false, 'message' => 'Paramètre manquant'], 400);
+        }
+
+        $turnParam = $request->integer('simultaneous_play_turn');
+
+        if ($game->simultaneous_play_turn !== $turnParam) {
+            return response()->json(['success' => false, 'message' => 'Le tour a déjà évolué'], 200);
+        }
+
+        if ($game->updated_at->gt(now()->subSeconds($game->turn_duration))) {
+            return response()->json(['success' => false, 'message' => "Le temps n'est pas encore écoulé"], 200);
+        }
+
+        $result = $forceEndTurnAction($game, $turnParam);
+        if ($result === 'forced_success') {
+            $gameBroadcastService->gameBroadcastGameDetails($game);
+            return response()->json(['success' => true, 'message' => $result]);
+        }
+
+        return response()->json(['success' => false, 'message' => $result]);
     }
 }

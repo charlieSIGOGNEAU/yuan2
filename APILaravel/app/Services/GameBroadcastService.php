@@ -18,7 +18,7 @@ class GameBroadcastService
     {
         // On charge les relations manquantes directement sur l'objet existant
         // C'est l'équivalent du "with" mais pour un objet déjà créé.
-        $game->load(['tiles', 'clans', 'gameUsers', 'actions', 'biddings']);
+        $game->refresh()->load(['tiles', 'clans', 'gameUsers', 'actions', 'biddings']);
 
         foreach ($game->gameUsers as $gameUser) {
             if ($gameUser->abandoned) {
@@ -66,7 +66,7 @@ class GameBroadcastService
 
     public function userBroadcastGameDetails(User $user, Game $game)
     {
-        $game->load(['tiles', 'clans', 'gameUsers', 'actions', 'biddings']);
+        $game->refresh()->load(['tiles', 'clans', 'gameUsers', 'actions', 'biddings']);
 
         UserBroadcast::dispatch($user->id, [
             'type' => 'game_details',
@@ -74,7 +74,5 @@ class GameBroadcastService
             'my_game_user_id' => $game->gameUsers->firstWhere('user_id', $user->id)->id
         ]);
     }
-
-
-     
+    
 }
