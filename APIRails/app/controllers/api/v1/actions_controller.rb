@@ -9,9 +9,9 @@ class Api::V1::ActionsController < ApplicationController
   # POST /api/v1/games/:game_id/actions
   def create  
     # Attributs à modifier/créer
-  attrs = @action_params.slice(
-    :position_q, :position_r, :development_level, :fortification_level, :militarisation_level
-  )
+    attrs = @action_params.slice(
+      :position_q, :position_r, :development_level, :fortification_level, :militarisation_level
+    )
 
     # Vérifier si une action existe déjà pour ce game_user et ce turn
     existing_action = Action.find_by(

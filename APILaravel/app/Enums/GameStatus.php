@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum GameStatus: int
+enum GameStatus: int implements \JsonSerializable
 {
     case WAITING_FOR_PLAYERS = 0;
     case WAITING_FOR_CONFIRMATION_PLAYERS = 1;
@@ -14,4 +14,9 @@ enum GameStatus: int
     case COMPLETED = 7;
     case ABANDONED = 8;
     case END_DISPUTE = 9;
+
+    public function jsonSerialize(): string
+    {
+        return strtolower($this->name);
+    }
 }

@@ -29,11 +29,34 @@ class Game extends Model
         'biddings_turn',
         'turn_duration',
         'simultaneous_play_turn',
+        'waiting_players_count',
+        'custom_code',
+        'creator_id',
+        'submitted_by_user_id',
+        'game_duration',
     ];
     protected $casts = [
         'game_status' => GameStatus::class,
         'game_type' => GameType::class,
     ];
+    /**
+     * Cette méthode intercepte la conversion en Array/JSON
+     */
+    public function toArray()
+    {
+        $array = parent::toArray();
+        
+        // On force la conversion en string via le nom de la case Enum
+        if ($this->game_status instanceof GameStatus) {
+            $array['game_status'] = strtolower($this->game_status->name);
+        }
+        
+        if ($this->game_type instanceof GameType) {
+            $array['game_type'] = strtolower($this->game_type->name);
+        }
+
+        return $array;
+    }
     public function users()
     {
         return $this->belongsToMany(User::class, 'game_users');
@@ -45,6 +68,10 @@ class Game extends Model
     public function tiles()
     {
         return $this->hasMany(Tile::class);
+    }
+    public function actions()
+    {
+        return $this->hasMany(Action::class);
     }
     public function clans()
     {

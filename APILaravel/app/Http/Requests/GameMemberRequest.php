@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class GameMemberRequest extends FormRequest
 {
+    public $game;
+    public $gameUser;
     protected function prepareForValidation()
     {
         if ($this->route('game')) {
@@ -18,8 +20,12 @@ class GameMemberRequest extends FormRequest
 
     public function authorize(): bool
     {
+        // On s'assure de récupérer uniquement l'ID, pas l'objet entier
+        // Si $this->game_id est un objet, on prend son ->id, sinon on prend la valeur brute
+        $gameId = is_object($this->game_id) ? $this->game_id->id : $this->game_id;
+        
         $this->gameUser = $this->user()->gameUsers()
-            ->where('game_id', $this->game_id)
+            ->where('game_id', $gameId)
             ->first();
 
         if ($this->gameUser) {

@@ -8,8 +8,11 @@ use App\Actions\Games\JoinOrCreateGame;
 use App\Actions\Games\CreateCustomGame;
 use App\Actions\Games\JoinCustomGame;
 use App\Actions\Games\LaunchCustomGame;
+use App\Actions\Games\IAmReady;
 use App\Actions\Games\GiveUpGame;
 use App\Actions\Games\ForceEndTurnAction;
+use App\Actions\Games\StartGameAfterDelay;
+use App\Enums\Actions\Games\StartGameAfterDelayResult;
 use App\Services\GameBroadcastService;
 use App\Models\Game;
 use App\Http\Requests\GameMemberRequest;
@@ -41,7 +44,8 @@ class GameController extends Controller
                 $gameBroadcastService->gameBroadcastReadyToPlay($game);
                 break;
 
-            case 'waiting for players':
+            case 'yes waiting for other players':
+                // donc le brodcaste juste endessous est fait
             case 'new game':
                 $gameBroadcastService->gameBroadcastWaitingForPlayers($game);
                 break;
@@ -229,33 +233,36 @@ class GameController extends Controller
         }
 
         $result = $startGameAfterDelay($game);
-        $message = $result['message'];
+        $status = $result['status'];
+        $userIdToDestroed = $result['userIdToDestroed'] ?? [];
 
-        switch ($message) {
-            case 'game ready installation_phase':
-                $gameBroadcastService->gameBroadcastGameDetails($game);
-                return response()->json([
-                    'success' => true,
-                    'message' => $message,
-                ], 200);
-            case 'missing player, waiting for player':
-                $gameBroadcastService->gameBroadcastWaitingForPlayers($game);
-                return response()->json([
-                    'success' => false,
-                    'message' => $message,
-                ], 200);
-            case 'game destroyed':
-                return response()->json([
-                    'success' => false,
-                    'message' => $message,
-                ], 200);
-            default:
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Game not in waiting_for_confirmation_players',
-                ], 422);
+        foreach ($userIdToDestroed as $userId) {
+            $gameBroadcastService->userBroadcastPlayerDestroyed($game, $userId);
         }
 
+        if ($status === StartGameAfterDelayResult::GAME_READY_INSTALLATION_PHASE) {
+            $gameBroadcastService->gameBroadcastGameDetails($game);
+        } elseif ($status === StartGameAfterDelayResult::MISSING_PLAYER) {
+            $gameBroadcastService->gameBroadcastWaitingForPlayers($game);
+        }
+
+        $message = match ($status) {
+            StartGameAfterDelayResult::GAME_READY_INSTALLATION_PHASE => 'game ready installation_phase',
+            StartGameAfterDelayResult::MISSING_PLAYER => 'missing player, waiting for player',
+            StartGameAfterDelayResult::WAITING_FOR_PLAYERS => 'waiting for players',
+            StartGameAfterDelayResult::GAME_DESTROYED => 'game destroyed',
+            StartGameAfterDelayResult::INVALID_STATUS => 'invalid status',
+            StartGameAfterDelayResult::UNEXPIRED_TIMEOUT => 'unexpired timeout',
+            default => 'unknown status',
+        };
+
+        return response()->json([
+            'success' => in_array($status, [
+                StartGameAfterDelayResult::GAME_READY_INSTALLATION_PHASE, 
+                StartGameAfterDelayResult::MISSING_PLAYER
+            ]),            
+            'message' => $message,
+        ], 200);
     }
 
     // abandon de la partie uniquement avant qu'elle ai commencé

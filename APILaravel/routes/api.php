@@ -7,6 +7,7 @@ Broadcast::routes(['middleware' => ['auth:api']]);
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\GameController;
+use App\Http\Controllers\Api\V1\TileController;
 Route::get('test', function() {
     return response()->json(['message' => 'L\'API fonctionne !']);
 });
@@ -48,18 +49,18 @@ Route::group(['prefix' => 'v1'], function () {
         //     Route::post('confirm_game_details_reception', [GameController::class, 'confirm_game_details_reception']);
 
         //     // Routes avec ID de jeu (équivalent member do / resources)
-        //     Route::group(['prefix' => '{game}'], function () {
-                Route::post('submit_victory', [GameController::class, 'submitVictory']);
-        //         Route::post('force_end_turn', [GameController::class, 'force_end_turn']);
+            Route::group(['prefix' => '{game}'], function () {
+            Route::post('submit_victory', [GameController::class, 'submitVictory']);
+            Route::post('force_end_turn', [GameController::class, 'forceEndTurn']);
                 
         //         // Nesting (Tuiles, Clans, Bidding)
-        //         Route::post('tiles/{tile}/place', [TileController::class, 'place']);
+            Route::post('tiles/{tile}/place', [TileController::class, 'place']);
         //         Route::post('clans', [ClanController::class, 'store']);
         //         Route::post('bidding', [BiddingController::class, 'store']);
         //         Route::post('actions', [ActionController::class, 'store']);
                 
         //         Route::post('game_users/{game_user}/abandon', [GameUserController::class, 'abandon']);
-        //     });
+            });
         });
     });
 });

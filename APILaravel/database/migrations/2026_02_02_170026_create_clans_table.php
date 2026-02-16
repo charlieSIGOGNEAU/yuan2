@@ -18,8 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->integer('start_q');
             $table->integer('start_r');
-            $table->integer('received_turn');
-            $table->integer('received_chao');
+
             $table->timestamps();
         });
     }

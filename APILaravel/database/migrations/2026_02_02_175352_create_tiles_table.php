@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('tiles', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->integer('position_q');
-            $table->integer('position_r');
-            $table->integer('rotation');
+            $table->string('name')->nullable();
+            $table->integer('position_q')->nullable();
+            $table->integer('position_r')->nullable();
+            $table->integer('rotation')->nullable();
             $table->foreignId('game_user_id')->constrained()->onDelete('cascade');
             $table->foreignId('game_id')->constrained()->onDelete('cascade');
-            $table->integer('turn');
+            $table->integer('turn')->nullable();
             $table->timestamps();
         });
     }

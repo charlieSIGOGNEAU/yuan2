@@ -14,7 +14,7 @@ use App\Http\Resources\GameResource;
 
 class GameBroadcastService
 {
-    public function broadcastGameDetails(Game $game)
+    public function gamebroadcastGameDetails(Game $game)
     {
         // On charge les relations manquantes directement sur l'objet existant
         // C'est l'équivalent du "with" mais pour un objet déjà créé.
@@ -72,6 +72,14 @@ class GameBroadcastService
             'type' => 'game_details',
             'game' => new GameResource($game),
             'my_game_user_id' => $game->gameUsers->firstWhere('user_id', $user->id)->id
+        ]);
+    }
+
+    public function userBroadcastPlayerDestroyed(Game $game, int $userId)
+    {
+        UserBroadcast::dispatch($userId, [
+            'type' => 'player_destroyed',
+            'game_id' => $game->id,
         ]);
     }
     

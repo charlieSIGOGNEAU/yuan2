@@ -15,7 +15,7 @@ class IAmReady
     public function __invoke(GameUser $gameUser, Game $game)
     {
         return DB::transaction(function () use ($gameUser, $game) {
-            $game->lockForUpdate()->refresh();
+            $game = Game::where('id', $game->id)->lockForUpdate()->first();
             if ($game->game_status !== GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS) {
                 return ['message' => 'game not in waiting for confirmation players'];
             }
@@ -28,7 +28,7 @@ class IAmReady
                 return ['message' => 'player ready and game not full'];
             }
             $this->gameService->startInstallationPhase($game);
-            return ['message' => 'player ready and game full'];
+            return ['message' => 'player ready and game full', 'game' => $game];
         });
     }
 }

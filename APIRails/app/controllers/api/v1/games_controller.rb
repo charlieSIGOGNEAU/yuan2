@@ -165,9 +165,6 @@ class Api::V1::GamesController < ApplicationController
   end
 
   def startGameAfterDelay
-    p "4"*100
-    p @game.game_status
-    p "4"*100
     if @game.game_status == "waiting_for_confirmation_players"
       result = @game.start_game_after_delay
       message = result&.[](:message)

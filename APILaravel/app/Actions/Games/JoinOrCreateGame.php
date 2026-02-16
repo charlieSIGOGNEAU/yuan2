@@ -63,8 +63,6 @@ class JoinOrCreateGame
         return null;
     }
 
-    
-
     // est dans une transaction
     private function addPlayer(Game $game, User $user)
     {

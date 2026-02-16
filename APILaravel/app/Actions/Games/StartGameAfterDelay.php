@@ -7,6 +7,8 @@ use App\Enums\GameStatus;
 use Illuminate\Support\Facades\DB;
 use App\Services\Games\GameService;
 
+
+
 class StartGameAfterDelay
 {
     public function __construct(private GameService $gameService){}
@@ -17,27 +19,35 @@ class StartGameAfterDelay
             $game->lockForUpdate()->refresh();
 
             if ($game->game_status !== GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS) {
-                return ['message' => 'invalid status'];
+                return ['status' => StartGameAfterDelayResult::INVALID_STATUS];
             }
 
             if ($game->updated_at->gt(now()->subSeconds(20))) {
-                return ['message' => 'unexpired timeout'];
+                return ['status' => StartGameAfterDelayResult::UNEXPIRED_TIMEOUT];
             }
 
-            $game->gameUsers()->where('player_ready', false)->delete();
+            $userIdToDestroed = $game->gameUsers()->where('player_ready', false)->pluck('user_id');
 
-            $game->refresh();
+            $game->gameUsers()->whereIn('user_id', $userIdToDestroed)->delete();
+            $game->unsetRelation('gameUsers');
+
             $currentPlayersCount = $game->gameUsers()->count();
 
             if ($currentPlayersCount >= 2) {
                 $this->gameService->startInstallationPhase($game);
-                return ['message' => 'game ready installation_phase'];
+                return [
+                    'status' => StartGameAfterDelayResult::GAME_READY_INSTALLATION_PHASE,
+                    'userIdToDestroed' => $userIdToDestroed
+                ];
             } 
             
             if ($currentPlayersCount === 0 || $game->game_type === GameType::CUSTOM_GAME) {
                 $game->gameUsers()->delete();
                 $game->delete();
-                return ['message' => 'game destroyed'];
+                return [
+                    'status' => StartGameAfterDelayResult::GAME_DESTROYED,
+                    'userIdToDestroed' => $userIdToDestroed
+                ];
             }
 
             // donc 1 joueur
@@ -47,7 +57,8 @@ class StartGameAfterDelay
             ]);
             
             return [
-                'message' => 'missing player, waiting for player',
+                'status' => StartGameAfterDelayResult::MISSING_PLAYER,
+                'userIdToDestroed' => $userIdToDestroed
             ];
         });
     }
