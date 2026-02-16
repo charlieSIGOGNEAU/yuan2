@@ -16,6 +16,7 @@ use App\Enums\Actions\Games\StartGameAfterDelayResult;
 use App\Services\GameBroadcastService;
 use App\Models\Game;
 use App\Http\Requests\GameMemberRequest;
+use App\Enums\GameStatus;
 
 class GameController extends Controller
 {
@@ -322,5 +323,36 @@ class GameController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => $result]);
+    }
+
+    public function reconnect(Request $request, GameBroadcastService $broadcastService)
+    {
+        $user = $request->user();
+
+        // On cherche le gameUser actif (non abandonné)
+        $gameUser = $user->gameUsers()
+            ->where('abandoned', false)
+            ->first();
+
+        if (!$gameUser) {
+            return response()->json(['message' => 'No active game found'], 200);
+        }
+
+        $game = $gameUser->game;
+        $status = $game->game_status;
+
+        // Déclenchement manuel du broadcast selon l'état (ton switch Rails)
+        if ($status === GameStatus::WAITING_FOR_PLAYERS) {
+            $broadcastService->userBroadcastWaitingForPlayers($user, $game);
+        } 
+        elseif ($status === GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS) {
+            $broadcastService->userBroadcastReadyToPlay($user, $game);
+        } 
+        else {
+            // Pour toutes les phases de jeu actives
+            $broadcastService->userBroadcastGameDetails($user, $game);
+        }
+
+        return response()->json(['status' => 'sync_triggered']);
     }
 }

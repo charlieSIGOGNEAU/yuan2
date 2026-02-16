@@ -12,17 +12,18 @@ class GameMemberRequest extends FormRequest
     {
         if ($this->route('game')) {
             $this->merge([
-                'game_id' => $this->route('game'),
-                'custom_code' => $this->custom_code ? strtoupper($this->custom_code) : null,
+                // 'game_id' => $this->route('game'),
+                'game_id' => $this->route('game')->id,
             ]);
+            if ($this->custom_code !== null) {
+                $this->merge(['custom_code' => strtoupper($this->custom_code)]);
+            }
         }
     }
 
     public function authorize(): bool
     {
-        // On s'assure de récupérer uniquement l'ID, pas l'objet entier
-        // Si $this->game_id est un objet, on prend son ->id, sinon on prend la valeur brute
-        $gameId = is_object($this->game_id) ? $this->game_id->id : $this->game_id;
+        $gameId = $this->game_id;
         
         $this->gameUser = $this->user()->gameUsers()
             ->where('game_id', $gameId)
@@ -38,9 +39,19 @@ class GameMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'game_id' => 'required|integer|exists:games,id',
             'simultaneous_play_turn' => 'sometimes|integer',
             'custom_code' => 'sometimes|string|size:6',
         ];
     }
+
+    protected function failedAuthorization()
+    {
+        \Log::info('FAILED AUTH', ['user' => $this->user()]);
+    }
+
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    {
+        \Log::info('FAILED VALIDATION', $validator->errors()->toArray());
+    }
+
 }

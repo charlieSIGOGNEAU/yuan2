@@ -11,6 +11,24 @@ export const WebSocketClient = {
     gameSubscriptions: [],
     connectionStatus: 'disconnected',
 
+    async requestSyncLaravel() {
+        try {
+            const syncUrl = ServerConfig.HTTP_BASE.replace('/v1', '/v1/games/reconnect');
+            await fetch(syncUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${Auth.authToken}`
+                }
+            });
+            console.log('🔄 Requête de synchronisation envoyée');
+        } catch (error) {
+            console.error('❌ Erreur lors de la demande de synchro:', error);
+        }
+    },
+
+
     // Connexion WebSocket
     async connect() {
         if (!Auth.authToken) return;
@@ -45,6 +63,16 @@ export const WebSocketClient = {
                 // Gérer le ping
                 if (rawData.event === "pusher:ping") {
                     this.connection.send(JSON.stringify({ event: "pusher:pong" }));
+                    return;
+                }
+
+                // Gérer la confirmation d'abonnement réussie
+                if (rawData.event === 'pusher_internal:subscription_succeeded') {
+                    const channel = rawData.channel;
+                    if (channel.startsWith('private-user_')) {
+                        console.log('✅ Abonnement confirmé, demande de synchronisation...');
+                        this.requestSyncLaravel(); // <--- APPEL ICI
+                    }
                     return;
                 }
 

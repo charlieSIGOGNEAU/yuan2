@@ -14,7 +14,7 @@ class TileController extends Controller
 {
     public function place(GameMemberRequest $request, Game $game, Tile $tile, GameBroadcastService $gameBroadcastService)
     {
-        return response()->json(['ok' => true]);
+        // return response()->json(['ok' => true]);
         // 1. Récupération des objets déjà injectés/validés par le Request
         $game = $request->game;
         $gameUser = $request->gameUser;

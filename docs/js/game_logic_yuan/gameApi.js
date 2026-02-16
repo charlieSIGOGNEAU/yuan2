@@ -413,6 +413,8 @@ export const gameApi = {
                             'Authorization': `Bearer ${Auth.authToken}`
                         },
                         body: JSON.stringify({
+                            game_id: gameState.game.id,
+
                             name: tileData.name,
                             rotation: tileData.rotation,
                             position_q: tileData.position.q,

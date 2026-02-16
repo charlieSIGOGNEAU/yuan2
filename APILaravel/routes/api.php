@@ -38,6 +38,8 @@ Route::group(['prefix' => 'v1'], function () {
 
         // --- Logique de Jeu (GameController) ---
         Route::prefix('games')->group(function () {
+            Route::post('reconnect', [GameController::class, 'reconnect']);
+
             Route::post('quick_game', [GameController::class, 'quickGame']);
             Route::post('creat_custom_game', [GameController::class, 'createCustomGame']);
             Route::post('join_game_custom', [GameController::class, 'joinCustomGame']);
