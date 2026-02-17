@@ -18,7 +18,6 @@ class CreateBiddingAction
 
             $turn = $data['turn'] ?? $game->biddings_turn;
 
-            // Création ou Mise à jour
             $bidding = Bidding::updateOrCreate(
                 ['game_id' => $game->id, 'game_user_id' => $gameUser->id, 'turn' => $turn],
                 ['chao' => $data['chao'], 'clan_id' => $data['clan_id'], 'victory' => false]
@@ -37,7 +36,6 @@ class CreateBiddingAction
 
     private function finalizeTurn(Game $game, int $turn, Bidding $currentBidding): array
     {
-        // Trouver le gagnant (le plus de chao, puis le premier ID)
         $winner = $game->biddings()
             ->where('turn', $turn)
             ->whereNotNull('clan_id')
@@ -46,15 +44,12 @@ class CreateBiddingAction
             ->first();
 
         if ($winner && $game->game_status === GameStatus::BIDDING_PHASE) {
-            // Assigner le clan au GameUser gagnant
             $winner->gameUser->update(['clan_id' => $winner->clan_id]);
             $winner->update(['victory' => true]);
 
-            // Incrémenter le tour d'enchère
             $newTurn = $game->biddings_turn + 1;
             $game->update(['biddings_turn' => $newTurn]);
 
-            // Si toutes les enchères sont finies
             if ($newTurn > $game->player_count) {
                 $game->update([
                     'game_status' => GameStatus::SIMULTANEOUS_PLAY,

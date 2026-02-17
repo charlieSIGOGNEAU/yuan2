@@ -62,7 +62,7 @@ Route::group(['prefix' => 'v1'], function () {
             Route::post('tiles/{tile}/place', [TileController::class, 'place']);
             Route::post('clans', [ClanController::class, 'store']);
             Route::post('bidding', [BiddingController::class, 'store']);
-        //         Route::post('actions', [ActionController::class, 'store']);
+            Route::post('actions', [ActionController::class, 'store']);
                 
         //         Route::post('game_users/{game_user}/abandon', [GameUserController::class, 'abandon']);
             });

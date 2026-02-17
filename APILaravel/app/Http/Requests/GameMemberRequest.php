@@ -21,12 +21,10 @@ class GameMemberRequest extends FormRequest
     public function authorize(): bool
     {
         $gameId = $this->game_id;
-        \Log::info('GAME ID', [$gameId]);
         
         $this->gameUser = $this->user()->gameUsers()
             ->where('game_id', $gameId)
             ->first();
-        \Log::info('GAME USER', [$this->gameUser]);
 
         if ($this->gameUser) {
             $this->game = $this->gameUser->game;
