@@ -16,6 +16,8 @@ use App\Enums\Actions\Games\StartGameAfterDelayResult;
 use App\Services\GameBroadcastService;
 use App\Models\Game;
 use App\Http\Requests\GameMemberRequest;
+use App\Http\Requests\JoinGameRequest;
+use App\Http\Requests\confirmationGameDetailRequest;
 use App\Enums\GameStatus;
 
 class GameController extends Controller
@@ -100,7 +102,7 @@ class GameController extends Controller
         }
     }
 
-    public function joinCustomGame(Request $request, JoinCustomGame $joinCustomGame, GameBroadcastService $gameBroadcastService)
+    public function joinCustomGame(JoinGameRequest $request, JoinCustomGame $joinCustomGame, GameBroadcastService $gameBroadcastService)
     {
         $result = $joinCustomGame($request->user(), $request->custom_code);
         $message = $result['message'];
@@ -299,12 +301,13 @@ class GameController extends Controller
 
     //   def confirm_game_details_reception a implementer
 
-    public function forceEndTurn(GameMemberRequest $request, ForceEndTurnAction $forceEndTurnAction, GameBroadcastService $gameBroadcastService)
+    public function forceEndTurn(confirmationGameDetailRequest $request, ForceEndTurnAction $forceEndTurnAction, GameBroadcastService $gameBroadcastService)
     {
         $game = $request->game;
-        if ($request->missing('simultaneous_play_turn')) {
-            return response()->json(['success' => false, 'message' => 'Paramètre manquant'], 400);
-        }
+        // in confirmationGameDetailRequest
+        // if ($request->missing('simultaneous_play_turn')) {
+        //     return response()->json(['success' => false, 'message' => 'Paramètre manquant'], 400);
+        // }
 
         $turnParam = $request->integer('simultaneous_play_turn');
 

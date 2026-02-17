@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class PlaceTileAction
 {
-    public function execute(Game $game, Tile $tile, array $data, bool $isLastTile): void
+    public function __invoke(Game $game, Tile $tile, array $data, bool $isLastTile): void
     {
         // 1. Mise à jour de la tuile
         $tile->update([

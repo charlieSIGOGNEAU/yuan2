@@ -107,4 +107,12 @@ class GameBroadcastService
         ]);
     }
     
+    public function userBroadcastWaitingForOthers(User $user, Game $game)
+    {
+        UserBroadcast::dispatch($user->id, [
+            'type' => 'waiting_for_others',
+            'game_id' => $game->id,
+            'message' => 'En attente des autres joueurs...'
+        ]);
+    }
 }

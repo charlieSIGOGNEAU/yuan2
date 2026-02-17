@@ -8,6 +8,9 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\GameController;
 use App\Http\Controllers\Api\V1\TileController;
+use App\Http\Controllers\Api\V1\ClanController;
+use App\Http\Controllers\Api\V1\BiddingController;
+
 Route::get('test', function() {
     return response()->json(['message' => 'L\'API fonctionne !']);
 });
@@ -57,8 +60,8 @@ Route::group(['prefix' => 'v1'], function () {
                 
         //         // Nesting (Tuiles, Clans, Bidding)
             Route::post('tiles/{tile}/place', [TileController::class, 'place']);
-        //         Route::post('clans', [ClanController::class, 'store']);
-        //         Route::post('bidding', [BiddingController::class, 'store']);
+            Route::post('clans', [ClanController::class, 'store']);
+            Route::post('bidding', [BiddingController::class, 'store']);
         //         Route::post('actions', [ActionController::class, 'store']);
                 
         //         Route::post('game_users/{game_user}/abandon', [GameUserController::class, 'abandon']);

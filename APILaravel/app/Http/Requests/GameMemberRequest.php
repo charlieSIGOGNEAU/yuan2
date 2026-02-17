@@ -15,19 +15,19 @@ class GameMemberRequest extends FormRequest
                 // 'game_id' => $this->route('game'),
                 'game_id' => $this->route('game')->id,
             ]);
-            if ($this->custom_code !== null) {
-                $this->merge(['custom_code' => strtoupper($this->custom_code)]);
-            }
+
         }
     }
 
     public function authorize(): bool
     {
         $gameId = $this->game_id;
+        \Log::info('GAME ID', ['game_id' => $gameId]);
         
         $this->gameUser = $this->user()->gameUsers()
             ->where('game_id', $gameId)
             ->first();
+        \Log::info('GAME USER', ['game_user' => $this->gameUser]);
 
         if ($this->gameUser) {
             $this->game = $this->gameUser->game;
@@ -36,17 +36,12 @@ class GameMemberRequest extends FormRequest
         return false;
     }
 
-    public function rules(): array
-    {
-        return [
-            'simultaneous_play_turn' => 'sometimes|integer',
-            'custom_code' => 'sometimes|string|size:6',
-        ];
-    }
+
 
     protected function failedAuthorization()
     {
         \Log::info('FAILED AUTH', ['user' => $this->user()]);
+        throw new \Illuminate\Auth\Access\AuthorizationException('This action is unauthorized.');
     }
 
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
