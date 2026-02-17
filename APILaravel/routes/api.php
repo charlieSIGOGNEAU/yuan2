@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\GameController;
 use App\Http\Controllers\Api\V1\TileController;
 use App\Http\Controllers\Api\V1\ClanController;
 use App\Http\Controllers\Api\V1\BiddingController;
+use App\Http\Controllers\Api\V1\ActionController;
 
 Route::get('test', function() {
     return response()->json(['message' => 'L\'API fonctionne !']);

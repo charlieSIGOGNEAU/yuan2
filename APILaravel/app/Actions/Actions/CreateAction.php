@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Actions\Actions;
+
+use App\Models\Game;
+use App\Models\GameUser;
+use App\Models\Action;
+use Illuminate\Support\Facades\DB;
+
+class CreateAction
+{
+    public function __invoke(Game $game, GameUser $gameUser, array $data)
+    {
+        return DB::transaction(function () use ($game, $gameUser, $data) {
+            // Verrouillage de la game (lock! dans Rails)
+            $lockedGame = Game::where('id', $game->id)->lockForUpdate()->first();
+            $currentTurn = $lockedGame->simultaneous_play_turn;
+
+            if ((int)$data['turn'] !== $currentTurn) {
+                return ['success' => false, 'message' => 'trop tard, le tour est déjà terminé'];
+            }
+
+            // updateOrCreate (find_by + assign_attributes dans Rails)
+            $action = Action::updateOrCreate(
+                [
+                    'game_id'      => $game->id,
+                    'game_user_id' => $gameUser->id,
+                    'turn'         => $currentTurn
+                ],
+                [
+                    'position_q'           => $data['position_q'] ?? null,
+                    'position_r'           => $data['position_r'] ?? null,
+                    'development_level'    => $data['development_level'],
+                    'fortification_level'  => $data['fortification_level'],
+                    'militarisation_level' => $data['militarisation_level'],
+                ]
+            );
+
+            // Appel de la vérification de fin de tour
+            $result = $this->checkTurnCompletion($lockedGame);
+
+            return [
+                'success'        => true,
+                'result'         => $result, // :tour_finished, :still_waiting, etc.
+                'action'         => $action,
+                'turn_completed' => in_array($result, ['tour_finished', 'already_completed'])
+            ];
+        });
+    }
+
+    private function checkTurnCompletion(Game $game)
+    {
+        $actionsCount = Action::where('game_id', $game->id)
+            ->where('turn', $game->simultaneous_play_turn)
+            ->count();
+
+        $playersCount = $game->gameUsers()->count();
+
+        if ($actionsCount >= $playersCount) {
+            $game->increment('simultaneous_play_turn');
+            // Logique de Broadcast ici
+            return 'tour_finished';
+        }
+
+        return 'still_waiting';
+    }
+}

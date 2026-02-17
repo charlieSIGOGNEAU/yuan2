@@ -74,6 +74,11 @@ class GameResource extends JsonResource
                         'game_user_id' => $action->game_user_id,
                         'action'       => $action->action,
                         'turn'         => $action->turn,
+                        'position_q'   => $action->position_q,
+                        'position_r'   => $action->position_r,
+                        'development_level' => $action->development_level,
+                        'fortification_level' => $action->fortification_level,
+                        'militarisation_level' => $action->militarisation_level,
                     ];
                 });
             }),
