@@ -8,6 +8,7 @@ use App\Actions\Games\JoinOrCreateGame;
 use App\Actions\Games\CreateCustomGame;
 use App\Actions\Games\JoinCustomGame;
 use App\Actions\Games\LaunchCustomGame;
+use App\Http\Requests\LaunchCustomGameRequest;
 use App\Actions\Games\IAmReady;
 use App\Actions\Games\GiveUpGame;
 use App\Actions\Games\ForceEndTurnAction;
@@ -135,14 +136,12 @@ class GameController extends Controller
         }
     }
     
-    public function launchCustomGame(GameMemberRequest $request, LaunchCustomGame $launchCustomGame, GameBroadcastService $gameBroadcastService)
+    public function launchCustomGame(LaunchCustomGameRequest $request, LaunchCustomGame $launchCustomGame, GameBroadcastService $gameBroadcastService)
     {
-        $validated = $request->validate([
-            'game_duration' => 'nullable|integer|min:30|max:600',
-        ]);
-
         $user = $request->user();
         $game = $request->game;
+        \Log::info('GAME', [$game]);
+        \Log::info('USER', [$user]);
 
         if ($user->id !== $game->creator_id) {
             return response()->json([
@@ -151,7 +150,7 @@ class GameController extends Controller
             ], 200);
         }
 
-        if ($game->game_status !== 'waiting_for_players') {
+        if ($game->game_status !== GameStatus::WAITING_FOR_PLAYERS) {
             return response()->json([
                 'success' => false,
                 'message' => 'Game not in waiting_for_players',
