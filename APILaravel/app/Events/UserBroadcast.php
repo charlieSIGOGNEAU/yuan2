@@ -2,14 +2,18 @@
 
 namespace App\Events;
 
+
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+// use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Broadcasting\InteractsWithSockets;
 
-class UserBroadcast implements ShouldBroadcastNow
+class UserBroadcast implements ShouldQueue, ShouldBroadcast
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, SerializesModels, InteractsWithSockets;
 
     public $data;
     public $userId;

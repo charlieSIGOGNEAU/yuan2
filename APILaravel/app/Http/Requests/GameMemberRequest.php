@@ -21,12 +21,6 @@ class GameMemberRequest extends FormRequest
                 'game_id' => $id,
             ]);
         }
-        // if ($this->route('game')) {
-        //     $this->merge([
-        //         // 'game_id' => $this->route('game'),
-        //         'game_id' => $this->route('game')->id,
-        //     ]);
-        // }
     }
 
     public function authorize(): bool
@@ -43,18 +37,4 @@ class GameMemberRequest extends FormRequest
         }
         return false;
     }
-
-
-
-    protected function failedAuthorization()
-    {
-        \Log::info('FAILED AUTH', ['user' => $this->user()]);
-        throw new \Illuminate\Auth\Access\AuthorizationException('This action is unauthorized.');
-    }
-
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
-    {
-        \Log::info('FAILED VALIDATION', $validator->errors()->toArray());
-    }
-
 }

@@ -15,6 +15,8 @@ class GameBroadcastService
     {
         $game->refresh()->load(['tiles', 'clans', 'gameUsers', 'actions', 'biddings']);
 
+        $gameData = (new GameResource($game))->resolve();
+
         foreach ($game->gameUsers as $gameUser) {
             if ($gameUser->abandoned) {
                 continue;
@@ -22,7 +24,7 @@ class GameBroadcastService
 
             UserBroadcast::dispatch($gameUser->user_id, [
                 'type' => 'game_details',
-                'game' => new GameResource($game),
+                'game' => $gameData,
                 'my_game_user_id' => $gameUser->id
             ]);
         }
@@ -32,9 +34,11 @@ class GameBroadcastService
     {
         $game->refresh()->load(['tiles', 'clans', 'gameUsers', 'actions', 'biddings']);
 
+        $gameData = (new GameResource($game))->resolve();
+
         UserBroadcast::dispatch($user->id, [
             'type' => 'game_details',
-            'game' => new GameResource($game),
+            'game' => $gameData,
             'my_game_user_id' => $game->gameUsers->firstWhere('user_id', $user->id)->id
         ]);
     }

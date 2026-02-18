@@ -15,6 +15,24 @@ php artisan reverb:start
 
 php artisan migrate:fresh --seed
 
+equivalant rails c
+php artisan tinker
+exemple  App\Models\Game::find(1); App\Models\Game::all();
+
+pour les job des websocket, lancer dans un terminal :
+php artisan queue:work
+Si je modifie mon code, je dois relancer cette commande (ou utiliser php artisan queue:listen).
+
+
+
+
+
+
+
+
+
+
+
 ouvrir la consol de mon api dans mon docker local:
 docker compose -f docker-compose.dev.yml exec api bash
 # Voir où vous êtes

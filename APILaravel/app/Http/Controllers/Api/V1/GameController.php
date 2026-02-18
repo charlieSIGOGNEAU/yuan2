@@ -43,7 +43,7 @@ class GameController extends Controller
 
         switch ($message) {
             case 'ongoing game':
-                $gameBroadcastService->broadcastGameDetails($game);
+                $gameBroadcastService->gameBroadcastGameDetails($game);
                 break;
 
             case 'game ready installation_phase': 
@@ -54,7 +54,9 @@ class GameController extends Controller
             case 'yes waiting for other players':
                 // donc le brodcaste juste endessous est fait
             case 'new game':
+                \Log::info('new game');
                 $gameBroadcastService->gameBroadcastWaitingForPlayers($game);
+                \Log::info('new game');
                 break;
         }
 
