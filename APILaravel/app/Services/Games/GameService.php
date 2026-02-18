@@ -26,7 +26,7 @@ class GameService
                 ->where('abandoned', false);
         })
         ->whereNotIn('game_status', $excludedStatuses)
-        ->first();
+        ->first(); 
 
         if (!$existingGameForUser) {
             return null;

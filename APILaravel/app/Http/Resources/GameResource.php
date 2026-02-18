@@ -9,7 +9,6 @@ class GameResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            // Table: games
             'id'                      => $this->id,
             'game_status'             => $this->game_status,
             'game_type'               => $this->game_type,

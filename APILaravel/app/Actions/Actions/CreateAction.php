@@ -12,7 +12,6 @@ class CreateAction
     public function __invoke(Game $game, GameUser $gameUser, array $data)
     {
         return DB::transaction(function () use ($game, $gameUser, $data) {
-            // Verrouillage de la game (lock! dans Rails)
             $lockedGame = Game::where('id', $game->id)->lockForUpdate()->first();
             $currentTurn = $lockedGame->simultaneous_play_turn;
 
@@ -20,7 +19,6 @@ class CreateAction
                 return ['success' => false, 'message' => 'trop tard, le tour est déjà terminé'];
             }
 
-            // updateOrCreate (find_by + assign_attributes dans Rails)
             $action = Action::updateOrCreate(
                 [
                     'game_id'      => $game->id,
@@ -41,7 +39,7 @@ class CreateAction
 
             return [
                 'success'        => true,
-                'result'         => $result, // :tour_finished, :still_waiting, etc.
+                'result'         => $result,
                 'action'         => $action,
                 'turn_completed' => in_array($result, ['tour_finished', 'already_completed'])
             ];
@@ -58,7 +56,6 @@ class CreateAction
 
         if ($actionsCount >= $playersCount) {
             $game->increment('simultaneous_play_turn');
-            // Logique de Broadcast ici
             return 'tour_finished';
         }
 

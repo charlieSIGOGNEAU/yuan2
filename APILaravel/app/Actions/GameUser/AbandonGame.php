@@ -18,11 +18,9 @@ class AbandonGame
     public function __invoke(GameUser $gameUser, Game $game): array
     {
         return DB::transaction(function () use ($gameUser, $game) {
-            // 1. Verrouillage et rafraîchissement
             Game::where('id', $game->id)->lockForUpdate()->first();
             $game->refresh();
 
-            // 2. Cas des phases précoces (Destruction de la partie)
             $earlyPhases = [
                 GameStatus::WAITING_FOR_PLAYERS,
                 GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS,
@@ -33,7 +31,7 @@ class AbandonGame
             ];
 
             if (in_array($game->game_status, $earlyPhases)) {
-                // Récupération directe des objets User autonomes
+                // Récupération directe des objets User autonomes pour faire les brodcasts apres la destruction de la game et gameUser
                 $usersToNotify = User::whereIn('id', function($query) use ($game) {
                     $query->select('user_id')
                         ->from('game_users')
@@ -51,18 +49,14 @@ class AbandonGame
                 return ['success' => true, 'message' => "Game destroyed"];
             }
 
-            // 3. Vérification si déjà fini
             if (in_array($game->game_status, [GameStatus::COMPLETED, GameStatus::END_DISPUTE])) {
                 return ['success' => true, 'message' => "Game already finished"];
             }
 
-            // 4. Marquage de l'abandon
             $gameUser->update(['abandoned' => true]);
 
-            // Broadcast : "Un joueur a abandonné" (Informer les survivants)
             DB::afterCommit(fn() => $this->broadcastService->userBroadcastPlayerAbandoned($game, $gameUser));
 
-            // 5. Vérification de la fin de partie
             $activePlayers = $game->gameUsers()->where('abandoned', false)->get();
             $count = $activePlayers->count();
 
@@ -71,13 +65,9 @@ class AbandonGame
 
                 if ($count === 1) {
                     $winner = $activePlayers->first();
-                    // Notification spécifique au gagnant
                     DB::afterCommit(fn() => $this->broadcastService->userBroadcastGameWon($winner));
                 }
             }
-
-            // 6. Notification globale (Mise à jour de l'état du jeu pour tous)
-            DB::afterCommit(fn() => $this->broadcastService->gameBroadcastGameDetails($game));
 
             return ['success' => true, 'message' => "Game abandoned successfully"];
         });
