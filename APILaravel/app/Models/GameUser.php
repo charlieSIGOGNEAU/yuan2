@@ -17,6 +17,7 @@ class GameUser extends Model
         'turn_order',
         'player_ready',
         'clan_id',
+        'abandoned',
     ];
 
     public function game()

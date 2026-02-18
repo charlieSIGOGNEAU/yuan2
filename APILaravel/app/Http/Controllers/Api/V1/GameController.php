@@ -10,16 +10,19 @@ use App\Actions\Games\JoinCustomGame;
 use App\Actions\Games\LaunchCustomGame;
 use App\Http\Requests\LaunchCustomGameRequest;
 use App\Actions\Games\IAmReady;
+use App\Actions\Games\SubmitVictory;
 use App\Actions\Games\GiveUpGame;
 use App\Actions\Games\ForceEndTurnAction;
 use App\Actions\Games\StartGameAfterDelay;
 use App\Enums\Actions\Games\StartGameAfterDelayResult;
 use App\Services\GameBroadcastService;
 use App\Models\Game;
+use App\Models\GameUser;
 use App\Http\Requests\GameMemberRequest;
 use App\Http\Requests\JoinGameRequest;
 use App\Http\Requests\confirmationGameDetailRequest;
 use App\Enums\GameStatus;
+use App\Services\Games\GameService;
 
 class GameController extends Controller
 {
@@ -140,9 +143,7 @@ class GameController extends Controller
     {
         $user = $request->user();
         $game = $request->game;
-        \Log::info('GAME', [$game]);
-        \Log::info('USER', [$user]);
-
+ 
         if ($user->id !== $game->creator_id) {
             return response()->json([
                 'success' => false,
@@ -327,33 +328,27 @@ class GameController extends Controller
         return response()->json(['success' => false, 'message' => $result]);
     }
 
-    public function reconnect(Request $request, GameBroadcastService $broadcastService)
+    public function reconnect(Request $request, GameService $gameService, GameBroadcastService $broadcastService)
     {
         $user = $request->user();
+        $result = $gameService->ongoingGame($user);
 
-        // On cherche le gameUser actif (non abandonné)
-        $gameUser = $user->gameUsers()
-            ->where('abandoned', false)
-            ->first();
-
-        if (!$gameUser) {
+        if (!$result) {
             return response()->json(['message' => 'No active game found'], 200);
         }
 
-        $game = $gameUser->game;
-        $status = $game->game_status;
+        $game = $result['game'];
 
-        // Déclenchement manuel du broadcast selon l'état (ton switch Rails)
-        if ($status === GameStatus::WAITING_FOR_PLAYERS) {
-            $broadcastService->userBroadcastWaitingForPlayers($user, $game);
-        } 
-        elseif ($status === GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS) {
-            $broadcastService->userBroadcastReadyToPlay($user, $game);
-        } 
-        else {
-            // Pour toutes les phases de jeu actives
-            $broadcastService->userBroadcastGameDetails($user, $game);
-        }
+        match ($game->game_status) {
+            GameStatus::WAITING_FOR_PLAYERS 
+                => $broadcastService->userBroadcastWaitingForPlayers($user, $game),
+
+            GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS 
+                => $broadcastService->userBroadcastReadyToPlay($user, $game),
+
+            default 
+                => $broadcastService->userBroadcastGameDetails($user, $game),
+        };
 
         return response()->json(['status' => 'sync_triggered']);
     }

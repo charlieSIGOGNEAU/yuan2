@@ -10,12 +10,23 @@ class GameMemberRequest extends FormRequest
     public $gameUser;
     protected function prepareForValidation()
     {
-        if ($this->route('game')) {
+        $gameParam = $this->route('game');
+
+        if ($gameParam) {
+            // Si c'est un objet (Model Binding), on prend son ->id
+            // Si c'est déjà une string/int (ID seul), on la garde telle quelle
+            $id = is_object($gameParam) ? $gameParam->id : $gameParam;
+
             $this->merge([
-                // 'game_id' => $this->route('game'),
-                'game_id' => $this->route('game')->id,
+                'game_id' => $id,
             ]);
         }
+        // if ($this->route('game')) {
+        //     $this->merge([
+        //         // 'game_id' => $this->route('game'),
+        //         'game_id' => $this->route('game')->id,
+        //     ]);
+        // }
     }
 
     public function authorize(): bool

@@ -31,7 +31,6 @@ class PlaceTileAction
 
         if ($allTilesNamed) {
             $game->update(['game_status' => GameStatus::INITIAL_PLACEMENT]);
-            Log::info("Partie {$game->id} passée en INITIAL_PLACEMENT via Action.");
         }
     }
 }

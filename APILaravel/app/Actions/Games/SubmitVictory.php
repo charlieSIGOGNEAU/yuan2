@@ -12,7 +12,7 @@ class SubmitVictory
     public function __invoke(Game $game, User $user, array $rankings)
     {
         return DB::transaction(function () use ($game, $user, $rankings) {
-            $game->lockForUpdate()->refresh();
+            $game = Game::where('id', $game->id)->lockForUpdate()->first();
 
             if ($game->game_status === GameStatus::COMPLETED || $game->game_status === GameStatus::END_DISPUTE) {
                 return ['success' => true, 'message' => 'Game already finished'];

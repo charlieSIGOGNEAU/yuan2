@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class GameBroadcastService
 {
-    public function gamebroadcastGameDetails(Game $game)
+    public function gamebroadcastGameDetails(Game $game): void
     {
         $game->refresh()->load(['tiles', 'clans', 'gameUsers', 'actions', 'biddings']);
 
@@ -28,10 +28,8 @@ class GameBroadcastService
         }
     }
 
-    public function userBroadcastGameDetails(User $user, Game $game)
+    public function userBroadcastGameDetails(User $user, Game $game): void
     {
-        Log::info('Message informatif 4');
-
         $game->refresh()->load(['tiles', 'clans', 'gameUsers', 'actions', 'biddings']);
 
         UserBroadcast::dispatch($user->id, [
@@ -41,7 +39,7 @@ class GameBroadcastService
         ]);
     }
 
-    public function gameBroadcastReadyToPlay(Game $game)
+    public function gameBroadcastReadyToPlay(Game $game): void
     {
         $gameUsers = $game->gameUsers()->where('abandoned', false)->get();
         
@@ -56,7 +54,7 @@ class GameBroadcastService
         }
     }
     
-    public function userBroadcastReadyToPlay(User $user, Game $game)
+    public function userBroadcastReadyToPlay(User $user, Game $game): void
     {
         UserBroadcast::dispatch($user->id, [
                 'type'                  => 'ready_to_play',
@@ -67,7 +65,7 @@ class GameBroadcastService
             ]);
     }
 
-    public function gameBroadcastWaitingForPlayers(Game $game)
+    public function gameBroadcastWaitingForPlayers(Game $game): void
     {
         $gameUsers = $game->gameUsers()->where('abandoned', false)->get();
         $waitingCount = $gameUsers->count();
@@ -82,7 +80,7 @@ class GameBroadcastService
             ]);
         }
     }
-    public function userBroadcastWaitingForPlayers(User $user, Game $game)
+    public function userBroadcastWaitingForPlayers(User $user, Game $game): void
     {
         $gameUsers = $game->gameUsers()->where('abandoned', false)->get();
         $waitingCount = $gameUsers->count();
@@ -99,7 +97,7 @@ class GameBroadcastService
 
 
 
-    public function userBroadcastPlayerDestroyed(Game $game, int $userId)
+    public function userBroadcastPlayerDestroyed(Game $game, int $userId): void
     {
         UserBroadcast::dispatch($userId, [
             'type' => 'player_destroyed',
@@ -107,12 +105,41 @@ class GameBroadcastService
         ]);
     }
     
-    public function userBroadcastWaitingForOthers(User $user, Game $game)
+    public function userBroadcastWaitingForOthers(User $user, Game $game): void
     {
         UserBroadcast::dispatch($user->id, [
             'type' => 'waiting_for_others',
             'game_id' => $game->id,
             'message' => 'En attente des autres joueurs...'
         ]);
+    }
+
+    public function userBroadcastGameWon(GameUser $gameUser): void
+    {
+        UserBroadcast::dispatch($gameUser->user_id, [
+            'type' => 'game_won',
+            'game_id' => $gameUser->game_id,
+            'game_user_id' => $gameUser->id,
+            'message' => 'Félicitations ! Vous avez gagné la partie par abandon des autres joueurs'
+        ]);
+        
+    }
+
+    public function userBroadcastGameDestroyed(User $user): void
+    {
+        UserBroadcast::dispatch($user->id, [
+            'type' => 'game_destroyed',
+        ]);
+    }
+
+    public function userBroadcastPlayerAbandoned(Game $game, GameUser $oneGameUser): void
+    {
+        $gameUsers = $game->gameUsers()->where('abandoned', false)->get();
+        $gameUsers->each(function ($gameUser) use ($oneGameUser) {
+            UserBroadcast::dispatch($gameUser->user_id, [
+                'type' => 'player_abandoned',
+                'game_user_id' => $oneGameUser->id,
+            ]);
+        });
     }
 }

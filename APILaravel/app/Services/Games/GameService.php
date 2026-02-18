@@ -14,11 +14,18 @@ class GameService
     
     public function ongoingGame(User $user) : ?array
     {
+        $excludedStatuses = [
+            GameStatus::COMPLETED->value, 
+            GameStatus::ABANDONED->value, 
+            GameStatus::END_DISPUTE->value
+        ];
+        \Log::info($user->id);
+
         $existingGameForUser = Game::whereHas('gameUsers', function ($query) use ($user) {
             $query->where('user_id', $user->id)
                 ->where('abandoned', false);
         })
-        ->whereNotIn('game_status', [GameStatus::COMPLETED, GameStatus::ABANDONED])
+        ->whereNotIn('game_status', $excludedStatuses)
         ->first();
 
         if (!$existingGameForUser) {
