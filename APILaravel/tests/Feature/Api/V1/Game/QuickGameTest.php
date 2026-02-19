@@ -61,6 +61,7 @@ class QuickGameTest extends TestCase
             'game_status' => 0, 
             'player_count' => 3,
             'waiting_players_count' => 2,
+            'game_type' => 0,
         ]);
 
         // 2 users
@@ -71,7 +72,7 @@ class QuickGameTest extends TestCase
 
         $response->assertStatus(200);
         $game->refresh();
-        $this->assertEquals(GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS, $game->game_status);
+        $this->assertEquals($game->game_status, GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS);
         $this->assertDatabaseHas('game_users', [
             'game_id' => $game->id,
             'user_id' => $this->user->id,
@@ -144,7 +145,7 @@ class QuickGameTest extends TestCase
                 $event->data['waiting_players_count'] === 2;
         });
 
-        // pour afficher les brodcast pour debuger les tests :
+        // pour afficher les brodcasts pour debuger les tests :
         // Event::assertDispatched(UserBroadcast::class, function ($event) {
         //     dump([
         //         'DESTINATAIRE_ID' => $event->userId,
