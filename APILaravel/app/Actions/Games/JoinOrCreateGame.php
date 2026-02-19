@@ -41,6 +41,7 @@ class JoinOrCreateGame
                         return $result;
                     }
                     $game = Game::create([
+                        'creator_id' => $user->id,
                         'game_status' => GameStatus::WAITING_FOR_PLAYERS,
                         'game_type' => GameType::QUICK_GAME,
                         'player_count' => 3,

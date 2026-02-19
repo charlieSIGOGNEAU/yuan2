@@ -19,7 +19,6 @@ class GameService
             GameStatus::ABANDONED->value, 
             GameStatus::END_DISPUTE->value
         ];
-        \Log::info($user->id);
 
         $existingGameForUser = Game::whereHas('gameUsers', function ($query) use ($user) {
             $query->where('user_id', $user->id)

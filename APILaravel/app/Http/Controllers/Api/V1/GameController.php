@@ -54,9 +54,7 @@ class GameController extends Controller
             case 'yes waiting for other players':
                 // donc le brodcaste juste endessous est fait
             case 'new game':
-                \Log::info('new game');
                 $gameBroadcastService->gameBroadcastWaitingForPlayers($game);
-                \Log::info('new game');
                 break;
         }
 

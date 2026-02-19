@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions;
+namespace App\Actions\Games;
 
 use App\Models\Game;
 use App\Models\GameUser;
@@ -8,7 +8,7 @@ use App\Models\GameStatus;
 use App\Models\GameType;
 use Illuminate\Support\Facades\DB;
 
-class GiveUpGameAction
+class GiveUpGame
 {
     /**
      * Exécute la logique d'abandon de la partie mais uniquement avant qu'elle ai commencé
