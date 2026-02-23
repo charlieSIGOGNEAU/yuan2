@@ -19,7 +19,7 @@ La version en ligne vise à transposer fidèlement des règles métier denses, a
 
 ## Architecture générale
 
- - **Backend :** Laravel 11 + Reverb (WebSockets), [transactions/locks](APILaravel/app/Actions/Games/LaunchCustomGame.php) pour la cohérence, JWT/Google Auth, [Form Requests](APILaravel/app/Http/Requests/ActionRequest.php) pour l'autorisation
+ - **Backend :** Rails puis Laravel 11 + Reverb (WebSockets), [transactions/locks](APILaravel/app/Actions/Games/LaunchCustomGame.php) pour la cohérence, JWT/Google Auth, [Form Requests](APILaravel/app/Http/Requests/ActionRequest.php) pour l'autorisation
  - **Frontend :** JS vanilla, SPA + router, 3D Three.js, Vite, i18n simple
  - **Évolution :** Après un 1er développement sous Rails, j'ai entièrement porté l'API vers Laravel 11 en 3 semaines (apprentissage php/laravel inclus). Ce second passage a permis d'affiner l'architecture (découpage en Actions, typage) grâce au recul acquis sur le premier développement.
 
@@ -28,18 +28,18 @@ La version en ligne vise à transposer fidèlement des règles métier denses, a
 
 - **Règles complexes** : moteur type “diplomacy”, phases simultanées, attaques en chaîne
 - **Concurrence & synchronisation** : gestion déconnexions, [test rails race condition multi-threads](APIRails/test/models/race_condition_test.rb#L1) et [test laravel intégrité du Matchmaking](APILaravel/tests/Feature/Api/V1/Game/QuickGameTest.php#L1) et [protection contre les IDOR/Timing](APILaravel/tests/Feature/Api/V1/Game/StoreActionTest.php)
-- **Choix techniques** : timers côté client, validation serveur, logique concentrée là où pertinent
+- **Optimisation Serveur** : Choix d'un backend "light" (logique déportée) pour maximiser la fluidité. La triche est détectée ; sa sanction automatisée a été écartée pour prioriser d'autres problématiques techniques.
 - **Adaptabilité technique** : Apprentissage et portage rapide (Laravel). Logique métier complexe déportée dans le front pour un serveur léger.
 - **3D & multi-outils** : Blender + Three.js, animations asynchrones, apprentissage rapide d’outils complexes
 
 
 ## État du projet & Méthode de travail
 
-Ce projet a été réalisé suite à un bootcamp de 3 mois (je n’avais jamais codé auparavant). C'est un projet d’auto-formation de 6 mois, aujourd'hui fonctionnel et déployé. Certaines parties du front-end trahissent ce statut de premier projet (besoin de refactorisation et découpage).
+Ce projet a été réalisé suite à un bootcamp de 3 mois (je n’avais jamais codé auparavant). C'est un projet d’auto-formation de 6 mois, aujourd'hui fonctionnel et déployé. 
 
-**Architecture :** Choix volontaire d'un serveur léger pour la fluidité. La triche est détectée et signalée, mais non sanctionnée côté backend ; son blocage strict côté backend a été volontairement reporté pour privilégier l'exploration d'autres outils.
+**Recul technique :**  Certaines parties du front-end trahissent ce statut de premier projet (besoin de refactorisation et découpage). Le portage Laravel a permis d'identifier que l'optimisation des timers côté client (présente dans ma version Rails) apportait une complexité superflue sans gain de performance notable. Je reste conscient que certains patterns de l'écosystème Laravel demandent encore à être approfondis.
 
-**Pour le portage rapide vers Laravel** j'ai utilisé l'IA comme support d'apprentissage pour migrer l'API. Je privilégie la compréhension profonde de chaque ligne intégrée plutôt que la génération automatisée, afin de maîtriser l'évolutivité du système et de pouvoir justifier chaque choix technique. Je reste conscient que certains patterns de l'écosystème Laravel (architecture de services, DTO, etc.) demandent encore à être approfondis.
+**Pour le portage rapide vers Laravel** j'ai utilisé l'IA comme support d'apprentissage. Je privilégie la compréhension profonde de chaque ligne intégrée plutôt que la génération automatisée, afin de maîtriser l'évolutivité du système et de pouvoir justifier chaque choix technique. 
 
 
 
