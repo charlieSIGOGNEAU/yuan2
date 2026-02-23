@@ -37,9 +37,9 @@ La version en ligne vise à transposer fidèlement des règles métier denses, a
 
 Ce projet a été réalisé suite à un bootcamp de 3 mois (je n’avais jamais codé auparavant). C'est un projet d’auto-formation de 6 mois, aujourd'hui fonctionnel et déployé. 
 
-**Recul technique :**  Certaines parties du front-end trahissent ce statut de premier projet (besoin de refactorisation et découpage). Le portage Laravel a permis d'identifier que l'optimisation des timers côté client (présente dans ma version Rails) apportait une complexité superflue sans gain de performance notable. Je reste conscient que certains patterns de l'écosystème Laravel demandent encore à être approfondis.
+- **Recul technique :**  Certaines parties du front-end trahissent ce statut de premier projet (besoin de refactorisation et découpage). Le portage Laravel a permis d'identifier que l'optimisation des timers côté client (présente dans ma version Rails) apportait une complexité superflue sans gain de performance notable. Je reste conscient que certains patterns de l'écosystème Laravel demandent encore à être approfondis.
 
-**Pour le portage rapide vers Laravel** j'ai utilisé l'IA comme support d'apprentissage. Je privilégie la compréhension profonde de chaque ligne intégrée plutôt que la génération automatisée, afin de maîtriser l'évolutivité du système et de pouvoir justifier chaque choix technique. 
+- **Pour le portage rapide vers Laravel :** j'ai utilisé l'IA comme support d'apprentissage. Je privilégie la compréhension profonde de chaque ligne intégrée plutôt que la génération automatisée, afin de maîtriser l'évolutivité du système et de pouvoir justifier chaque choix technique. 
 
 
 
