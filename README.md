@@ -19,7 +19,7 @@ La version en ligne vise à transposer fidèlement des règles métier denses, a
 
 ## Architecture générale
 
- - **Backend :** Laravel 11 + Reverb (WebSockets), [transactions/locks](APILaravel/app/Actions/Games/LaunchCustomGame.php) pour la cohérence, JWT/Google Auth, [Form Requests](APILaravel/app/Http/Requests/Api/V1/Game/ActionRequest.php) pour l'autorisation
+ - **Backend :** Laravel 11 + Reverb (WebSockets), [transactions/locks](APILaravel/app/Actions/Games/LaunchCustomGame.php) pour la cohérence, JWT/Google Auth, [Form Requests](APILaravel/app/Http/Requests/ActionRequest.php) pour l'autorisation
  - **Frontend :** JS vanilla, SPA + router, 3D Three.js, Vite, i18n simple
  - **Évolution :** Après un 1er développement sous Rails, j'ai entièrement porté l'API vers Laravel 11 en 3 semaines (apprentissage php/laravel inclus). Ce second passage a permis d'affiner l'architecture (découpage en Actions, typage) grâce au recul acquis sur le premier développement.
 
@@ -27,7 +27,7 @@ La version en ligne vise à transposer fidèlement des règles métier denses, a
 ## Ce que le projet démontre
 
 - **Règles complexes** : moteur type “diplomacy”, phases simultanées, attaques en chaîne
-- **Concurrence & synchronisation** : gestion déconnexions, [test rails race condition multi-threads](APIRails/test/models/race_condition_test.rb#L1) et [test laravel intégrité du Matchmaking](APILaravel/tests/Feature/Api/V1/Game/QuickGameTest.php#L1) et [protection contre les IDOR/Timing](APILaravel/tests/Feature/Api/V1/Game/ActionTest.php#L1)
+- **Concurrence & synchronisation** : gestion déconnexions, [test rails race condition multi-threads](APIRails/test/models/race_condition_test.rb#L1) et [test laravel intégrité du Matchmaking](APILaravel/tests/Feature/Api/V1/Game/QuickGameTest.php#L1) et [protection contre les IDOR/Timing](APILaravel/tests/Feature/Api/V1/Game/StoreActionTest.php)
 - **Choix techniques** : timers côté client, validation serveur, logique concentrée là où pertinent
 - **Adaptabilité technique** : Apprentissage et portage rapide (Laravel). Logique métier complexe déportée dans le front pour un serveur léger.
 - **3D & multi-outils** : Blender + Three.js, animations asynchrones, apprentissage rapide d’outils complexes

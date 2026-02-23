@@ -206,6 +206,7 @@ class GameController extends Controller
         return response()->json($result, $result['success'] ? 200 : 422);
     }
 
+    // startGameAfterDelay devrait être supprimé et géré uniquement côté backend ; l'optimisation du timer côté client n'apporte aucune valeur ajoutée et complexifie inutilement la logique.
     public function startGameAfterDelay(GameMemberRequest $request, StartGameAfterDelay $startGameAfterDelay, GameBroadcastService $gameBroadcastService)
     {
         $game = $request->game;
@@ -281,15 +282,11 @@ class GameController extends Controller
         }
     }
 
-    //   def confirm_game_details_reception a implementer
+    // def confirm_game_details_reception a implementer
 
     public function forceEndTurn(confirmationGameDetailRequest $request, ForceEndTurnAction $forceEndTurnAction, GameBroadcastService $gameBroadcastService)
     {
         $game = $request->game;
-        // in confirmationGameDetailRequest
-        // if ($request->missing('simultaneous_play_turn')) {
-        //     return response()->json(['success' => false, 'message' => 'Paramètre manquant'], 400);
-        // }
 
         $turnParam = $request->integer('simultaneous_play_turn');
 

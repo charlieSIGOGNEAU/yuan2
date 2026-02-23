@@ -86,8 +86,8 @@ class GameBroadcastService
     }
     public function userBroadcastWaitingForPlayers(User $user, Game $game): void
     {
-        $gameUsers = $game->gameUsers()->where('abandoned', false)->get();
-        $waitingCount = $gameUsers->count();
+        $gameUser = $game->gameUsers()->where(['abandoned' => false, 'user_id' => $user->id])->first();
+        $waitingCount = $gameUser->count();
 
         UserBroadcast::dispatch($user->id, [
             'i_am_creator'          => $gameUser->user_id === $game->creator_id,
