@@ -22,3 +22,7 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# Ignorer tous les fichiers .md à la racine uniquement sauf readme.md
+/*.md
+!README.md
+
