@@ -12,8 +12,9 @@ class CreateAction
     public function __invoke(Game $game, GameUser $gameUser, array $data)
     {
         return DB::transaction(function () use ($game, $gameUser, $data) {
-            $lockedGame = Game::where('id', $game->id)->lockForUpdate()->first();
-            $currentTurn = $lockedGame->simultaneous_play_turn;
+            Game::where('id', $game->id)->lockForUpdate()->first();
+            $game->refresh();
+            $currentTurn = $game->simultaneous_play_turn;
 
             if ((int)$data['turn'] !== $currentTurn) {
                 return ['success' => false, 'message' => 'trop tard, le tour est déjà terminé'];
@@ -35,7 +36,7 @@ class CreateAction
             );
 
             // Appel de la vérification de fin de tour
-            $result = $this->checkTurnCompletion($lockedGame);
+            $result = $this->checkTurnCompletion($game);
 
             return [
                 'success'        => true,

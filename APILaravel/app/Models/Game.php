@@ -14,6 +14,7 @@ use App\Models\User;
 
 class Game extends Model
 {
+    const MAX_PLAYERS = 8;
     use HasFactory;
 
     /**

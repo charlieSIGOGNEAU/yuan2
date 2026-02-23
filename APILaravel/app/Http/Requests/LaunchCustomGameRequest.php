@@ -6,26 +6,24 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class LaunchCustomGameRequest extends FormRequest
 {
-        public function authorize(): bool
-        {
-            $gameId = $this->input('game_id');
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'game_duration' => $this->game_duration ?? 120,
+        ]);
+    }
+    public function authorize(): bool
+    {
+        $gameId = $this->input('game_id');
 
-            $this->gameUser = $this->user()->gameUsers()
-                ->where('game_id', $gameId)
-                ->first();
-
-            if ($this->gameUser) {
-                $this->game = $this->gameUser->game;
-                return true;
-            }
-
-            return false;
-        }
+        $this->gameUser = $this->user()->gameUsers()->where('game_id', $gameId)->first();
+        return ($this->gameUser && $this->gameUser->game->creator_id === $this->user()->id);
+    }
 
     public function rules(): array
     {
         return [
-            'game_duration' => 'nullable|integer|min:30|max:600',
+            'game_duration' => 'required|integer'
         ];
     }
 }

@@ -19,31 +19,28 @@ La version en ligne vise à transposer fidèlement des règles métier denses, a
 
 ## Architecture générale
 
-### Projet full-stack avec séparation claire front / back.
+ - **Backend :** Laravel 11 + Reverb (WebSockets), [transactions/locks](APILaravel/app/Actions/Games/LaunchCustomGame.php) pour la cohérence, JWT/Google Auth, [Form Requests](APILaravel/app/Http/Requests/Api/V1/Game/ActionRequest.php) pour l'autorisation
+ - **Frontend :** JS vanilla, SPA + router, 3D Three.js, Vite, i18n simple
+ - **Évolution :** Après un 1er développement sous Rails, j'ai entièrement porté l'API vers Laravel 11 en 3 semaines (apprentissage php/laravel inclus). Ce second passage a permis d'affiner l'architecture (découpage en Actions, typage) grâce au recul acquis sur le premier développement.
 
- - **Backend :** Rails API, PostgreSQL, transactions/locks pour la cohérence, WebSockets, JWT/Google Auth, Docker
- - **Frontend :** JS vanilla, SPA + router, 3D Three.js, API + WebSocket, Vite, i18n simple
 
+## Ce que le projet démontre
 
-### Ce que le projet démontre (profil raisonnement)
-
-- **Règles complexes** : moteur type “diplomacy”, phases simultanées, attaques en chaîne  
-- **Concurrence & synchronisation** : échanges front back, gestion déconnexions, transactions/locks, [test race condition multi-threads](api/test/models/race_condition_test.rb#L1) 
-- **Choix techniques** : timers côté client, validation serveur, logique concentrée là où pertinent  
-- **Structuration** : séparation responsabilités, code commenté, organisation pour projet long mené seul  
+- **Règles complexes** : moteur type “diplomacy”, phases simultanées, attaques en chaîne
+- **Concurrence & synchronisation** : gestion déconnexions, [test rails race condition multi-threads](APIRails/test/models/race_condition_test.rb#L1) et [test laravel intégrité du Matchmaking](APILaravel/tests/Feature/Api/V1/Game/QuickGameTest.php#L1) et [protection contre les IDOR/Timing](APILaravel/tests/Feature/Api/V1/Game/ActionTest.php#L1)
+- **Choix techniques** : timers côté client, validation serveur, logique concentrée là où pertinent
+- **Adaptabilité technique** : Apprentissage et portage rapide (Laravel). Logique métier complexe déportée dans le front pour un serveur léger.
 - **3D & multi-outils** : Blender + Three.js, animations asynchrones, apprentissage rapide d’outils complexes
 
 
-### Limites assumées
- - Backend volontairement léger : la majorité de la complexité métier est côté client
- - Certains fichiers front sont trop volumineux et pourraient être davantage découpés
- - Stack choisie pour la vitesse d’itération plutôt que pour un cadre industriel strict
+## État du projet & Méthode de travail
 
+Ce projet a été réalisé suite à un bootcamp de 3 mois (je n’avais jamais codé auparavant). C'est un projet d’auto-formation de 6 mois, aujourd'hui fonctionnel et déployé. Certaines parties du front-end trahissent ce statut de premier projet (besoin de refactorisation et découpage).
 
+**Architecture :** Choix volontaire d'un serveur léger pour la fluidité. La triche est détectée et signalée, mais non sanctionnée côté backend ; une évolution mise de côté pour privilégier l'apprentissage de nouveaux outils.
 
-## État du projet
+**Pour le portage rapide vers Laravel** j'ai utilisé l'IA comme support d'apprentissage pour migrer l'API. Je privilégie la compréhension profonde de chaque ligne intégrée plutôt que la génération automatisée, afin de maîtriser l'évolutivité du système et de pouvoir justifier chaque choix technique.
 
-Ce projet a été réalisé après un bootcamp de 3 mois, je n’avais jamais codé auparavant. Fonctionnel, déployé et jouable, il reste un projet d’auto-formation de 6 mois, avec des évolutions futures limitées afin de me concentrer sur d’autres apprentissages et la recherche d’un poste.
 
 
 ### Objectif professionnel

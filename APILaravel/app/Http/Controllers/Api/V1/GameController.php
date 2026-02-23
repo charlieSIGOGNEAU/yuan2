@@ -141,25 +141,11 @@ class GameController extends Controller
     
     public function launchCustomGame(LaunchCustomGameRequest $request, LaunchCustomGame $launchCustomGame, GameBroadcastService $gameBroadcastService)
     {
-        $user = $request->user();
-        $game = $request->game;
+        $gameUser = $request->gameUser;
+        $game = $gameUser->game;
  
-        if ($user->id !== $game->creator_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only the creator can launch the game',
-            ], 200);
-        }
-
-        if ($game->game_status !== GameStatus::WAITING_FOR_PLAYERS) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Game not in waiting_for_players',
-            ], 200);
-        }
-
-        $duration = $validated['game_duration'] ?? 120;
-        $result = $launchCustomGame($game, $duration);
+        $duration = $request->validated()['game_duration'];
+        $result = $launchCustomGame($game, $gameUser, $duration);
 
         if ($result['message'] !== 'go ready to play') {
             return response()->json([
@@ -167,10 +153,6 @@ class GameController extends Controller
                 'message' => $result['message'],
             ], 200);
         }
-
-        $game->gameUsers()
-            ->where('user_id', $user->id)
-            ->update(['player_ready' => true]);
 
         $gameBroadcastService->gameBroadcastReadyToPlay($game);
         
