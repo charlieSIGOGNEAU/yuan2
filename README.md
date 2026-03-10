@@ -4,32 +4,33 @@
 
 Cliquez sur l’image pour voir la vidéo du jeu en action (18 secondes). Pensé et jouable sur smartphone (portrait et paysage)
 
-Yuan est un jeu de stratégie multijoueur en ligne, basé sur des règles complexes et des interactions simultanées entre joueurs.
-Le projet a été mené en autonomie, de la conception des règles jusqu’au déploiement en production.
+Yuan est un jeu de stratégie multijoueur en ligne **actuellement en production, basé sur des phases d’actions simultanées entre joueurs**, impliquant gestion de concurrence et cohérence d’états partagés.
+Projet conçu et développé seul, de la conception des règles jusqu’au déploiement en production.
 
 [**Jeu en production :**](https://yuan-game.com) Une partie rapide nécessite au moins 3 joueurs connectés simultanément
 
 
 ## Contexte 
 
-Ce projet est l’adaptation numérique d’un jeu de société de stratégie que j’ai conçu (édité et commercialisé par Oka Luda, version physique sortie en 2023).
+Ce projet est l’adaptation numérique d’un jeu de société de stratégie que j’ai conçu (**édité et commercialisé par Oka Luda, version physique sortie en 2023**).
 Ancien professeur de maths, j’ai appliqué une approche analytique pour transposer des règles complexes en algorithmes.
 La version en ligne vise à transposer fidèlement des règles métier denses, avec gestion des conflits, du temps simultané et des états partagés entre joueurs.
 
 
 ## Architecture générale
 
- - **Backend :** Rails puis Laravel 11 + Reverb (WebSockets), [transactions/locks](APILaravel/app/Actions/Games/LaunchCustomGame.php) pour la cohérence, JWT/Google Auth, [Form Requests](APILaravel/app/Http/Requests/ActionRequest.php) pour l'autorisation
+ - **Backend :** Rails puis **Laravel 12 + Reverb (WebSockets), [transactions/locks](APILaravel/app/Actions/Games/LaunchCustomGame.php), JWT/Google Auth, [Form Requests](APILaravel/app/Http/Requests/ActionRequest.php)**
  - **Frontend :** JS vanilla, SPA + router, 3D Three.js, Vite, i18n simple
- - **Évolution :** Après un 1er développement sous Rails, j'ai entièrement porté l'API vers Laravel 11 en 3 semaines (apprentissage php/laravel inclus). Ce second passage a permis d'affiner l'architecture (découpage en Actions, typage) grâce au recul acquis sur le premier développement.
+ - **Évolution :** Après un 1er développement sous Rails, j'ai entièrement porté l'API vers Laravel 12 en 3 semaines (apprentissage php/laravel inclus). Ce second passage a permis d'affiner l'architecture (découpage en Actions, typage) grâce au recul acquis sur le premier développement.
 
 
 ## Ce que le projet démontre
 
 - **Règles complexes** : moteur type “diplomacy”, phases simultanées, attaques en chaîne
-- **Concurrence & synchronisation** : gestion déconnexions, [test rails race condition multi-threads](APIRails/test/models/race_condition_test.rb#L1) et [test laravel intégrité du Matchmaking](APILaravel/tests/Feature/Api/V1/Game/QuickGameTest.php#L1) et [protection contre les IDOR/Timing](APILaravel/tests/Feature/Api/V1/Game/StoreActionTest.php)
-- **Optimisation Serveur** : Choix d'un backend "light" (logique déportée) pour maximiser la fluidité. La triche est détectée ; sa sanction automatisée a été écartée pour prioriser d'autres problématiques techniques.
-- **Adaptabilité technique** : Apprentissage et portage rapide (Laravel). Logique métier complexe déportée dans le front pour un serveur léger.
+- **Concurrence & synchronisation** : gestion déconnexions et cohérence des actions simultanées.
+- **Tests** : [test rails race condition multi-threads](APIRails/test/models/race_condition_test.rb#L1) et [test laravel intégrité du Matchmaking](APILaravel/tests/Feature/Api/V1/Game/QuickGameTest.php#L1) et [protection contre les IDOR/Timing](APILaravel/tests/Feature/Api/V1/Game/StoreActionTest.php)
+- **CI** : exécution automatique des tests via GitHub Actions.
+- **Adaptabilité technique** : Apprentissage et portage rapide (Laravel).
 - **3D & multi-outils** : Blender + Three.js, animations asynchrones, apprentissage rapide d’outils complexes
 
 
