@@ -1,99 +1,49 @@
-Yuan – Online Strategy Game (Production)
+# Yuan – Jeu de Stratégie en Ligne (Production)
 
-![demo](yuanPaysage2.gif)  
-Pensé et jouable sur smartphone (portrait et paysage, contraintes d’écran réduites)
+[![Yuan démo 18 seconde](https://img.youtube.com/vi/vSdPwUxjG74/sddefault.jpg)](https://youtu.be/vSdPwUxjG74)
 
-Yuan est un jeu de stratégie multijoueur en ligne, basé sur des règles complexes et des interactions simultanées entre joueurs.
-Le projet a été mené en autonomie, de la conception des règles jusqu’au déploiement en production.
-- Jeu en production : https://yuan-game.com
-- Une partie rapide nécessite au moins 3 joueurs connectés simultanément
+Cliquez sur l’image pour voir la vidéo du jeu en action (18 secondes). Pensé et jouable sur smartphone (portrait et paysage)
+
+Yuan est un jeu de stratégie multijoueur en ligne **actuellement en production, basé sur des phases d’actions simultanées entre joueurs**, impliquant gestion de concurrence et cohérence d’états partagés.
+Projet conçu et développé seul, de la conception des règles jusqu’au déploiement en production.
+
+[**Jeu en production :**](https://yuan-game.com) Une partie rapide nécessite au moins 3 joueurs connectés simultanément
 
 
-Contexte
+## Contexte 
 
-Ce projet est l’adaptation numérique d’un jeu de société de stratégie que j’ai conçu, édité et commercialisé (version physique sortie en 2023).
+Ce projet est l’adaptation numérique d’un jeu de société de stratégie que j’ai conçu (**édité et commercialisé par Oka Luda, version physique sortie en 2023**).
+Ancien professeur de maths, j’ai appliqué une approche analytique pour transposer des règles complexes en algorithmes.
 La version en ligne vise à transposer fidèlement des règles métier denses, avec gestion des conflits, du temps simultané et des états partagés entre joueurs.
 
-L’objectif principal du projet est le raisonnement, la robustesse logique et la synchronisation, plus que la performance graphique ou l’UX.
+
+## Architecture générale
+
+ - **Backend :** Rails puis **Laravel 12 + Reverb (WebSockets), [transactions/locks](APILaravel/app/Actions/Games/LaunchCustomGame.php), JWT/Google Auth, [Form Requests](APILaravel/app/Http/Requests/ActionRequest.php)**
+ - **Frontend :** JS vanilla, SPA + router, 3D Three.js, Vite, i18n simple
+ - **Évolution :** Après un 1er développement sous Rails, j'ai entièrement porté l'API vers Laravel 12 en 3 semaines (apprentissage php/laravel inclus). Ce second passage a permis d'affiner l'architecture (découpage en Actions, typage) grâce au recul acquis sur le premier développement.
 
 
-Architecture générale
+## Ce que le projet démontre
 
-Projet full-stack avec séparation claire front / back.
+- **Règles complexes** : moteur type “diplomacy”, phases simultanées, attaques en chaîne
+- **Concurrence & synchronisation** : gestion déconnexions et cohérence des actions simultanées.
+- **Tests** : [test rails race condition multi-threads](APIRails/test/models/race_condition_test.rb#L1) et [test laravel intégrité du Matchmaking](APILaravel/tests/Feature/Api/V1/Game/QuickGameTest.php#L1) et [protection contre les IDOR/Timing](APILaravel/tests/Feature/Api/V1/Game/StoreActionTest.php)
+- **CI** : exécution automatique des tests via GitHub Actions.
+- **Adaptabilité technique** : Apprentissage et portage rapide (Laravel).
+- **3D & multi-outils** : Blender + Three.js, animations asynchrones, apprentissage rapide d’outils complexes
 
-Backend :
 
- - Ruby on Rails (API only)
- - Base de données : SQLite (compatible postgreSQL)
- - Transactions et verrous utilisés pour gérer :
-   - accès concurrents
-   - attribution des parties
-   - cohérence des états de jeu
- - WebSockets (ActionCable) pour la synchronisation temps réel
- - Authentification (JWT + connexion Google)
- - Conteneurisation Docker
+## État du projet & Méthode de travail
 
-Frontend :
+Ce projet a été réalisé suite à un bootcamp de 3 mois (je n’avais jamais codé auparavant). C'est un projet d’auto-formation de 6 mois, aujourd'hui fonctionnel et déployé. 
 
- - JavaScript vanilla (ES modules)
- - SPA avec router personnalisé
- - Rendu 3D temps réel via Three.js
- - Communication API + WebSocket
- - Build et dev server via Vite
- - Internationalisation simple basée sur fichiers JSON (i18n maison)
+- **Recul technique :**  Certaines parties du front-end trahissent ce statut de premier projet (besoin de refactorisation et découpage). Le portage Laravel a permis d'identifier que l'optimisation des timers côté client (présente dans ma version Rails) apportait une complexité superflue sans gain de performance notable. Je reste conscient que certains patterns de l'écosystème Laravel demandent encore à être approfondis.
+
+- **Pour le portage rapide vers Laravel :** j'ai utilisé l'IA comme support d'apprentissage. Je privilégie la compréhension profonde de chaque ligne intégrée plutôt que la génération automatisée, afin de maîtriser l'évolutivité du système et de pouvoir justifier chaque choix technique. 
 
 
 
-Ce que le projet démontre (profil raisonnement)
+### Objectif professionnel
 
-Règles métier complexes
- - Implémentation d’un moteur de règles non trivial (conflits, phases simultanées, attaques en chaîne)
- - Traduction d’un système de jeu physique complexe en algorithmes robustes
- - Gestion d’états transitoires et dépendants (avant / pendant / après résolution)
-
-Concurrence et synchronisation
- - Système de vérification bidirectionnelle des échanges front ↔ back
- - (accusé de réception + renvoi si absence de réponse)
- - Gestion des joueurs inactifs ou déconnectés
- - Utilisation explicite de transactions et de locks côté backend
-
-Choix techniques orientés charge et cohérence
- - Timers gérés côté client avec vérification côté API pour limiter la charge serveur
- - Centralisation minimale du back : le serveur valide, le client orchestre
- - Logique métier concentrée là où elle est la plus pertinente
-
-Structuration et lisibilité
- - Séparation claire des responsabilités (phases de jeu, état global, rendu, API)
- - Code commenté aux étapes clés des algorithmes
- - Organisation pensée pour un projet long mené seul
-
-
-3D et apprentissage multi-outils
- - Modélisation complète des éléments 3D réalisée avec Blender
- - Intégration et optimisation des scènes Three.js
- - Gestion manuelle des animations asynchrones et groupées
- - Choix techniques faits pour rester compatible avec les contraintes temps réel
-Ces aspects ne sont pas centraux pour un profil back-end, mais illustrent une capacité à apprendre et utiliser plusieurs outils complexes en parallèle.
-
-Limites assumées
- - Backend volontairement léger : la majorité de la complexité métier est côté client
- - Pas de tests automatisés (choix assumé dans un cadre d’auto-formation)
- - Certains fichiers front sont trop volumineux et pourraient être davantage découpés
- - Stack choisie pour la vitesse d’itération plutôt que pour un cadre industriel strict
-
----
-  
-État du projet
-
-Le projet est fonctionnel, déployé et jouable, mais reste un projet d’auto-formation.
-Les évolutions futures sont limitées afin de pouvoir me concentrer sur d’autres apprentissages et sur la recherche d’un poste.
-
-
-Objectif professionnel
-
-Ce projet vise à démontrer ma capacité à :
- - raisonner sur des systèmes complexes,
- - faire des choix techniques cohérents sans cadre imposé,
- - devenir rapidement opérationnel sur des problématiques back-end, données et synchronisation.
-
-Je recherche aujourd’hui un environnement technique exigeant, orienté backend / architecture / raisonnement, avec un profil volontairement junior mais à fort potentiel de progression.
+Ce projet démontre ma capacité à concevoir des systèmes complexes et à faire des choix techniques cohérents en autonomie. Je recherche un environnement exigeant, orienté Backend / Architecture, où ma capacité d'apprentissage et mon autonomie pourront s'exprimer au sein d'une équipe expérimentée.
