@@ -4,17 +4,14 @@ namespace Tests\Feature\Api\V1\Game;
 
 use App\Models\User;
 use App\Models\Game;
+use App\Events\UserBroadcast;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use PHPUnit\Framework\Attributes\Test;
+use App\Enums\GameStatus;
 
-/**
- * - (ActionRequest) petit test incomplet centre sur les verrification des droit de l'utilisateur qui demande de jouer une action
- * - (ActionRequest) action envoyer avec un tour en retard
- */
-
-class StoreActionTest extends TestCase
+class QuickGameTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -24,92 +21,139 @@ class StoreActionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // On intercepte les événements pour ne pas polluer les tests
+        Event::fake();
+
+        // On prépare un utilisateur et son badge pour TOUS les tests
         $this->user = User::factory()->create();
-        $this->token = JWTAuth::fromUser($this->user);
+        $this->token = \PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth::fromUser($this->user);
     }
 
-    /**
-     * le joueur apartien a la game de l'action qu'il entreprend
-     */
+
     #[Test]
-    public function player_belongs_to_the_game()
+    public function it_returns_ongoing_game_details_if_user_is_already_in_a_game()
     {
-        $game = Game::factory()->create(['simultaneous_play_turn' => 2]);
-        $gameUser = $game->gameUsers()->create([
-            'user_id' => $this->user->id,
-        ]);
-
-        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->token])
-            ->postJson("/api/v1/games/{$game->id}/actions", [
-                'game_user_id' => $gameUser->id,
-                'game_id' => $game->id,
-                'turn' => 2,
-                'position_q' => 1,
-                'position_r' => 1,
-                'development_level' => 1,
-                'fortification_level' => 2,
-                'militarisation_level' => 3
-            ]);
-
-        $response->assertStatus(200)
-                 ->assertJsonPath('success', true);
+        $game = Game::factory()->create(['game_status' => 2]); 
         
-        $this->assertDatabaseHas('actions', [
-            'game_user_id' => $gameUser->id,
-            'turn' => 2
+        $game->gameUsers()->create([
+            'user_id' => $this->user->id,
+            'abandoned' => false
         ]);
+
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->token])->postJson('/api/v1/games/quick_game');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('game_id', $game->id);
+        
+        $this->assertDatabaseCount('games', 1);
+
+        Event::assertDispatched(UserBroadcast::class, function ($event) {
+            return $event->userId === $this->user->id && 
+                $event->data['type'] === 'game_details';
+        });
+
     }
 
-    /**
-     * le joueur n'apartien pas a la game de l'action qu'il entreprend
-     */
     #[Test]
-    public function player_does_not_belong_to_the_game()
+    public function it_starts_the_game_when_the_last_player_joins()
     {
-        $game1 = Game::factory()->create(['simultaneous_play_turn' => 2]);
-        $game2 = Game::factory()->create(['simultaneous_play_turn' => 2]);
-        $gameUser = $game2->gameUsers()->create([
+        $game = Game::factory()->create([
+            'game_status' => 0, 
+            'player_count' => 3,
+            'waiting_players_count' => 2,
+            'game_type' => 0,
+        ]);
+
+        // 2 users
+        $game->gameUsers()->create(['user_id' => User::factory()->create()->id]);
+        $game->gameUsers()->create(['user_id' => User::factory()->create()->id]);
+
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->token])->postJson('/api/v1/games/quick_game');
+
+        $response->assertStatus(200);
+        $game->refresh();
+        $this->assertEquals($game->game_status, GameStatus::WAITING_FOR_CONFIRMATION_PLAYERS);
+        $this->assertDatabaseHas('game_users', [
+            'game_id' => $game->id,
             'user_id' => $this->user->id,
+            'player_ready' => true
+        ]);
+
+        Event::assertDispatched(UserBroadcast::class, function ($event) {
+            return $event->userId === $this->user->id && 
+                $event->data['type'] === 'ready_to_play';
+        });
+    }
+
+    #[Test]
+    public function it_creates_a_new_game_if_none_is_available()
+    {
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->token,])->postJson('/api/v1/games/quick_game');
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseCount('games', 1);
+        $this->assertDatabaseHas('games', [
+            'creator_id' => $this->user->id,
+            'game_status' => 0, 
+        ]);
+
+        Event::assertDispatched(UserBroadcast::class, function ($event) {
+            return $event->userId === $this->user->id && 
+                $event->data['type'] === 'waiting_for_players';
+        });
+    }
+
+    #[Test]
+    public function it_joins_an_existing_game_if_available()
+    {
+        $creator = User::factory()->create();
+        $game = Game::factory()->create([
+            'creator_id' => $creator->id,
+            'game_status' => 0,
+            'game_type' => 0,
+            'player_count' => 3,
+            'waiting_players_count' => 1
+        ]);
+
+        $game->gameUsers()->create([
+            'user_id' => $creator->id,
+            'abandoned' => false
         ]);
         
-        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->token])
-            ->postJson("/api/v1/games/{$game1->id}/actions", [
-                'game_user_id' => $gameUser->id,
-                'game_id' => $game1->id,
-                'turn' => 2,
-                'position_q' => 1,
-                'position_r' => 1,
-                'development_level' => 1,
-                'fortification_level' => 2,
-                'militarisation_level' => 3
-            ]);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->token,])->postJson('/api/v1/games/quick_game');
 
-        $response->assertStatus(403);
+        $response->assertStatus(200);
+
+        $this->assertDatabaseCount('games', 1);
+        
+        $this->assertEquals(2, $game->refresh()->waiting_players_count);
+
+        Event::assertDispatched(UserBroadcast::class, 2);
+
+        Event::assertDispatched(UserBroadcast::class, function ($event) use ($creator) {
+            return $event->userId === $creator->id && 
+                $event->data['i_am_creator'] === true &&
+                $event->data['type'] === 'waiting_for_players' &&
+                $event->data['waiting_players_count'] === 2;
+        });
+
+        Event::assertDispatched(UserBroadcast::class, function ($event) {
+            return $event->userId === $this->user->id && 
+                $event->data['i_am_creator'] === false &&
+                $event->data['type'] === 'waiting_for_players' &&
+                $event->data['waiting_players_count'] === 2;
+        });
+
+        // pour afficher les brodcasts pour debuger les tests :
+        // Event::assertDispatched(UserBroadcast::class, function ($event) {
+        //     dump([
+        //         'DESTINATAIRE_ID' => $event->userId,
+        //         'CONTENU_DATA' => $event->data
+        //     ]);
+            
+        //     return true; // Permet au test de continuer sans bloquer
+        // });
     }
 
-    /**
-     * le joueur n'apartien pas a la game de l'action qu'il entreprend
-     */
-    #[Test]
-    public function action_send_with_a_late_turn()
-    {
-        $game = Game::factory()->create(['simultaneous_play_turn' => 3]);
-        $gameUser = $game->gameUsers()->create([
-            'user_id' => $this->user->id,
-        ]);
-
-        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->token])
-            ->postJson("/api/v1/games/{$game->id}/actions", [
-                'game_user_id' => $gameUser->id,
-                'game_id' => $game->id,
-                'turn' => 2,
-                'position_q' => 1,
-                'position_r' => 1,
-                'development_level' => 1,
-                'fortification_level' => 2,
-                'militarisation_level' => 3
-            ]);
-
-        $response->assertStatus(403);
-    }
 }

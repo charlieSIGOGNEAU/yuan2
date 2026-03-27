@@ -21,7 +21,9 @@ exemple  App\Models\Game::find(1); App\Models\Game::all();
 
 pour les job des websocket, lancer dans un terminal :
 php artisan queue:work
-Si je modifie mon code, je dois relancer cette commande (ou utiliser php artisan queue:listen).
+Si je modifie mon code, je dois relancer cette commande (ou utiliser php artisan queue:listen qui sera plus lant mais ne necessite pas de relancer la commande).
+ou mieu pour dev : 
+php artisan queue:listen --sleep=0.25
 
 
 
